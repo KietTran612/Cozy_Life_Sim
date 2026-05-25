@@ -9,5 +9,9 @@
 | **Task 6: Create Core Structs (StickerPlacedData & CropState)** | [x] | Plan updated with review fixes (pure floats). Ready to implement Core gameplay data models in CozyLifeSim.Core. |
 | **Task 7: Implement Tactile Sticker Drag & Drop with DOTween** | [x] | Plan updated with review fixes (event cameras, snapping target). Ready to write CozySticker & StickerBookPage. |
 | **Task 8: Implement 2D Pseudo-3D Notebook Page Flip** | [x] | Plan updated with review fixes (specific RemoveListener). Ready to write StickerBook supporting page flips. |
-| **Task 9: Implement Real-Time Crop Growth Logic with UniTask** | [ ] | Plan updated with review fixes (timer try-catch, specific RemoveListener). Ready to write CropWidget. |
-| **Task 10: Implement Interactive Animal Breathing & Petting** | [ ] | Plan updated with review fixes (CanvasGroup safety, specific RemoveListener). Ready to write AnimalWidget. |
+| **Task 9: Implement Real-Time Crop Growth Logic with UniTask** | [x] | Implemented CropWidget with UniTask timer, watering feedback, growth stage visuals, cancellation, tween cleanup, and specific RemoveListener. |
+| **Task 10: Implement Interactive Animal Breathing & Petting** | [x] | Implemented AnimalWidget with breathing loop, pet hop feedback, heart spawn/fade safety, tween cleanup, and specific RemoveListener. |
+| **Task 11: Implement Save and Inventory Services in Core and UI** | [ ] | Create SaveData, ISaveService, SaveService, IInventoryService, InventoryService and register in GameLifetimeScope. |
+| **Task 12: Implement Scrapbook Memory and Quest Services** | [ ] | Create IMemoryService, MemoryService, QuestData, IQuestService, QuestService and register in GameLifetimeScope. |
+| **Task 13: Implement Event-Driven MVP Presenters for UI** | [ ] | Create FarmPresenter, AnimalPresenter, and StickerBookPresenter with VContainer DI registrations. |
+| **Task 14: Connect UI Widgets to Presenters via Dependency Injection** | [ ] | Inject Presenters into CropWidget, AnimalWidget, and CozySticker to complete the core gameplay loop. |

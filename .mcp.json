@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "UnityMCP": {
+      "command": "D:/soflware/Unity/Source/Cozy_Life_Sim/Assets/StreamingAssets/realvirtual-MCP/python/python.exe",
+      "args": [
+        "D:/soflware/Unity/Source/Cozy_Life_Sim/Assets/StreamingAssets/realvirtual-MCP/unity_mcp_server.py"
+      ]
+    }
+  }
+}

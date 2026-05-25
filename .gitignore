@@ -1,0 +1,39 @@
+/[L|l]ibrary/
+/[T|t]emp/
+/[O|o]bj/
+/[B|b]uild/
+/[B|b]uilds/
+/[L|l]ogs/
+/[U|u]ser[S|s]ettings/
+
+# Memory Captures
+*.shadertest
+*.pfx
+*.cltch
+
+# Asset meta files matching deleted files
+*.meta.deleted
+
+# Personal settings
+.vs/
+.idea/
+.gradle/
+.recommenders/
+*.suo
+*.user
+*.userosscache
+*.sln
+*.csproj
+*.unityproj
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.tlog
+
+# Crashlytics generated file
+crashlytics-build.properties
+
+# OS generated files
+.DS_Store
+Thumbs.db

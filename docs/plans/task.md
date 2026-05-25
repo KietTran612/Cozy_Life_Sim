@@ -1,8 +1,8 @@
-| Task | Status | Notes |
+| Implementation Task | Status | Notes |
 | :--- | :---: | :--- |
-| **1. Explore project context** | [x] | Explored the docs folder and read `1. cozy_life_sim_so_tay_sticker_game_design.md`. Confirmed empty project root. |
-| **2. Ask clarifying questions** | [x] | Clarified target engine (Unity) and requested deep analysis on UI systems. |
-| **3. Propose 2-3 approaches** | [x] | Analyzed UGUI vs UI Toolkit. User chose Option A (UGUI dominant + DOTween + Centralized Style). |
-| **4. Present design** | [x] | Designed all core modules, coding guidelines (UniTask, VContainer, DIP, Struct layout), and solved structural styling via Prefab Swapping + Editor Spawner. |
-| **5. Write design doc** | [x] | Wrote the official Technical Design Document to `docs/plans/2026-05-25-cozy-life-sim-technical-design.md` and committed it to git. |
-| **6. Transition to implementation** | [x] | Created the detailed technical implementation plan at `docs/plans/2026-05-25-cozy-life-sim-core-architecture.md` and committed it to git. |
+| **Task 0: Initialize Unity 6000.3.11f1 Project & Packages** | [x] | Created ProjectVersion.txt, Packages/manifest.json with UPM packages. Unity Editor successfully imported the project in the background and compiled it! |
+| **Task 1: Setup Assembly Definitions & Folders** | [x] | Created CozyLifeSim.Core, CozyLifeSim.UI, and CozyLifeSim.Editor asmdefs with strict boundary references. |
+| **Task 2: Implement Style Config & TextStyle class** | [x] | Implemented TextStyle and ScriptableObject UIStyleConfig with null-safe style lookup. |
+| **Task 3: Implement GameLifetimeScope & StyleService** | [x] | Implemented VContainer GameLifetimeScope and StyleService class to resolve DI dependencies at runtime. |
+| **Task 4: Implement UIStyleElement with Caching** | [x] | Implemented UIStyleElement with original base font-size caching to prevent the cumulative growth bug. |
+| **Task 5: Implement CozyWidgetPlaceholder** | [x] | Implemented CozyWidgetPlaceholder separating preview/runtime instances with edit-mode safety guards. |

@@ -13,7 +13,7 @@
 ### Task 0: Initialize Unity 6000.3.11f1 Project and Install Packages
 
 **Files:**
-- Create: `Packages/manifest.json`
+- Modify: `Packages/manifest.json`
 - Create: `ProjectSettings/ProjectVersion.txt`
 
 **Step 1: Specify Unity Version**
@@ -23,26 +23,25 @@ m_EditorVersion: 6000.3.11f1
 m_EditorVersionWithRevision: 6000.3.11f1 (e3d548395551)
 ```
 
-**Step 2: Configure UPM manifest.json with Dependencies**
-Configure packages in `Packages/manifest.json` to include TextMeshPro, VContainer, and UniTask via git URLs:
+**Step 2: Initialize from 2D Template and Append Dependencies**
+Create the project using Unity Hub's **2D Template** (which automatically configures `com.unity.ugui` and core packages natively for Unity 6 without pinning legacy TextMeshPro packages). Then, append **VContainer** (using the correct official package ID and path) and **UniTask** to `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "com.unity.modules.ui": "1.0.0",
-    "com.unity.modules.tilemap": "1.0.0",
-    "com.unity.textmeshpro": "3.0.9",
-    "jp.hadashia.vcontainer": "https://github.com/hadashiA/VContainer.git?path=src/VContainer/Assets/VContainer",
+    "com.unity.2d.sprite": "1.0.0",
+    "com.unity.ugui": "2.0.0",
+    "jp.hadashikick.vcontainer": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer#1.18.0",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask"
   }
 }
 ```
 
 **Step 3: Install and Configure DOTween**
-Since DOTween is imported via the Asset Store or standard package DLLs rather than OpenUPM:
+Since DOTween is imported manually rather than UPM:
 1. Import DOTween into the project (placed under `Assets/Plugins/Demigiant/DOTween`).
 2. Open the DOTween Utility Panel (`Tools -> Demigiant -> DOTween Utility Panel`).
-3. Click "Setup DOTween..." to compile the DLLs.
-4. Ensure `DOTween` generates or is visible to Assembly Definitions so that `CozyLifeSim.UI` can reference it (under `Assets/Plugins/Demigiant/DOTween/DOTween.asmdef` if generated, or standard visual scripts).
+3. Click "Setup DOTween..." to compile the DLLs and generate `DOTween.asmdef` or ensure `DOTween.Modules` is available.
+4. *Git instruction:* This directory containing DOTween DLLs must be staged and committed to Git so the project compiles directly for all developers.
 
 **Step 4: Setup Project Directory Structure**
 Create the base sub-folders under Assets for modularization:
@@ -53,8 +52,8 @@ Create the base sub-folders under Assets for modularization:
 
 **Step 5: Commit**
 ```bash
-git add ProjectSettings/ProjectVersion.txt Packages/manifest.json
-git commit -m "chore: initialize Unity 6000.3.11f1 project and packages"
+git add ProjectSettings/ProjectVersion.txt Packages/manifest.json Assets/Plugins/
+git commit -m "chore: initialize Unity 6000.3.11f1 project, configure packages and DOTween"
 ```
 
 ---
@@ -89,7 +88,7 @@ Create `Assets/CozyLifeSim/Scripts/Core/CozyLifeSim.Core.asmdef`:
 ```
 
 **Step 2: Create UI Assembly Definition**
-The UI layer holds style configuration, theme adapters, and UGUI view structures. It references `CozyLifeSim.Core`, `VContainer`, `UniTask`, and `Unity.TextMeshPro`.
+The UI layer holds style configuration, theme adapters, and UGUI view structures. It references `CozyLifeSim.Core`, `VContainer`, `UniTask`, `Unity.TextMeshPro`, and `DOTween.Modules`.
 Create `Assets/CozyLifeSim/Scripts/UI/CozyLifeSim.UI.asmdef`:
 ```json
 {
@@ -99,7 +98,8 @@ Create `Assets/CozyLifeSim/Scripts/UI/CozyLifeSim.UI.asmdef`:
         "CozyLifeSim.Core",
         "VContainer",
         "UniTask",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "DOTween.Modules"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

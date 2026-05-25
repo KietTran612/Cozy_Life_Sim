@@ -193,9 +193,11 @@ Các Component vệ tinh `UIStyleElement` gắn trên Text/Image chỉ định `
 ## V. Kế hoạch Kiểm thử & Xác minh (Verification Plan)
 
 ### 5.1. Kiểm thử Tối ưu hóa Bộ nhớ (Profiler & GC Alloc)
-*   **Mục tiêu:** Đạt mức **Zero GC Allocation** trong Core loop (trồng trọt, cho gà ăn, kéo thả sticker dán vào sổ).
+*   **Mục tiêu:** 
+    *   Đạt **0 byte recurring GC Allocation (Không sinh rác tuần hoàn)** trong Core Service Loop sau giai đoạn warm-up (timer trồng trọt nền, nhịp thở của gà đang chạy ổn định).
+    *   Tối thiểu hóa tối đa GC Alloc cho các tương tác UI (kéo thả sticker, nhấp thả) ở mức cực nhỏ (dưới 100 bytes cho một lần nhấc/thả để khởi tạo tween/event), tuyệt đối không sinh rác rò rỉ liên tục trong suốt quá trình di chuyển ngón tay (dragging).
 *   **Công cụ:** Unity Profiler (CPU Usage & Memory Allocation).
-*   **Phương pháp:** Bật Profiler, thực hiện kéo thả 20 sticker liên tục, thu hoạch 10 cây trồng. Kiểm tra cột *GC Alloc*, giá trị bắt buộc phải bằng **0 byte**.
+*   **Phương pháp:** Bật Profiler, thực hiện kéo thả sticker liên tục 20 giây và quan sát biểu đồ. Đợi chu kỳ trồng trọt chạy nền 1 phút để xác minh không có cột rác GC đột biến phát sinh tuần hoàn.
 
 ### 5.2. Kiểm thử Hiển thị Editor Preview
 *   **Mục tiêu:** Thay đổi cấu hình Theme trong Editor và giao diện trong Scene View của Unity Editor lập tức thay đổi trong thời gian thực mà không cần nhấn Play.

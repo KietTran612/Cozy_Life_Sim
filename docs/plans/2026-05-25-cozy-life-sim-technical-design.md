@@ -5,8 +5,11 @@
 *   **Tên dự án:** Xóm Nhỏ Tuổi Thơ
 *   **Thể loại:** Cozy Life Sim (Mô phỏng cuộc sống nhẹ nhàng), Decor, Sưu tầm, Sổ tay/Sticker
 *   **Nền tảng mục tiêu:** Android, iOS
-*   **Công nghệ cốt lõi:** Unity Engine (C#), UGUI, DOTween, UniTask, VContainer
-*   **Fantasy chính:** *"Mỗi ngày sửa lại một góc nhỏ của tuổi thơ"* thông qua tương tác t## II. Quy chuẩn Lập trình & Kiến trúc Cốt lõi (Coding Guidelines)
+*   **Fantasy chính:** *"Mỗi ngày sửa lại một góc nhỏ của tuổi thơ"* thông qua tương tác tĩnh cảm xúc, hạn chế tối đa animation phức tạp và world-space chuyển động lớn.
+
+---
+
+## II. Quy chuẩn Lập trình & Kiến trúc Cốt lõi (Coding Guidelines)
 
 Để đảm bảo hiệu năng tối ưu trên thiết bị di động (đặc biệt là quản lý bộ nhớ, hạn chế Garbage Collection - GC Allocations) và tăng khả năng bảo trì khi dự án phình to, toàn bộ dự án bắt buộc tuân thủ 4 quy tắc vàng sau:
 
@@ -195,12 +198,13 @@ Các Component vệ tinh `UIStyleElement` gắn trên Text/Image chỉ định `
 *   **Phương pháp:** Bật Profiler, thực hiện kéo thả 20 sticker liên tục, thu hoạch 10 cây trồng. Kiểm tra cột *GC Alloc*, giá trị bắt buộc phải bằng **0 byte**.
 
 ### 5.2. Kiểm thử Hiển thị Editor Preview
-*   **Mục tiêu:** Thay đổi Theme trong ScriptableObject cấu hình và giao diện trong Scene View của Unity Editor lập tức thay đổi trong thời gian thực mà không cần nhấn Play.
+*   **Mục tiêu:** Thay đổi cấu hình Theme trong Editor và giao diện trong Scene View của Unity Editor lập tức thay đổi trong thời gian thực mà không cần nhấn Play.
 *   **Phương pháp:**
     1. Mở Scene thiết kế chứa các Placeholder Button.
-    2. Chuyển đổi thuộc tính `CurrentConfig` trong `StyleService` từ `Theme_A` sang `Theme_B`.
-    3. Xác nhận bằng mắt thường: Các nút bấm lập tức đổi hình dạng từ phức tạp (Theme A) sang tối giản (Theme B).
-    4. Kiểm tra Git Status: File Scene không phát sinh thay đổi rác của các GameObject con Preview.
+    2. Trong cửa sổ Inspector của `CozyWidgetPlaceholder`, thay đổi kéo thả tham chiếu `_editorOnlyConfig` từ `Theme_A` sang `Theme_B`.
+    3. Xác nhận bằng mắt thường: Các nút bấm lập tức được tái tạo, đổi hình dạng từ phức tạp (Theme A) sang tối giản (Theme B) trong Scene View.
+    4. Kiểm tra Git Status: File Scene không phát sinh thay đổi rác của các GameObject con Preview (được bảo vệ nhờ `HideFlags.DontSave`).
+    5. Chạy game (Play Mode): Gọi `ApplyTheme(Theme_B)` trên `IStyleService` và kiểm tra nút bấm tráo đổi thành công tại runtime.
 
 ---
 

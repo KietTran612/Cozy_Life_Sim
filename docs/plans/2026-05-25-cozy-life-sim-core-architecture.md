@@ -37,14 +37,21 @@ Configure packages in `Packages/manifest.json` to include TextMeshPro, VContaine
 }
 ```
 
-**Step 3: Setup Project Directory Structure**
+**Step 3: Install and Configure DOTween**
+Since DOTween is imported via the Asset Store or standard package DLLs rather than OpenUPM:
+1. Import DOTween into the project (placed under `Assets/Plugins/Demigiant/DOTween`).
+2. Open the DOTween Utility Panel (`Tools -> Demigiant -> DOTween Utility Panel`).
+3. Click "Setup DOTween..." to compile the DLLs.
+4. Ensure `DOTween` generates or is visible to Assembly Definitions so that `CozyLifeSim.UI` can reference it (under `Assets/Plugins/Demigiant/DOTween/DOTween.asmdef` if generated, or standard visual scripts).
+
+**Step 4: Setup Project Directory Structure**
 Create the base sub-folders under Assets for modularization:
 - `Assets/CozyLifeSim/Scripts/Core`
 - `Assets/CozyLifeSim/Scripts/UI`
 - `Assets/CozyLifeSim/Scripts/UI/Style`
 - `Assets/CozyLifeSim/Scripts/Editor`
 
-**Step 4: Commit**
+**Step 5: Commit**
 ```bash
 git add ProjectSettings/ProjectVersion.txt Packages/manifest.json
 git commit -m "chore: initialize Unity 6000.3.11f1 project and packages"
@@ -186,7 +193,7 @@ namespace CozyLifeSim.UI.Style
 
         public TextStyle GetTextStyle(string key)
         {
-            return TextStyles.Find(x => x.StyleKey == key);
+            return TextStyles.Find(x => x != null && x.StyleKey == key);
         }
     }
 }
@@ -476,7 +483,14 @@ namespace CozyLifeSim.UI
         {
             if (_runtimeInstance != null)
             {
-                Destroy(_runtimeInstance);
+                if (Application.isPlaying)
+                {
+                    Destroy(_runtimeInstance);
+                }
+                else
+                {
+                    DestroyImmediate(_runtimeInstance);
+                }
                 _runtimeInstance = null;
             }
         }

@@ -6,7 +6,7 @@
         "VContainer",
         "UniTask",
         "Unity.TextMeshPro",
-        "DOTween.Modules"
+        "CozyLifeSim.DOTweenModules"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

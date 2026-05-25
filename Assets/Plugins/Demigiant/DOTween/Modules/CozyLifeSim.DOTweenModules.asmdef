@@ -1,5 +1,5 @@
 {
-    "name": "DOTween.Modules",
+    "name": "CozyLifeSim.DOTweenModules",
     "rootNamespace": "",
     "references": [
         "Unity.TextMeshPro",

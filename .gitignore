@@ -31,6 +31,10 @@
 *.opendb
 *.tlog
 
+# Local Unity MCP tooling
+/Packages/io.realvirtual.mcp/
+/Assets/.mcp_auth_token
+
 # Crashlytics generated file
 crashlytics-build.properties
 

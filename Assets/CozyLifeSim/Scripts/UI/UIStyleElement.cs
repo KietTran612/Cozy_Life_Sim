@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using VContainer;
+using VContainer.Unity;
 using CozyLifeSim.UI.Style;
 
 namespace CozyLifeSim.UI
@@ -13,6 +14,7 @@ namespace CozyLifeSim.UI
         private TextMeshProUGUI _textComponent;
         private float _baseFontSize;
         private bool _isInitialized;
+        private bool _isInjected;
 
         private void Awake()
         {
@@ -24,9 +26,24 @@ namespace CozyLifeSim.UI
             }
         }
 
+        private void Start()
+        {
+            if (Application.isPlaying)
+            {
+                var scope = LifetimeScope.Find<GameLifetimeScope>();
+                if (scope != null && scope.Container != null)
+                {
+                    scope.Container.Inject(this);
+                }
+            }
+        }
+
         [Inject]
         public void Construct(IStyleService styleService)
         {
+            if (_isInjected) return;
+            _isInjected = true;
+
             _styleService = styleService;
             _styleService.OnStyleChanged += ApplyStyle;
             ApplyStyle();

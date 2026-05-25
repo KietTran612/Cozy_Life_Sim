@@ -17,6 +17,7 @@ namespace CozyLifeSim.UI
         private RectTransform _rectTransform;
         private Tween _scaleTween;
         private Tween _shadowTween;
+        private bool _isDragging;
 
         public int StickerId => _stickerId;
 
@@ -31,6 +32,7 @@ namespace CozyLifeSim.UI
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (_canvas == null) return;
+            _isDragging = true;
 
             _scaleTween?.Kill();
             _shadowTween?.Kill();
@@ -56,7 +58,7 @@ namespace CozyLifeSim.UI
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (_canvas == null) return;
+            if (!_isDragging || _canvas == null) return;
             
             // Move using canvas scale factor
             _rectTransform.anchoredPosition += eventData.delta / _canvas.scaleFactor;
@@ -64,6 +66,9 @@ namespace CozyLifeSim.UI
 
         public void OnEndDrag(PointerEventData eventData)
         {
+            if (!_isDragging) return;
+            _isDragging = false;
+
             _scaleTween?.Kill();
             _shadowTween?.Kill();
 
@@ -121,6 +126,12 @@ namespace CozyLifeSim.UI
             {
                 _shadowTween = _shadowOffset.DOAnchorPos(new Vector2(-3f, -4f), 0.2f).SetEase(Ease.OutQuad);
             }
+        }
+
+        private void OnDestroy()
+        {
+            _scaleTween?.Kill();
+            _shadowTween?.Kill();
         }
     }
 }

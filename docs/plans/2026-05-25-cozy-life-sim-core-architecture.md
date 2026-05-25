@@ -87,8 +87,7 @@ Create `Assets/CozyLifeSim/Scripts/Core/CozyLifeSim.Core.asmdef`:
 }
 ```
 
-**Step 2: Create UI Assembly Definition**
-The UI layer holds style configuration, theme adapters, and UGUI view structures. It references `CozyLifeSim.Core`, `VContainer`, `UniTask`, `Unity.TextMeshPro`, and `DOTween.Modules`.
+The UI layer holds style configuration, theme adapters, and UGUI view structures. It references `CozyLifeSim.Core`, `VContainer`, `UniTask`, and `Unity.TextMeshPro`.
 Create `Assets/CozyLifeSim/Scripts/UI/CozyLifeSim.UI.asmdef`:
 ```json
 {
@@ -98,8 +97,7 @@ Create `Assets/CozyLifeSim/Scripts/UI/CozyLifeSim.UI.asmdef`:
         "CozyLifeSim.Core",
         "VContainer",
         "UniTask",
-        "Unity.TextMeshPro",
-        "DOTween.Modules"
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -322,6 +320,18 @@ namespace CozyLifeSim.UI
             }
         }
 
+        private void Start()
+        {
+            if (Application.isPlaying)
+            {
+                var scope = LifetimeScope.Find<GameLifetimeScope>();
+                if (scope != null && scope.Container != null)
+                {
+                    scope.Container.Inject(this);
+                }
+            }
+        }
+
         [Inject]
         public void Construct(IStyleService styleService)
         {
@@ -402,6 +412,18 @@ namespace CozyLifeSim.UI
             RefreshWidget();
         }
 
+        private void Start()
+        {
+            if (Application.isPlaying)
+            {
+                var scope = LifetimeScope.Find<GameLifetimeScope>();
+                if (scope != null && scope.Container != null)
+                {
+                    scope.Container.Inject(this);
+                }
+            }
+        }
+
         private void OnEnable()
         {
             if (!Application.isPlaying)
@@ -409,6 +431,19 @@ namespace CozyLifeSim.UI
                 GenerateEditorPreview();
             }
         }
+
+        #if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (!Application.isPlaying)
+            {
+                UnityEditor.EditorApplication.delayCall += () =>
+                {
+                    if (this != null) GenerateEditorPreview();
+                };
+            }
+        }
+        #endif
 
         private void GenerateEditorPreview()
         {
@@ -437,17 +472,17 @@ namespace CozyLifeSim.UI
             // Spawn actual theme prefab at runtime
             _runtimeInstance = Instantiate(prefab, transform);
             
-            // Transfer RectTransform constraints
+            // Stretch to fill placeholder parent completely to avoid double offset multiplier bug
             RectTransform sourceRect = GetComponent<RectTransform>();
             RectTransform targetRect = _runtimeInstance.GetComponent<RectTransform>();
-            if (sourceRect != null && targetRect != null)
+            if (targetRect != null)
             {
-                targetRect.anchorMin = sourceRect.anchorMin;
-                targetRect.anchorMax = sourceRect.anchorMax;
-                targetRect.anchoredPosition = sourceRect.anchoredPosition;
-                targetRect.sizeDelta = sourceRect.sizeDelta;
-                targetRect.pivot = sourceRect.pivot;
-                targetRect.localScale = sourceRect.localScale;
+                targetRect.anchorMin = Vector2.zero;
+                targetRect.anchorMax = Vector2.one;
+                targetRect.anchoredPosition = Vector2.zero;
+                targetRect.sizeDelta = Vector2.zero;
+                targetRect.pivot = sourceRect != null ? sourceRect.pivot : new Vector2(0.5f, 0.5f);
+                targetRect.localScale = Vector3.one;
             }
         }
 

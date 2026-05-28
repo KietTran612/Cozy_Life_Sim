@@ -18,7 +18,7 @@ namespace CozyLifeSim.UI
                 // Confirm drop is fully within page boundaries
                 if (pageRect.rect.Contains(localPoint))
                 {
-                    sticker.FinalizePlacement(transform, localPoint);
+                    sticker.FinalizePlacement(transform, localPoint, _pageIndex);
                     return true;
                 }
             }

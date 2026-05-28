@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using DG.Tweening;
+using VContainer; // Required DI import
+using VContainer.Unity; // Required LifetimeScope import
+using CozyLifeSim.UI.Presenters; // Required Presenter import
 
 namespace CozyLifeSim.UI
 {
@@ -18,15 +21,37 @@ namespace CozyLifeSim.UI
         private Tween _scaleTween;
         private Tween _shadowTween;
         private bool _isDragging;
+        private StickerBookPresenter _presenter;
+        private int _pageIndex;
 
         public int StickerId => _stickerId;
 
+        [Inject]
+        public void Construct(StickerBookPresenter presenter)
+        {
+            _presenter = presenter;
+        }
+
         private void Awake()
         {
+            // CRITICAL: Cache essential RectTransform components IMMEDIATELY on Awake
+            // This guarantees they are loaded before Restoration loops call FinalizePlacement()
             _rectTransform = GetComponent<RectTransform>();
             _startPosition = _rectTransform.anchoredPosition;
             _originalParent = transform.parent;
             _canvas = GetComponentInParent<Canvas>();
+        }
+
+        private void Start()
+        {
+            if (Application.isPlaying)
+            {
+                var scope = LifetimeScope.Find<GameLifetimeScope>();
+                if (scope != null && scope.Container != null)
+                {
+                    scope.Container.Inject(this);
+                }
+            }
         }
 
         public void OnBeginDrag(PointerEventData eventData)
@@ -105,8 +130,9 @@ namespace CozyLifeSim.UI
             }
         }
 
-        public void FinalizePlacement(Transform pageParent, Vector2 pageAnchoredPosition)
+        public void FinalizePlacement(Transform pageParent, Vector2 pageAnchoredPosition, int pageIndex, bool saveToDisk = true)
         {
+            _pageIndex = pageIndex;
             if (_canvasGroup != null)
             {
                 _canvasGroup.blocksRaycasts = true;
@@ -125,6 +151,12 @@ namespace CozyLifeSim.UI
             if (_shadowOffset != null)
             {
                 _shadowTween = TweenAnchorPos(_shadowOffset, new Vector2(-3f, -4f), 0.2f).SetEase(Ease.OutQuad);
+            }
+
+            // Only save when not initializing from restore loop
+            if (saveToDisk)
+            {
+                _presenter?.SaveStickerPosition(_stickerId, _pageIndex, pageAnchoredPosition.x, pageAnchoredPosition.y, transform.localScale.x, transform.localRotation.eulerAngles.z);
             }
         }
 

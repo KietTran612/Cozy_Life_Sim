@@ -6,6 +6,9 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer; // Required DI import
+using VContainer.Unity; // Required LifetimeScope import
+using CozyLifeSim.UI.Presenters; // Required Presenter import
 
 namespace CozyLifeSim.UI
 {
@@ -19,6 +22,8 @@ namespace CozyLifeSim.UI
         [SerializeField] private TextMeshProUGUI _timerText;
         [SerializeField] private Button _waterButton;
         [SerializeField] private RectTransform _wateringCan;
+        [SerializeField] private Button _plantButton;
+        [SerializeField] private Button _harvestButton;
 
         [Header("Stage Sprites")]
         [SerializeField] private Sprite _seedSprite;
@@ -31,11 +36,29 @@ namespace CozyLifeSim.UI
         private Sequence _wateringSequence;
         private Tween _cropFeedbackTween;
         private bool _isWatering;
+        private FarmPresenter _presenter;
+
+        [Inject]
+        public void Construct(FarmPresenter presenter)
+        {
+            _presenter = presenter;
+        }
 
         private void Start()
         {
+            // Auto Injection helper
+            if (Application.isPlaying)
+            {
+                var scope = LifetimeScope.Find<GameLifetimeScope>();
+                if (scope != null && scope.Container != null)
+                {
+                    scope.Container.Inject(this);
+                }
+            }
+
             float stageDuration = Mathf.Max(1f, _stageDurationSeconds);
-            _state = new CropState(_cropId, 0, stageDuration, false);
+            // Start in empty soil stage (-1)
+            _state = new CropState(_cropId, -1, stageDuration, false);
             UpdateVisuals();
 
             if (_wateringCan != null)
@@ -46,6 +69,16 @@ namespace CozyLifeSim.UI
             if (_waterButton != null)
             {
                 _waterButton.onClick.AddListener(Irrigate);
+            }
+
+            if (_plantButton != null)
+            {
+                _plantButton.onClick.AddListener(PlantSeed);
+            }
+
+            if (_harvestButton != null)
+            {
+                _harvestButton.onClick.AddListener(HarvestCrop);
             }
 
             _cts = new CancellationTokenSource();
@@ -60,7 +93,7 @@ namespace CozyLifeSim.UI
                 {
                     await UniTask.Delay(1000, cancellationToken: token);
 
-                    if (_state.GrowthStage >= 3 || !_state.IsWatered)
+                    if (_state.GrowthStage == -1 || _state.GrowthStage >= 3 || !_state.IsWatered)
                     {
                         continue;
                     }
@@ -80,6 +113,28 @@ namespace CozyLifeSim.UI
             }
         }
 
+        private void PlantSeed()
+        {
+            if (_state.GrowthStage != -1 || _presenter == null) return;
+
+            if (_presenter.TryPlantCrop())
+            {
+                _state = new CropState(_cropId, 0, Mathf.Max(1f, _stageDurationSeconds), false);
+                UpdateVisuals();
+            }
+        }
+
+        private void HarvestCrop()
+        {
+            if (_state.GrowthStage < 3 || _presenter == null) return;
+
+            _presenter.HarvestCrop();
+
+            // Reset plot back to empty soil (-1)
+            _state = new CropState(_cropId, -1, Mathf.Max(1f, _stageDurationSeconds), false);
+            UpdateVisuals();
+        }
+
         private void AdvanceStage()
         {
             int nextStage = Mathf.Min(_state.GrowthStage + 1, 3);
@@ -95,7 +150,7 @@ namespace CozyLifeSim.UI
 
         private void Irrigate()
         {
-            if (_isWatering || _state.IsWatered || _state.GrowthStage >= 3)
+            if (_isWatering || _state.IsWatered || _state.GrowthStage == -1 || _state.GrowthStage >= 3)
             {
                 return;
             }
@@ -134,6 +189,12 @@ namespace CozyLifeSim.UI
                 _cropFeedbackTween = _cropVisual.transform.DOShakePosition(0.4f, 8f, 15);
             }
 
+            // Notify quest watered progress ONLY on successful complete watering completion
+            if (_presenter != null)
+            {
+                _presenter.NotifyCropWatered();
+            }
+
             UpdateVisuals();
         }
 
@@ -141,19 +202,27 @@ namespace CozyLifeSim.UI
         {
             if (_cropVisual != null)
             {
-                _cropVisual.sprite = _state.GrowthStage switch
+                _cropVisual.gameObject.SetActive(_state.GrowthStage >= 0);
+                if (_state.GrowthStage >= 0)
                 {
-                    0 => _seedSprite,
-                    1 => _sproutSprite,
-                    2 => _matureSprite,
-                    3 => _harvestSprite,
-                    _ => _seedSprite
-                };
+                    _cropVisual.sprite = _state.GrowthStage switch
+                    {
+                        0 => _seedSprite,
+                        1 => _sproutSprite,
+                        2 => _matureSprite,
+                        3 => _harvestSprite,
+                        _ => _seedSprite
+                    };
+                }
             }
 
             if (_timerText != null)
             {
-                if (_state.GrowthStage >= 3)
+                if (_state.GrowthStage == -1)
+                {
+                    _timerText.text = "EMPTY SOIL";
+                }
+                else if (_state.GrowthStage >= 3)
                 {
                     _timerText.text = "READY TO HARVEST!";
                 }
@@ -167,8 +236,20 @@ namespace CozyLifeSim.UI
                 }
             }
 
+            if (_plantButton != null)
+            {
+                _plantButton.gameObject.SetActive(_state.GrowthStage == -1);
+            }
+
+            if (_harvestButton != null)
+            {
+                _harvestButton.gameObject.SetActive(_state.GrowthStage >= 0);
+                _harvestButton.interactable = _state.GrowthStage >= 3;
+            }
+
             if (_waterButton != null)
             {
+                _waterButton.gameObject.SetActive(_state.GrowthStage >= 0);
                 _waterButton.interactable = !_isWatering && !_state.IsWatered && _state.GrowthStage < 3;
             }
         }
@@ -183,6 +264,16 @@ namespace CozyLifeSim.UI
             if (_waterButton != null)
             {
                 _waterButton.onClick.RemoveListener(Irrigate);
+            }
+
+            if (_plantButton != null)
+            {
+                _plantButton.onClick.RemoveListener(PlantSeed);
+            }
+
+            if (_harvestButton != null)
+            {
+                _harvestButton.onClick.RemoveListener(HarvestCrop);
             }
         }
     }

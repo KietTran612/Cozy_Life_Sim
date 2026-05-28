@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using DG.Tweening;
+using VContainer; // Required DI import
+using VContainer.Unity; // Required LifetimeScope import
+using CozyLifeSim.UI.Presenters; // Required Presenter import
 
 namespace CozyLifeSim.UI
 {
@@ -11,13 +14,30 @@ namespace CozyLifeSim.UI
         [SerializeField] private RectTransform _flipPageIndicator; // Target for ScaleX compression
         [SerializeField] private Button _nextButton;
         [SerializeField] private Button _prevButton;
+        [SerializeField] private List<CozySticker> _stickerTemplates; // Prefab references mapping StickerId
 
         private int _currentPageIndex = 0;
         private bool _isTransitioning = false;
         private Sequence _flipSequence;
+        private StickerBookPresenter _presenter;
+
+        [Inject]
+        public void Construct(StickerBookPresenter presenter)
+        {
+            _presenter = presenter;
+        }
 
         private void Start()
         {
+            if (Application.isPlaying)
+            {
+                var scope = LifetimeScope.Find<GameLifetimeScope>();
+                if (scope != null && scope.Container != null)
+                {
+                    scope.Container.Inject(this);
+                }
+            }
+
             if (_pages == null || _pages.Count == 0)
             {
                 if (_nextButton != null) _nextButton.interactable = false;
@@ -38,6 +58,39 @@ namespace CozyLifeSim.UI
             if (_prevButton != null) _prevButton.onClick.AddListener(PrevPage);
             
             UpdateNavigationButtons();
+
+            // Restore sticker layouts from database on load
+            RestoreStickers();
+        }
+
+        private void RestoreStickers()
+        {
+            if (_presenter == null || _stickerTemplates == null) return;
+
+            var placedList = _presenter.GetPlacedStickers();
+            foreach (var item in placedList)
+            {
+                // Find matching page index
+                StickerBookPage targetPage = _pages.Find(p => p.PageIndex == item.PageIndex);
+                if (targetPage == null) continue;
+
+                // Find template prefab
+                CozySticker prefab = _stickerTemplates.Find(t => t.StickerId == item.StickerId);
+                if (prefab == null) continue;
+
+                // Spawn and position safely
+                CozySticker spawned = Instantiate(prefab, targetPage.transform);
+                RectTransform rect = spawned.GetComponent<RectTransform>();
+                if (rect != null)
+                {
+                    rect.anchoredPosition = new Vector2(item.PositionX, item.PositionY);
+                    rect.localScale = new Vector3(item.Scale, item.Scale, 1.0f);
+                    rect.localRotation = Quaternion.Euler(0f, 0f, item.Rotation);
+                    
+                    // Finalize positioning with saveToDisk set to FALSE to eliminate PlayerPrefs loops
+                    spawned.FinalizePlacement(targetPage.transform, rect.anchoredPosition, item.PageIndex, false);
+                }
+            }
         }
 
         public void NextPage()

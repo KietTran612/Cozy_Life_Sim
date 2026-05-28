@@ -4,6 +4,7 @@ using VContainer.Unity;
 using CozyLifeSim.Core;
 using CozyLifeSim.UI.Style;
 using CozyLifeSim.UI.Services;
+using CozyLifeSim.UI.Presenters;
 
 namespace CozyLifeSim.UI
 {
@@ -19,6 +20,15 @@ namespace CozyLifeSim.UI
             // Register Save and Inventory Services as singletons
             builder.Register<ISaveService, SaveService>(Lifetime.Singleton);
             builder.Register<IInventoryService, InventoryService>(Lifetime.Singleton);
+
+            // Register Memory and Quest singletons
+            builder.Register<IMemoryService, MemoryService>(Lifetime.Singleton);
+            builder.Register<IQuestService, QuestService>(Lifetime.Singleton);
+
+            // Register Presenters
+            builder.Register<FarmPresenter>(Lifetime.Singleton);
+            builder.Register<AnimalPresenter>(Lifetime.Singleton);
+            builder.Register<StickerBookPresenter>(Lifetime.Singleton);
         }
     }
 }

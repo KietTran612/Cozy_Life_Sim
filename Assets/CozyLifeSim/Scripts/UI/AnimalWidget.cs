@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer; // Required DI import
+using VContainer.Unity; // Required LifetimeScope import
+using CozyLifeSim.UI.Presenters; // Required Presenter import
 
 namespace CozyLifeSim.UI
 {
@@ -16,9 +19,25 @@ namespace CozyLifeSim.UI
         private Sequence _petSequence;
         private Vector3 _baseScale;
         private bool _isPetting;
+        private AnimalPresenter _presenter;
+
+        [Inject]
+        public void Construct(AnimalPresenter presenter)
+        {
+            _presenter = presenter;
+        }
 
         private void Start()
         {
+            if (Application.isPlaying)
+            {
+                var scope = LifetimeScope.Find<GameLifetimeScope>();
+                if (scope != null && scope.Container != null)
+                {
+                    scope.Container.Inject(this);
+                }
+            }
+
             _baseScale = transform.localScale;
             _breathTween = transform.DOScaleY(_baseScale.y * 1.03f, 1.5f)
                 .SetEase(Ease.InOutSine)
@@ -55,6 +74,7 @@ namespace CozyLifeSim.UI
                 _petSequence.Append(transform.DOJump(transform.position, 0.25f, 1, 0.4f));
             }
 
+            _presenter?.PetAnimal();
             SpawnHeartReaction();
 
             _petSequence.OnComplete(() =>

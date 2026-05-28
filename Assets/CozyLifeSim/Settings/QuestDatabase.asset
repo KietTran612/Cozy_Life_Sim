@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a9746ad99b81d64aae4f825c3ba8449, type: 3}
+  m_Name: QuestDatabase
+  m_EditorClassIdentifier: CozyLifeSim.UI::CozyLifeSim.UI.Settings.QuestDatabase
+  Quests:
+  - QuestId: 1
+    Title: Water 3 Crops
+    TargetCount: 3
+    RewardCoins: 50
+    Type: 0
+  - QuestId: 2
+    Title: Harvest 2 Mature Crops
+    TargetCount: 2
+    RewardCoins: 80
+    Type: 1
+  - QuestId: 3
+    Title: Pet the Breathing Chicken 5 times
+    TargetCount: 5
+    RewardCoins: 40
+    Type: 2
+  - QuestId: 4
+    Title: test screate quest
+    TargetCount: 5
+    RewardCoins: 50
+    Type: 0
+  - QuestId: 5
+    Title: Test Create Quest 5
+    TargetCount: 5
+    RewardCoins: 50
+    Type: 0

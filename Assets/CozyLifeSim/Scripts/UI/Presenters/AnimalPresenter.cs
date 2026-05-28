@@ -21,7 +21,7 @@ namespace CozyLifeSim.UI.Presenters
         public void PetAnimal()
         {
             _inventory.AddCoins(5);
-            _quest.ProgressQuest(3, 1);
+            _quest.ProgressQuest(QuestType.PetAnimal, 1);
             OnPetRewardGiven?.Invoke(5);
         }
 

@@ -102,16 +102,37 @@ namespace CozyLifeSim.Editor
                 lifetimeScope = lifetimeScopeGo.AddComponent<GameLifetimeScope>();
             }
 
+            // Find and wire up QuestDatabase and UIStyleConfig to GameLifetimeScope
+            CozyLifeSim.UI.Settings.QuestDatabase questDb = null;
+            string[] dbGuids = AssetDatabase.FindAssets("t:QuestDatabase");
+            if (dbGuids == null || dbGuids.Length == 0)
+            {
+                dbGuids = AssetDatabase.FindAssets("QuestDatabase");
+            }
+            if (dbGuids != null && dbGuids.Length > 0)
+            {
+                string dbPath = AssetDatabase.GUIDToAssetPath(dbGuids[0]);
+                questDb = AssetDatabase.LoadAssetAtPath<CozyLifeSim.UI.Settings.QuestDatabase>(dbPath);
+            }
+
+            SerializedObject soScope = new SerializedObject(lifetimeScope);
             if (_styleConfig != null)
             {
-                SerializedObject soScope = new SerializedObject(lifetimeScope);
                 SerializedProperty propStyle = soScope.FindProperty("_defaultStyleConfig");
                 if (propStyle != null)
                 {
                     propStyle.objectReferenceValue = _styleConfig;
-                    soScope.ApplyModifiedProperties();
                 }
             }
+            if (questDb != null)
+            {
+                SerializedProperty propQuestDb = soScope.FindProperty("_questDatabase");
+                if (propQuestDb != null)
+                {
+                    propQuestDb.objectReferenceValue = questDb;
+                }
+            }
+            soScope.ApplyModifiedProperties();
 
             // 2. Setup Canvas
             Canvas canvas = FindFirstObjectByType<Canvas>();
@@ -395,6 +416,218 @@ namespace CozyLifeSim.Editor
             }
             soBook.ApplyModifiedProperties();
 
+            soBook.ApplyModifiedProperties();
+
+            // 8.5. Setup Sidebar Panel (Tabbed Sidebar Architecture)
+            RectTransform sidebarPanel = SetupPanel(uiRoot, "Sidebar_Panel");
+            sidebarPanel.anchorMin = new Vector2(0.75f, 0.45f);
+            sidebarPanel.anchorMax = new Vector2(0.97f, 0.90f);
+            sidebarPanel.sizeDelta = Vector2.zero;
+            sidebarPanel.anchoredPosition = Vector2.zero;
+
+            // Set up transparent background
+            Image sidebarImg = sidebarPanel.gameObject.GetComponent<Image>();
+            if (sidebarImg == null)
+            {
+                sidebarImg = sidebarPanel.gameObject.AddComponent<Image>();
+            }
+            sidebarImg.color = new Color(0f, 0f, 0f, 0.25f); // Transparent dark backing
+            sidebarImg.raycastTarget = false; // Allow clicks to pass through empty panel areas
+
+            // Explicitly destroy any existing HorizontalLayoutGroup on sidebarPanel from previous setup versions to allow manual anchoring
+            HorizontalLayoutGroup oldLayout = sidebarPanel.gameObject.GetComponent<HorizontalLayoutGroup>();
+            if (oldLayout != null)
+            {
+                DestroyImmediate(oldLayout);
+            }
+
+            // A. Create Tabs Container (Vertical Stack on the left side)
+            RectTransform tabsContainer = SetupPanel(sidebarPanel, "Tabs_Container");
+            tabsContainer.anchorMin = new Vector2(0f, 0f);
+            tabsContainer.anchorMax = new Vector2(0f, 1f);
+            tabsContainer.pivot = new Vector2(0f, 1f);
+            tabsContainer.sizeDelta = new Vector2(65f, 0f);
+            tabsContainer.anchoredPosition = Vector2.zero;
+
+            // Remove background image from tabs container to make it clean
+            Image tabsContImg = tabsContainer.gameObject.GetComponent<Image>();
+            if (tabsContImg != null)
+            {
+                DestroyImmediate(tabsContImg);
+            }
+
+            VerticalLayoutGroup tabsLayout = tabsContainer.gameObject.GetComponent<VerticalLayoutGroup>();
+            if (tabsLayout == null)
+            {
+                tabsLayout = tabsContainer.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+            tabsLayout.childAlignment = TextAnchor.UpperCenter;
+            tabsLayout.spacing = 15f;
+            tabsLayout.padding = new RectOffset(5, 5, 10, 10);
+            tabsLayout.childForceExpandHeight = false;
+            tabsLayout.childControlHeight = false;
+            tabsLayout.childControlWidth = true;
+
+            // Create buttons inside Tabs Container
+            Button toggleBtn = SetupButton(tabsContainer, "Toggle_Button", ">");
+            RectTransform toggleBtnRect = toggleBtn.GetComponent<RectTransform>();
+            toggleBtnRect.sizeDelta = new Vector2(55f, 55f);
+            TextMeshProUGUI toggleBtnText = toggleBtn.GetComponentInChildren<TextMeshProUGUI>();
+
+            Button tabBtn0 = SetupButton(tabsContainer, "Tab_Btn_0", "Q");
+            RectTransform tabBtn0Rect = tabBtn0.GetComponent<RectTransform>();
+            tabBtn0Rect.sizeDelta = new Vector2(55f, 55f);
+
+            Button tabBtn1 = SetupButton(tabsContainer, "Tab_Btn_1", "S");
+            RectTransform tabBtn1Rect = tabBtn1.GetComponent<RectTransform>();
+            tabBtn1Rect.sizeDelta = new Vector2(55f, 55f);
+
+            // B. Create Content Container (Stretches to occupy the remaining space on the right, with a 65px left offset)
+            RectTransform contentContainer = SetupPanel(sidebarPanel, "Content_Container");
+            contentContainer.anchorMin = new Vector2(0f, 0f);
+            contentContainer.anchorMax = new Vector2(1f, 1f);
+            contentContainer.offsetMin = new Vector2(65f, 0f); // Left offset is 65px (width of Tabs_Container)
+            contentContainer.offsetMax = new Vector2(0f, 0f);  // Top, Right, Bottom offsets are 0
+
+            // Remove Image to allow clicks to pass through empty spots
+            Image contentContImg = contentContainer.gameObject.GetComponent<Image>();
+            if (contentContImg != null)
+            {
+                DestroyImmediate(contentContImg);
+            }
+
+            // C. Setup Quest Content under Content Container
+            RectTransform questContent = SetupPanel(contentContainer, "Quest_Content");
+            StretchToFill(questContent);
+
+            Image questContentImg = questContent.gameObject.GetComponent<Image>();
+            if (questContentImg != null)
+            {
+                DestroyImmediate(questContentImg);
+            }
+
+            VerticalLayoutGroup questLayout = questContent.gameObject.GetComponent<VerticalLayoutGroup>();
+            if (questLayout == null)
+            {
+                questLayout = questContent.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+            questLayout.childAlignment = TextAnchor.UpperLeft;
+            questLayout.spacing = 15f;
+            questLayout.padding = new RectOffset(15, 15, 15, 15);
+            questLayout.childControlHeight = true;
+            questLayout.childControlWidth = true;
+
+            // Title inside Quest Content
+            TextMeshProUGUI questTitleText = SetupText(questContent, "Quest_Title", "ACTIVE QUESTS", "Header_Text");
+            questTitleText.fontSize = 24f;
+            questTitleText.fontStyle = FontStyles.Bold;
+            questTitleText.raycastTarget = false;
+
+            // Explicitly destroy obsolete static Quest_Item_0, Quest_Item_1, Quest_Item_2 to avoid cluttered hierarchy
+            for (int i = 0; i < 3; i++)
+            {
+                Transform obsoleteChild = questContent.Find($"Quest_Item_{i}");
+                if (obsoleteChild != null)
+                {
+                    DestroyImmediate(obsoleteChild.gameObject);
+                }
+            }
+
+            // Create a single clean dynamic Quest_Item_Template
+            TextMeshProUGUI questTemplateText = SetupText(questContent, "Quest_Item_Template", "• Loading Quest...", "");
+            questTemplateText.fontSize = 20f;
+            questTemplateText.alignment = TextAlignmentOptions.Left;
+            questTemplateText.raycastTarget = false;
+
+            // Attach QuestHudWidget and wire it up
+            QuestHudWidget questHud = questContent.gameObject.GetComponent<QuestHudWidget>();
+            if (questHud == null)
+            {
+                questHud = questContent.gameObject.AddComponent<QuestHudWidget>();
+            }
+
+            SerializedObject soQuestHud = new SerializedObject(questHud);
+            soQuestHud.FindProperty("_titleText").objectReferenceValue = questTitleText;
+            
+            SerializedProperty templateProp = soQuestHud.FindProperty("_questItemTemplate");
+            if (templateProp != null)
+            {
+                templateProp.objectReferenceValue = questTemplateText;
+            }
+            soQuestHud.ApplyModifiedProperties();
+
+            // D. Setup Stats Content (Placeholder Demo Tab) under Content Container
+            RectTransform statsContent = SetupPanel(contentContainer, "Stats_Content");
+            StretchToFill(statsContent);
+
+            Image statsContentImg = statsContent.gameObject.GetComponent<Image>();
+            if (statsContentImg != null)
+            {
+                DestroyImmediate(statsContentImg);
+            }
+
+            VerticalLayoutGroup statsLayout = statsContent.gameObject.GetComponent<VerticalLayoutGroup>();
+            if (statsLayout == null)
+            {
+                statsLayout = statsContent.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+            statsLayout.childAlignment = TextAnchor.UpperLeft;
+            statsLayout.spacing = 15f;
+            statsLayout.padding = new RectOffset(15, 15, 15, 15);
+            statsLayout.childControlHeight = true;
+            statsLayout.childControlWidth = true;
+
+            // Title inside Stats Content
+            TextMeshProUGUI statsTitleText = SetupText(statsContent, "Stats_Title", "GAME STATS", "Header_Text");
+            statsTitleText.fontSize = 24f;
+            statsTitleText.fontStyle = FontStyles.Bold;
+            statsTitleText.raycastTarget = false;
+
+            TextMeshProUGUI statsItem0 = SetupText(statsContent, "Stats_Item_0", "• Time Played: 00:05:12", "");
+            statsItem0.fontSize = 20f;
+            statsItem0.alignment = TextAlignmentOptions.Left;
+            statsItem0.raycastTarget = false;
+
+            TextMeshProUGUI statsItem1 = SetupText(statsContent, "Stats_Item_1", "• Animals Pet: 12", "");
+            statsItem1.fontSize = 20f;
+            statsItem1.alignment = TextAlignmentOptions.Left;
+            statsItem1.raycastTarget = false;
+
+            // E. Attach CozySidebar component and wire it up
+            CozySidebar sidebar = sidebarPanel.gameObject.GetComponent<CozySidebar>();
+            if (sidebar == null)
+            {
+                sidebar = sidebarPanel.gameObject.AddComponent<CozySidebar>();
+            }
+
+            SerializedObject soSidebar = new SerializedObject(sidebar);
+            soSidebar.FindProperty("_slidingPanel").objectReferenceValue = sidebarPanel;
+            soSidebar.FindProperty("_toggleButton").objectReferenceValue = toggleBtn;
+            soSidebar.FindProperty("_toggleButtonText").objectReferenceValue = toggleBtnText;
+
+            // Wire Tab Buttons
+            SerializedProperty tabButtonsProp = soSidebar.FindProperty("_tabButtons");
+            if (tabButtonsProp != null)
+            {
+                tabButtonsProp.ClearArray();
+                tabButtonsProp.InsertArrayElementAtIndex(0);
+                tabButtonsProp.GetArrayElementAtIndex(0).objectReferenceValue = tabBtn0;
+                tabButtonsProp.InsertArrayElementAtIndex(1);
+                tabButtonsProp.GetArrayElementAtIndex(1).objectReferenceValue = tabBtn1;
+            }
+
+            // Wire Tab Contents
+            SerializedProperty tabContentsProp = soSidebar.FindProperty("_tabContents");
+            if (tabContentsProp != null)
+            {
+                tabContentsProp.ClearArray();
+                tabContentsProp.InsertArrayElementAtIndex(0);
+                tabContentsProp.GetArrayElementAtIndex(0).objectReferenceValue = questContent;
+                tabContentsProp.InsertArrayElementAtIndex(1);
+                tabContentsProp.GetArrayElementAtIndex(1).objectReferenceValue = statsContent;
+            }
+            soSidebar.ApplyModifiedProperties();
+
             // 9. Setup Inventory Tray
             RectTransform inventoryTray = SetupPanel(uiRoot, "Inventory_Tray");
             inventoryTray.anchorMin = new Vector2(0f, 0f);
@@ -486,6 +719,13 @@ namespace CozyLifeSim.Editor
             // Log completion
             EditorUtility.SetDirty(canvas.gameObject);
             if (lifetimeScopeGo != null) EditorUtility.SetDirty(lifetimeScopeGo);
+            if (!Application.isPlaying)
+            {
+                var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(activeScene);
+                bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(activeScene);
+                Debug.Log($"<color=green>[CozySim]</color> Active Scene saved to disk: {activeScene.path} (Success: {saved})");
+            }
             
             Debug.Log("<color=green>[CozySim]</color> Test Scene Hierarchy and Wiring generated successfully!");
             ShowNotification(new GUIContent("Test Scene generated!"));

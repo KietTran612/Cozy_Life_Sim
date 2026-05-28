@@ -3,25 +3,24 @@ using System;
 namespace CozyLifeSim.Core
 {
     [Serializable]
-    public class QuestData
+    public class QuestTemplate
     {
         public int QuestId;
         public string Title;
         public int TargetCount;
-        public int CurrentCount;
         public int RewardCoins;
-        public bool IsCompleted;
         public QuestType Type;
 
-        public QuestData(int questId, string title, int targetCount, int rewardCoins, QuestType type)
+        // Required parameterless constructor for dynamic instantiation and editor staging
+        public QuestTemplate() { }
+
+        public QuestTemplate(int questId, string title, int targetCount, int rewardCoins, QuestType type)
         {
             QuestId = questId;
             Title = title;
             TargetCount = targetCount;
             RewardCoins = rewardCoins;
             Type = type;
-            CurrentCount = 0;
-            IsCompleted = false;
         }
     }
 }

@@ -47,7 +47,7 @@ namespace CozyLifeSim.Editor
                 Debug.Log("<color=green>[PASS]</color> InventoryService and SaveService logic verified");
 
                 // Test 3: Quest Progression & Rewards
-                QuestService questService = new QuestService(saveService, invService);
+                QuestService questService = new QuestService(saveService, invService, null); // Test Null Fallback
                 if (questService.ActiveQuests.Count != 3) throw new System.Exception("Quests should contain 3 entries");
                 
                 QuestData waterQuest = questService.ActiveQuests[0]; // QuestId = 1: Water 3 Crops
@@ -59,12 +59,12 @@ namespace CozyLifeSim.Editor
                 questService.OnQuestCompleted += (q) => questCompletedCount++;
                 
                 // Progress Quest
-                questService.ProgressQuest(1, 1);
+                questService.ProgressQuest(QuestType.WaterCrops, 1);
                 if (waterQuest.CurrentCount != 1) throw new System.Exception("Quest progress should be 1");
                 if (questProgressCount != 1) throw new System.Exception("OnQuestProgressed should fire");
                 
                 // Progress to Completion
-                questService.ProgressQuest(1, 2);
+                questService.ProgressQuest(QuestType.WaterCrops, 2);
                 if (!waterQuest.IsCompleted) throw new System.Exception("Quest should be completed");
                 if (questCompletedCount != 1) throw new System.Exception("OnQuestCompleted should fire");
                 
@@ -79,13 +79,58 @@ namespace CozyLifeSim.Editor
                 if (reloadInvService.Coins != 210) throw new System.Exception($"Reloaded Coins should be 210, got {reloadInvService.Coins}");
                 if (reloadInvService.Seeds != 12) throw new System.Exception($"Reloaded Seeds should be 12, got {reloadInvService.Seeds}");
                 
-                QuestService reloadQuestService = new QuestService(reloadSaveService, reloadInvService);
+                QuestService reloadQuestService = new QuestService(reloadSaveService, reloadInvService, null); // Test Null Fallback
                 if (!reloadQuestService.ActiveQuests[0].IsCompleted) throw new System.Exception("Reloaded Quest should remain completed");
                 
                 Debug.Log("<color=green>[PASS]</color> Save/Load Persistence verified");
+
+                // Test 5: Quest Editor Data Integrity Validation
+                var testDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.QuestDatabase>();
+                
+                // 5.1 Valid list should pass
+                testDb.Quests.Add(new QuestTemplate(1, "Valid Quest 1", 3, 50, QuestType.WaterCrops));
+                testDb.Quests.Add(new QuestTemplate(2, "Valid Quest 2", 5, 100, QuestType.HarvestCrops));
+                if (!testDb.ValidateDatabase(out var errors))
+                {
+                    throw new System.Exception($"Valid database failed validation: {string.Join(", ", errors)}");
+                }
+
+                // 5.2 Duplicate ID should fail
+                testDb.Quests.Add(new QuestTemplate(1, "Duplicate ID", 5, 20, QuestType.PetAnimal));
+                if (testDb.ValidateDatabase(out var duplicateErrors))
+                {
+                    throw new System.Exception("Database with duplicate ID should fail validation.");
+                }
+
+                // 5.3 Negative target should fail
+                testDb.Quests.Clear();
+                testDb.Quests.Add(new QuestTemplate(1, "Negative Goal", -2, 50, QuestType.WaterCrops));
+                if (testDb.ValidateDatabase(out var targetErrors))
+                {
+                    throw new System.Exception("Database with negative target count should fail validation.");
+                }
+
+                // 5.4 Negative reward should fail
+                testDb.Quests.Clear();
+                testDb.Quests.Add(new QuestTemplate(1, "Negative Reward", 3, -10, QuestType.WaterCrops));
+                if (testDb.ValidateDatabase(out var rewardErrors))
+                {
+                    throw new System.Exception("Database with negative reward coins should fail validation.");
+                }
+
+                // 5.5 Empty title should fail
+                testDb.Quests.Clear();
+                testDb.Quests.Add(new QuestTemplate(1, "   ", 3, 50, QuestType.WaterCrops));
+                if (testDb.ValidateDatabase(out var titleErrors))
+                {
+                    throw new System.Exception("Database with blank title should fail validation.");
+                }
+
+                Object.DestroyImmediate(testDb);
+                Debug.Log("<color=green>[PASS]</color> Quest Editor Data Integrity Validation verified");
                 
                 // Print all-pass congratulations!
-                Debug.Log("<color=cyan>[CozySim TestRunner]</color> <color=green>ALL VERIFICATION TESTS PASSED SUCCESSFULLY!</color>");
+                Debug.Log("<color=cyan>[CozySim]</color> <color=green>ALL LOGIC VERIFICATION TESTS PASSED SUCCESSFULLY!</color>");
                 
                 if (!Application.isBatchMode)
                 {

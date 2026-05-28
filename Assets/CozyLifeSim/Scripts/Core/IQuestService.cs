@@ -9,6 +9,6 @@ namespace CozyLifeSim.Core
         event Action<QuestData> OnQuestProgressed;
         event Action<QuestData> OnQuestCompleted;
 
-        void ProgressQuest(int questId, int amount);
+        void ProgressQuest(QuestType type, int amount);
     }
 }

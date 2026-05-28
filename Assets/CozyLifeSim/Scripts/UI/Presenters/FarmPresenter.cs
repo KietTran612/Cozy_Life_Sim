@@ -28,14 +28,14 @@ namespace CozyLifeSim.UI.Presenters
 
         public void NotifyCropWatered()
         {
-            _quest.ProgressQuest(1, 1);
+            _quest.ProgressQuest(QuestType.WaterCrops, 1);
         }
 
         public void HarvestCrop()
         {
             _inventory.AddCrops(1);
             _inventory.AddCoins(10);
-            _quest.ProgressQuest(2, 1);
+            _quest.ProgressQuest(QuestType.HarvestCrops, 1);
             OnCropHarvested?.Invoke();
         }
 

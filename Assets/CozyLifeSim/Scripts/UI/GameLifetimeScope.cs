@@ -11,6 +11,7 @@ namespace CozyLifeSim.UI
     public class GameLifetimeScope : LifetimeScope
     {
         [SerializeField] private UIStyleConfig _defaultStyleConfig;
+        [SerializeField] private CozyLifeSim.UI.Settings.QuestDatabase _questDatabase;
 
         protected override void Configure(IContainerBuilder builder)
         {
@@ -23,7 +24,12 @@ namespace CozyLifeSim.UI
 
             // Register Memory and Quest singletons
             builder.Register<IMemoryService, MemoryService>(Lifetime.Singleton);
-            builder.Register<IQuestService, QuestService>(Lifetime.Singleton);
+            
+            // Register Quest Service via 100% VContainer-safe nullable Lambda Factory
+            builder.Register<IQuestService>(resolver => new CozyLifeSim.UI.Services.QuestService(
+                resolver.Resolve<ISaveService>(),
+                resolver.Resolve<IInventoryService>(),
+                _questDatabase), Lifetime.Singleton);
 
             // Register Presenters
             builder.Register<FarmPresenter>(Lifetime.Singleton);

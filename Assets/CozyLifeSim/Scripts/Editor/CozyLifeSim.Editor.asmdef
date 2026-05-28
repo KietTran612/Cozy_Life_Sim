@@ -3,7 +3,9 @@
     "rootNamespace": "CozyLifeSim.Editor",
     "references": [
         "CozyLifeSim.Core",
-        "CozyLifeSim.UI"
+        "CozyLifeSim.UI",
+        "Unity.TextMeshPro",
+        "VContainer"
     ],
     "includePlatforms": [
         "Editor"

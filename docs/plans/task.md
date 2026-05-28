@@ -12,7 +12,7 @@
 | **Task 9: Implement Real-Time Crop Growth Logic with UniTask** | [x] | Implemented CropWidget with UniTask timer, watering feedback, growth stage visuals, cancellation, tween cleanup, and specific RemoveListener. |
 | **Task 10: Implement Interactive Animal Breathing & Petting** | [x] | Implemented AnimalWidget with breathing loop, pet hop feedback, heart spawn/fade safety, tween cleanup, and specific RemoveListener. |
 | **Task 10.5: Resolve CozySticker compilation errors** | [x] | Sửa lỗi biên dịch bằng cách dùng DOTween.To thay thế cho các tiện ích mở rộng DOAnchorPos của RectTransform. |
-| **Task 11: Implement Save and Inventory Services in Core and UI** | [ ] | Create SaveData, ISaveService, SaveService, IInventoryService, InventoryService and register in GameLifetimeScope. |
+| **Task 11: Implement Save and Inventory Services in Core and UI** | [x] | Create SaveData, ISaveService, SaveService, IInventoryService, InventoryService and register in GameLifetimeScope. |
 | **Task 12: Implement Scrapbook Memory and Quest Services** | [ ] | Create IMemoryService, MemoryService, QuestData, IQuestService, QuestService and register in GameLifetimeScope. |
 | **Task 13: Implement Event-Driven MVP Presenters for UI** | [ ] | Create FarmPresenter, AnimalPresenter, and StickerBookPresenter with VContainer DI registrations. |
 | **Task 14: Connect UI Widgets to Presenters via Dependency Injection** | [ ] | Inject Presenters into CropWidget, AnimalWidget, and CozySticker to complete the core gameplay loop. |

@@ -21,7 +21,17 @@ When updating `<project-root>/docs/plans/task.md`, keep it as a concise task tra
 
 Do not create a new brand, rename the product, or introduce new branding unless the user explicitly requests it.
 
+Do not commit changes unless the user explicitly requests a commit.
+
 Do not push code to any remote repository unless the user explicitly requests a push.
+
+For Unity asset/script changes, do not commit before Unity has finished compiling/importing and generated the required `.meta` files. Commits must include the corresponding `.meta` files for any new Unity-tracked files or folders.
+
+Do not manually create Unity `.meta` files. If a new Unity-tracked file or folder does not have a `.meta` yet, wait for Unity to import/compile and generate it automatically.
+
+Existing Unity `.meta` files may be edited when necessary, but do not change their `guid` or any serialized identifiers in a way that could break Unity references.
+
+After completing any task that changes or adds scripts, wait for Unity to finish compiling, check the Console/Editor log for compiler errors, and fix any errors before marking the task complete.
 
 ## Active Context & Handover Guidelines
 
@@ -32,4 +42,3 @@ To minimize token usage, prevent context dilution, and maintain strict structura
 3. **Gameplay Functional Specs**: [2026-05-25-cozy-life-sim-gameplay-prototype.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-25-cozy-life-sim-gameplay-prototype.md) - Contains precise specifications for stickers, notebook page flips, crop growth loops, and breathing chicken feedbacks.
 
 Agents must NOT read unrelated large historical files or perform broad workspace scans unless explicitly instructed. This guarantees a lightweight, cost-effective, and highly focused coding workspace.
-

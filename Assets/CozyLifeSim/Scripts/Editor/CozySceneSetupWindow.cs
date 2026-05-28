@@ -60,6 +60,35 @@ namespace CozyLifeSim.Editor
 
         private void GenerateScene()
         {
+            // 0. Setup Main Camera
+            Camera camera = Camera.main;
+            if (camera == null)
+            {
+                GameObject camGo = GameObject.Find("Main Camera");
+                if (camGo == null)
+                {
+                    camGo = new GameObject("Main Camera");
+                    camera = camGo.AddComponent<Camera>();
+                    camGo.tag = "MainCamera";
+                }
+                else
+                {
+                    camera = camGo.GetComponent<Camera>();
+                    if (camera == null)
+                    {
+                        camera = camGo.AddComponent<Camera>();
+                    }
+                }
+            }
+
+            if (camera != null)
+            {
+                camera.transform.position = new Vector3(0f, 0f, -10f);
+                camera.transform.rotation = Quaternion.identity;
+                camera.clearFlags = CameraClearFlags.SolidColor;
+                camera.backgroundColor = new Color(0.18f, 0.18f, 0.22f); // Dark cozy background
+            }
+
             // 1. Setup GameLifetimeScope
             GameObject lifetimeScopeGo = GameObject.Find("GameLifetimeScope");
             if (lifetimeScopeGo == null)

@@ -15,33 +15,34 @@ namespace CozyLifeSim.Editor
             
             try
             {
-                // Reset PlayerPrefs for clean test
-                PlayerPrefs.DeleteAll();
+                // Reset ONLY our game's save key to prevent wiping other editor/project settings
+                PlayerPrefs.DeleteKey("CozyLifeSim_SaveGame");
+                PlayerPrefs.Save();
                 
                 // Test 1: Save & Load
                 SaveService saveService = new SaveService();
                 if (saveService.ActiveSave == null) throw new System.Exception("ActiveSave is null");
                 Debug.Log("<color=green>[PASS]</color> SaveService initialized successfully");
 
-                // Test 2: Inventory Actions
+                // Test 2: Inventory Actions (SaveData defaults: Coins = 100, Seeds = 5, Crops = 0)
                 InventoryService invService = new InventoryService(saveService);
                 int coinsChangedCount = 0;
                 invService.OnCoinsChanged += (val) => coinsChangedCount++;
                 
                 invService.AddCoins(100);
-                if (invService.Coins != 100) throw new System.Exception($"Coins should be 100, got {invService.Coins}");
+                if (invService.Coins != 200) throw new System.Exception($"Coins should be 200 (100 default + 100 added), got {invService.Coins}");
                 if (coinsChangedCount != 1) throw new System.Exception($"OnCoinsChanged should be fired once, got {coinsChangedCount}");
                 
                 bool consumed = invService.ConsumeCoins(40);
                 if (!consumed) throw new System.Exception("Should consume 40 coins successfully");
-                if (invService.Coins != 60) throw new System.Exception($"Coins should be 60, got {invService.Coins}");
+                if (invService.Coins != 160) throw new System.Exception($"Coins should be 160 (200 - 40 consumed), got {invService.Coins}");
                 
                 invService.AddSeeds(10);
-                if (invService.Seeds != 10) throw new System.Exception($"Seeds should be 10, got {invService.Seeds}");
+                if (invService.Seeds != 15) throw new System.Exception($"Seeds should be 15 (5 default + 10 added), got {invService.Seeds}");
                 
                 bool seedConsumed = invService.ConsumeSeeds(3);
                 if (!seedConsumed) throw new System.Exception("Should consume 3 seeds successfully");
-                if (invService.Seeds != 7) throw new System.Exception($"Seeds should be 7, got {invService.Seeds}");
+                if (invService.Seeds != 12) throw new System.Exception($"Seeds should be 12 (15 - 3 consumed), got {invService.Seeds}");
                 
                 Debug.Log("<color=green>[PASS]</color> InventoryService and SaveService logic verified");
 
@@ -67,16 +68,16 @@ namespace CozyLifeSim.Editor
                 if (!waterQuest.IsCompleted) throw new System.Exception("Quest should be completed");
                 if (questCompletedCount != 1) throw new System.Exception("OnQuestCompleted should fire");
                 
-                // Verify Reward Coins (60 + 50 reward = 110)
-                if (invService.Coins != 110) throw new System.Exception($"Coins after quest reward should be 110, got {invService.Coins}");
+                // Verify Reward Coins (160 + 50 reward = 210)
+                if (invService.Coins != 210) throw new System.Exception($"Coins after quest reward should be 210, got {invService.Coins}");
                 
                 Debug.Log("<color=green>[PASS]</color> QuestService progression and rewards verified");
                 
                 // Test 4: Reload and Persistence
                 SaveService reloadSaveService = new SaveService();
                 InventoryService reloadInvService = new InventoryService(reloadSaveService);
-                if (reloadInvService.Coins != 110) throw new System.Exception($"Reloaded Coins should be 110, got {reloadInvService.Coins}");
-                if (reloadInvService.Seeds != 7) throw new System.Exception($"Reloaded Seeds should be 7, got {reloadInvService.Seeds}");
+                if (reloadInvService.Coins != 210) throw new System.Exception($"Reloaded Coins should be 210, got {reloadInvService.Coins}");
+                if (reloadInvService.Seeds != 12) throw new System.Exception($"Reloaded Seeds should be 12, got {reloadInvService.Seeds}");
                 
                 QuestService reloadQuestService = new QuestService(reloadSaveService, reloadInvService);
                 if (!reloadQuestService.ActiveQuests[0].IsCompleted) throw new System.Exception("Reloaded Quest should remain completed");
@@ -86,12 +87,22 @@ namespace CozyLifeSim.Editor
                 // Print all-pass congratulations!
                 Debug.Log("<color=cyan>[CozySim TestRunner]</color> <color=green>ALL VERIFICATION TESTS PASSED SUCCESSFULLY!</color>");
                 
-                EditorUtility.DisplayDialog("Verification Tests Passed", "All core services, inventory modifications, quest progression and PlayerPrefs persistence verified successfully!", "OK");
+                if (!Application.isBatchMode)
+                {
+                    EditorUtility.DisplayDialog("Verification Tests Passed", "All core services, inventory modifications, quest progression and PlayerPrefs persistence verified successfully!", "OK");
+                }
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"<color=red>[FAIL]</color> Verification test failed: {ex.Message}");
-                EditorUtility.DisplayDialog("Verification Test Failed", $"Test failed: {ex.Message}", "OK");
+                Debug.LogError($"<color=red>[FAIL]</color> Verification test failed: {ex.Message}\n{ex.StackTrace}");
+                if (Application.isBatchMode)
+                {
+                    throw;
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Verification Test Failed", $"Test failed: {ex.Message}", "OK");
+                }
             }
         }
     }

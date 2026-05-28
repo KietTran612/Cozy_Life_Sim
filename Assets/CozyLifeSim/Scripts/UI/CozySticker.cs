@@ -43,7 +43,7 @@ namespace CozyLifeSim.UI
             // Translate shadow downwards to mock physical depth/lift
             if (_shadowOffset != null)
             {
-                _shadowTween = _shadowOffset.DOAnchorPos(new Vector2(-10f, -15f), 0.15f).SetEase(Ease.OutQuad);
+                _shadowTween = TweenAnchorPos(_shadowOffset, new Vector2(-10f, -15f), 0.15f).SetEase(Ease.OutQuad);
             }
 
             if (_canvasGroup != null)
@@ -95,12 +95,12 @@ namespace CozyLifeSim.UI
                 }
 
                 transform.SetParent(_originalParent, true);
-                _rectTransform.DOAnchorPos(_startPosition, 0.3f).SetEase(Ease.OutQuad);
+                TweenAnchorPos(_rectTransform, _startPosition, 0.3f).SetEase(Ease.OutQuad);
                 _scaleTween = transform.DOScale(1.0f, 0.3f).SetEase(Ease.OutQuad);
 
                 if (_shadowOffset != null)
                 {
-                    _shadowTween = _shadowOffset.DOAnchorPos(Vector2.zero, 0.3f).SetEase(Ease.OutQuad);
+                    _shadowTween = TweenAnchorPos(_shadowOffset, Vector2.zero, 0.3f).SetEase(Ease.OutQuad);
                 }
             }
         }
@@ -124,8 +124,17 @@ namespace CozyLifeSim.UI
             _scaleTween = transform.DOScale(1.0f, 0.2f).SetEase(Ease.OutQuad);
             if (_shadowOffset != null)
             {
-                _shadowTween = _shadowOffset.DOAnchorPos(new Vector2(-3f, -4f), 0.2f).SetEase(Ease.OutQuad);
+                _shadowTween = TweenAnchorPos(_shadowOffset, new Vector2(-3f, -4f), 0.2f).SetEase(Ease.OutQuad);
             }
+        }
+
+        private static Tween TweenAnchorPos(RectTransform rect, Vector2 endValue, float duration)
+        {
+            return DOTween.To(
+                () => rect.anchoredPosition,
+                pos => rect.anchoredPosition = pos,
+                endValue,
+                duration);
         }
 
         private void OnDestroy()

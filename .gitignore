@@ -41,3 +41,8 @@ crashlytics-build.properties
 # OS generated files
 .DS_Store
 Thumbs.db
+/.screenshots
+/Assets/Packages
+/Assets/Packages.meta
+/Assets/TextMesh Pro
+/Assets/TextMesh Pro.meta

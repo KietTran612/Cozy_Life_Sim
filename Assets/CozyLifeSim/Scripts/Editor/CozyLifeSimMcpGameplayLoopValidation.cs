@@ -189,15 +189,7 @@ namespace CozyLifeSim.Editor
                 _inventoryService.ReloadFromSave();
             }
 
-            if (_stickers.Sticker != null)
-            {
-                _originalStickerParent = _stickers.Sticker.transform.parent;
-                var rect = _stickers.Sticker.GetComponent<RectTransform>();
-                if (rect != null)
-                {
-                    _originalStickerAnchoredPosition = rect.anchoredPosition;
-                }
-            }
+
 
             _waterQuestReward = GetWaterQuestReward(_questService);
 
@@ -258,6 +250,16 @@ namespace CozyLifeSim.Editor
                 stickerBook,
                 FindSceneComponent<StickerBookPage>("Page_0"),
                 FindInventorySticker());
+
+            if (_stickers.Sticker != null)
+            {
+                _originalStickerParent = _stickers.Sticker.transform.parent;
+                var rect = _stickers.Sticker.GetComponent<RectTransform>();
+                if (rect != null)
+                {
+                    _originalStickerAnchoredPosition = rect.anchoredPosition;
+                }
+            }
 
             if (!_farm.IsValid || !_animal.IsValid || !_stickers.IsValid)
             {

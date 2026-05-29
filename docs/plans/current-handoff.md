@@ -3,7 +3,7 @@
 ## Snapshot
 
 - Current phase: Core gameplay prototype foundation and polish are complete through Task 22 and Task 22.5 review feedback fixes.
-- Last completed commit: `e12b2ac feat: fix sticker parent backup execution order (Task 22.5.1)` (Task 22 and Task 22.5 review feedback are 100% implemented, verified, and committed).
+- Last completed implementation commit: `e12b2ac feat: fix sticker parent backup execution order (Task 22.5.1)` (Task 22 and Task 22.5 review feedback are 100% implemented, verified, and committed).
 - Completed gameplay scope:
   - **Task 22**: Created unified ASCII-safe validation logger `CozyValidationLog.cs`, cleaned logic/scene validation logs, added precise quest/inventory/sticker assertions, converted Play Mode validation into an update-driven async runner.
   - **Task 22.5**:
@@ -36,7 +36,7 @@
 
 ## Current Uncommitted Scope
 
-- None. All Task 22 and Task 22.5 work has been successfully committed under `e12b2ac`.
+- None. All Task 22 and Task 22.5 work has been successfully committed under implementation commit `e12b2ac`.
 
 Do not commit or push unless the user explicitly asks.
 

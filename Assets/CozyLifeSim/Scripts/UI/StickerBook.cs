@@ -5,6 +5,7 @@ using DG.Tweening;
 using VContainer; // Required DI import
 using VContainer.Unity; // Required LifetimeScope import
 using CozyLifeSim.UI.Presenters; // Required Presenter import
+using CozyLifeSim.UI.Settings; // Import Settings
 
 namespace CozyLifeSim.UI
 {
@@ -14,17 +15,23 @@ namespace CozyLifeSim.UI
         [SerializeField] private RectTransform _flipPageIndicator; // Target for ScaleX compression
         [SerializeField] private Button _nextButton;
         [SerializeField] private Button _prevButton;
-        [SerializeField] private List<CozySticker> _stickerTemplates; // Prefab references mapping StickerId
+
+        [Header("Dynamic Templates")]
+        [SerializeField] private Transform _inventoryTrayRoot;
+        [SerializeField] private CozySticker _stickerPrefabTemplate; // Single generic prefab reference
 
         private int _currentPageIndex = 0;
         private bool _isTransitioning = false;
         private Sequence _flipSequence;
         private StickerBookPresenter _presenter;
+        private StickerDatabase _stickerDatabase;
+        private readonly List<CozySticker> _spawnedInventoryStickers = new List<CozySticker>();
 
         [Inject]
-        public void Construct(StickerBookPresenter presenter)
+        public void Construct(StickerBookPresenter presenter, StickerDatabase stickerDatabase = null)
         {
             _presenter = presenter;
+            _stickerDatabase = stickerDatabase;
         }
 
         private void Start()
@@ -59,27 +66,66 @@ namespace CozyLifeSim.UI
             
             UpdateNavigationButtons();
 
+            // Spawn inventory tray dynamically
+            SpawnDynamicStickers();
+
             // Restore sticker layouts from database on load
             RestoreStickers();
         }
 
+        private void SpawnDynamicStickers()
+        {
+            if (_stickerDatabase == null || _inventoryTrayRoot == null || _stickerPrefabTemplate == null) return;
+            if (_stickerDatabase.Stickers == null) return;
+
+            foreach (var spawned in _spawnedInventoryStickers)
+            {
+                if (spawned != null)
+                {
+                    Destroy(spawned.gameObject);
+                }
+            }
+            _spawnedInventoryStickers.Clear();
+
+            // Hide the original editor setup template
+            _stickerPrefabTemplate.gameObject.SetActive(false);
+
+            foreach (var template in _stickerDatabase.Stickers)
+            {
+                if (template == null || template.Sprite == null) continue;
+
+                var sticker = Instantiate(_stickerPrefabTemplate, _inventoryTrayRoot);
+                sticker.gameObject.SetActive(true);
+
+                // Setup sticker values dynamically
+                sticker.Setup(template.StickerId, template.Sprite, template.ShadowSprite);
+                _spawnedInventoryStickers.Add(sticker);
+            }
+        }
+
         private void RestoreStickers()
         {
-            if (_presenter == null || _stickerTemplates == null) return;
+            if (_presenter == null || _stickerDatabase == null || _stickerPrefabTemplate == null || _pages == null) return;
+            if (_stickerDatabase.Stickers == null) return;
 
             var placedList = _presenter.GetPlacedStickers();
             foreach (var item in placedList)
             {
                 // Find matching page index
-                StickerBookPage targetPage = _pages.Find(p => p.PageIndex == item.PageIndex);
+                StickerBookPage targetPage = _pages.Find(p => p != null && p.PageIndex == item.PageIndex);
                 if (targetPage == null) continue;
 
-                // Find template prefab
-                CozySticker prefab = _stickerTemplates.Find(t => t.StickerId == item.StickerId);
-                if (prefab == null) continue;
+                // Find template config from database
+                var template = _stickerDatabase.GetSticker(item.StickerId);
+                if (template == null || template.Sprite == null) continue;
 
                 // Spawn and position safely
-                CozySticker spawned = Instantiate(prefab, targetPage.transform);
+                CozySticker spawned = Instantiate(_stickerPrefabTemplate, targetPage.transform);
+                spawned.gameObject.SetActive(true);
+                
+                // Configure graphics dynamically from database
+                spawned.Setup(template.StickerId, template.Sprite, template.ShadowSprite);
+
                 RectTransform rect = spawned.GetComponent<RectTransform>();
                 if (rect != null)
                 {

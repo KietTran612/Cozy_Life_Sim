@@ -5,11 +5,14 @@ using UnityEngine.UI;
 using VContainer; // Required DI import
 using VContainer.Unity; // Required LifetimeScope import
 using CozyLifeSim.UI.Presenters; // Required Presenter import
+using CozyLifeSim.UI.Settings; // Import Settings
 
 namespace CozyLifeSim.UI
 {
     public class AnimalWidget : MonoBehaviour
     {
+        [SerializeField] private int _animalId = 1;
+        [SerializeField] private Image _animalVisual;
         [SerializeField] private Button _interactionButton;
         [SerializeField] private RectTransform _heartPrefab;
         [SerializeField] private Transform _spawnRoot;
@@ -20,11 +23,15 @@ namespace CozyLifeSim.UI
         private Vector3 _baseScale;
         private bool _isPetting;
         private AnimalPresenter _presenter;
+        private AnimalDatabase _animalDatabase;
+        private AnimalTemplate _animalTemplate;
 
         [Inject]
-        public void Construct(AnimalPresenter presenter)
+        public void Construct(AnimalPresenter presenter, AnimalDatabase animalDatabase = null)
         {
             _presenter = presenter;
+            _animalDatabase = animalDatabase;
+            _animalTemplate = _animalDatabase != null ? _animalDatabase.GetAnimal(_animalId) : null;
         }
 
         private void Start()
@@ -38,8 +45,20 @@ namespace CozyLifeSim.UI
                 }
             }
 
-            _baseScale = transform.localScale;
-            _breathTween = transform.DOScaleY(_baseScale.y * 1.03f, 1.5f)
+            Transform animTarget = _animalVisual != null ? _animalVisual.transform : transform;
+            _baseScale = animTarget.localScale;
+
+            // Apply dynamic sprite from database
+            if (_animalVisual != null && _animalTemplate != null && _animalTemplate.Sprite != null)
+            {
+                _animalVisual.sprite = _animalTemplate.Sprite;
+            }
+
+            // Clamped breathing configuration
+            float multiplier = Mathf.Max(1.001f, _animalTemplate != null ? _animalTemplate.BreathScaleY : 1.03f);
+            float duration = Mathf.Max(0.05f, _animalTemplate != null ? _animalTemplate.BreathDuration : 1.5f);
+
+            _breathTween = animTarget.DOScaleY(_baseScale.y * multiplier, duration)
                 .SetEase(Ease.InOutSine)
                 .SetLoops(-1, LoopType.Yoyo);
 
@@ -61,17 +80,22 @@ namespace CozyLifeSim.UI
             _petSequence?.Kill();
 
             _petSequence = DOTween.Sequence();
-            RectTransform rect = transform as RectTransform;
+            Transform animTarget = _animalVisual != null ? _animalVisual.transform : transform;
+            RectTransform rect = animTarget as RectTransform;
+
+            // Clamped jump configuration
+            float jumpHeight = Mathf.Max(0f, _animalTemplate != null ? _animalTemplate.PetJumpHeight : 25f);
+            float jumpDur = Mathf.Max(0.05f, _animalTemplate != null ? _animalTemplate.PetJumpDuration : 0.4f);
 
             if (rect != null)
             {
                 Vector2 startPosition = rect.anchoredPosition;
-                _petSequence.Append(TweenAnchoredY(rect, startPosition.y + 25f, 0.2f).SetEase(Ease.OutQuad));
-                _petSequence.Append(TweenAnchoredY(rect, startPosition.y, 0.2f).SetEase(Ease.InQuad));
+                _petSequence.Append(TweenAnchoredY(rect, startPosition.y + jumpHeight, jumpDur * 0.5f).SetEase(Ease.OutQuad));
+                _petSequence.Append(TweenAnchoredY(rect, startPosition.y, jumpDur * 0.5f).SetEase(Ease.InQuad));
             }
             else
             {
-                _petSequence.Append(transform.DOJump(transform.position, 0.25f, 1, 0.4f));
+                _petSequence.Append(animTarget.DOJump(animTarget.position, jumpHeight * 0.01f, 1, jumpDur));
             }
 
             _presenter?.PetAnimal();
@@ -80,7 +104,7 @@ namespace CozyLifeSim.UI
             _petSequence.OnComplete(() =>
             {
                 _isPetting = false;
-                transform.localScale = _baseScale;
+                animTarget.localScale = _baseScale;
                 _breathTween?.Play();
             });
         }
@@ -95,6 +119,16 @@ namespace CozyLifeSim.UI
             RectTransform heart = Instantiate(_heartPrefab, _spawnRoot);
             heart.localPosition = Vector3.zero;
             heart.localScale = Vector3.zero;
+
+            // Apply custom heart pop sprite from database if set
+            if (_animalTemplate != null && _animalTemplate.HeartFeedbackSprite != null)
+            {
+                var img = heart.GetComponent<Image>();
+                if (img != null)
+                {
+                    img.sprite = _animalTemplate.HeartFeedbackSprite;
+                }
+            }
 
             if (!heart.TryGetComponent(out CanvasGroup canvasGroup))
             {

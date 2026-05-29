@@ -13,6 +13,8 @@ namespace CozyLifeSim.UI
         [SerializeField] private UIStyleConfig _defaultStyleConfig;
         [SerializeField] private CozyLifeSim.UI.Settings.QuestDatabase _questDatabase;
         [SerializeField] private CozyLifeSim.UI.Settings.CropDatabase _cropDatabase;
+        [SerializeField] private CozyLifeSim.UI.Settings.AnimalDatabase _animalDatabase;
+        [SerializeField] private CozyLifeSim.UI.Settings.StickerDatabase _stickerDatabase;
 
         protected override void Configure(IContainerBuilder builder)
         {
@@ -21,6 +23,12 @@ namespace CozyLifeSim.UI
 
             // Null-safe singleton register: always resolves to _cropDatabase (even if null) without exception
             builder.Register<CozyLifeSim.UI.Settings.CropDatabase>(resolver => _cropDatabase, Lifetime.Singleton);
+
+            // Null-safe singleton register: always resolves to _animalDatabase (even if null) without exception
+            builder.Register<CozyLifeSim.UI.Settings.AnimalDatabase>(resolver => _animalDatabase, Lifetime.Singleton);
+
+            // Null-safe singleton register: always resolves to _stickerDatabase (even if null) without exception
+            builder.Register<CozyLifeSim.UI.Settings.StickerDatabase>(resolver => _stickerDatabase, Lifetime.Singleton);
 
             // Register Save and Inventory Services as singletons
             builder.Register<ISaveService, SaveService>(Lifetime.Singleton);

@@ -242,6 +242,8 @@ namespace CozyLifeSim.Editor
             ValidateObjectReference(so, "_flipPageIndicator", "StickerBook flip page indicator", errors, passes);
             ValidateObjectReference(so, "_nextButton", "StickerBook next button", errors, passes);
             ValidateObjectReference(so, "_prevButton", "StickerBook previous button", errors, passes);
+            ValidateObjectReference(so, "_inventoryTrayRoot", "StickerBook inventory tray root", errors, passes);
+            ValidateObjectReference(so, "_stickerPrefabTemplate", "StickerBook generic sticker prefab template", errors, passes);
             ValidateButtonTarget("_nextButton", so, errors, passes);
             ValidateButtonTarget("_prevButton", so, errors, passes);
 
@@ -255,16 +257,29 @@ namespace CozyLifeSim.Editor
                 passes.Add("StickerBook has page references.");
             }
 
-            SerializedProperty templates = so.FindProperty("_stickerTemplates");
-            if (templates == null || templates.arraySize < 2)
+            // Check GameLifetimeScope has _stickerDatabase
+            GameLifetimeScope lifetimeScope = FindSceneComponent<GameLifetimeScope>("GameLifetimeScope");
+            if (lifetimeScope != null)
             {
-                errors.Add("StickerBook must have at least two sticker templates assigned.");
-                return;
+                SerializedObject soScope = new SerializedObject(lifetimeScope);
+                ValidateObjectReference(soScope, "_stickerDatabase", "GameLifetimeScope sticker database", errors, passes);
             }
 
-            passes.Add("StickerBook has sticker template references.");
-            ValidateStickerTemplate(templates.GetArrayElementAtIndex(0).objectReferenceValue as CozySticker, 1, "Bunny", errors, warnings, passes);
-            ValidateStickerTemplate(templates.GetArrayElementAtIndex(1).objectReferenceValue as CozySticker, 2, "Bear", errors, warnings, passes);
+            // Check generic template integrity
+            CozySticker template = GetReference<CozySticker>(so, "_stickerPrefabTemplate");
+            if (template == null)
+            {
+                errors.Add("StickerBook is missing a valid _stickerPrefabTemplate reference.");
+            }
+            else
+            {
+                passes.Add("StickerBook has a valid generic sticker template reference.");
+                
+                SerializedObject soTemplate = new SerializedObject(template);
+                ValidateObjectReference(soTemplate, "_shadowOffset", "Sticker template shadow offset", errors, passes);
+                ValidateObjectReference(soTemplate, "_canvasGroup", "Sticker template CanvasGroup", errors, passes);
+                ValidateObjectReference(soTemplate, "_visualImage", "Sticker template visual image", errors, passes);
+            }
         }
 
         private static void ValidateStickerTemplate(
@@ -499,21 +514,25 @@ namespace CozyLifeSim.Editor
             PrintManualChecklist();
 
             string summary = $"{passes.Count} passed, {warnings.Count} warnings, {errors.Count} errors.";
+            string statusColor = errors.Count > 0 ? "red" : "green";
+            string statusText = errors.Count > 0 ? "FAILED" : "PASSED";
+            string icon = errors.Count > 0 ? "❌" : "⚡";
+
             if (errors.Count > 0)
             {
-                Debug.LogError($"<color=red>[CozySim Scene Validation]</color> {summary}");
+                Debug.LogError("\n===================================================================================\n" +
+                               $"{icon} <size=14><b>[CozySim Scene Gameplay Validation: <color={statusColor}>{statusText}</color>]</b></size> {icon}\n" +
+                               $"<b>Summary:</b> <color=red>{summary}</color>\n" +
+                               "<b>Please fix the reference or compilation errors in your Scene!</b>\n" +
+                               "===================================================================================\n");
             }
             else
             {
-                Debug.Log($"<color=cyan>[CozySim Scene Validation]</color> {summary}");
-            }
-
-            if (!Application.isBatchMode)
-            {
-                EditorUtility.DisplayDialog(
-                    errors.Count > 0 ? "Scene Gameplay Validation Failed" : "Scene Gameplay Validation Passed",
-                    summary + "\n\nSee Console for the Play Mode manual checklist.",
-                    "OK");
+                Debug.Log("\n===================================================================================\n" +
+                          $"{icon} <size=14><b>[CozySim Scene Gameplay Validation: <color={statusColor}>{statusText}</color>]</b></size> {icon}\n" +
+                          $"<b>Summary:</b> <color=green>{summary}</color>\n" +
+                          "<b>All core UI and gameplay structures are validated successfully!</b>\n" +
+                          "===================================================================================\n");
             }
         }
 

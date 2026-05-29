@@ -140,12 +140,41 @@ namespace CozyLifeSim.Editor
             }
         }
 
+        private static void LogEditorError(string title, IEnumerable<string> details)
+        {
+            string detailText = details != null ? string.Join("\n", details) : string.Empty;
+            Debug.LogError(
+                "\n===================================================================================\n" +
+                $"<size=14><b><color=red>[CozySim Quest Editor: {title}]</color></b></size>\n" +
+                "-----------------------------------------------------------------------------------\n" +
+                detailText +
+                "\n===================================================================================");
+        }
+
+        private static void LogEditorWarning(string title, string detail)
+        {
+            Debug.LogWarning(
+                "\n===================================================================================\n" +
+                $"<size=14><b><color=yellow>[CozySim Quest Editor: {title}]</color></b></size>\n" +
+                "-----------------------------------------------------------------------------------\n" +
+                detail +
+                "\n===================================================================================");
+        }
+
+        private static void LogEditorSuccess(string message)
+        {
+            Debug.Log(
+                "\n===================================================================================\n" +
+                $"<size=14><b><color=green>[CozySim Quest Editor]</color></b></size> {message}\n" +
+                "===================================================================================");
+        }
+
         private void SaveStagedToDatabase()
         {
             RunStagingValidation();
             if (_validationErrors.Count > 0)
             {
-                EditorUtility.DisplayDialog("Validation Error", "Cannot save database because there are configuration errors! Check the red banner inside the Editor Window.", "OK");
+                LogEditorError("Save Blocked", _validationErrors);
                 return;
             }
 
@@ -164,7 +193,7 @@ namespace CozyLifeSim.Editor
             AssetDatabase.SaveAssets();
             _isDirty = false;
             
-            Debug.Log("<color=green>[CozySim]</color> QuestDatabase changes saved and written to disk successfully!");
+            LogEditorSuccess("QuestDatabase changes saved and written to disk successfully.");
             ShowNotification(new GUIContent("Database Saved!"));
         }
 
@@ -272,13 +301,13 @@ namespace CozyLifeSim.Editor
                 if (_selectedStagingIndex >= 0 && _selectedStagingIndex < _stagingQuests.Count)
                 {
                     var deletedQuest = _stagingQuests[_selectedStagingIndex];
-                    if (EditorUtility.DisplayDialog("Delete Quest Template?", $"Are you sure you want to permanently remove '{deletedQuest.Title}' (ID {deletedQuest.QuestId})? This will discard progress for this quest ID in active player saves.", "Delete", "Cancel"))
-                    {
-                        _stagingQuests.RemoveAt(_selectedStagingIndex);
-                        _selectedStagingIndex = _stagingQuests.Count > 0 ? 0 : -1;
-                        _isDirty = true;
-                        RunStagingValidation();
-                    }
+                    _stagingQuests.RemoveAt(_selectedStagingIndex);
+                    _selectedStagingIndex = _stagingQuests.Count > 0 ? 0 : -1;
+                    _isDirty = true;
+                    RunStagingValidation();
+                    LogEditorWarning(
+                        "Quest Template Deleted",
+                        $"Removed staged quest '{deletedQuest.Title}' (ID {deletedQuest.QuestId}). This is still a draft change until Save to Database is pressed.");
                 }
             }
             EditorGUILayout.EndHorizontal();
@@ -302,11 +331,11 @@ namespace CozyLifeSim.Editor
                 int newId = EditorGUILayout.IntField("Quest Unique ID", q.QuestId);
                 if (newId != q.QuestId)
                 {
-                    // ID Change Warning Dialog
-                    if (EditorUtility.DisplayDialog("Modify Quest ID?", "Warning: Changing an existing Quest ID will cause active players to lose progress for this quest, or finished quests to map onto new templates. Are you sure?", "Change ID", "Revert"))
-                    {
-                        q.QuestId = newId;
-                    }
+                    int oldId = q.QuestId;
+                    q.QuestId = newId;
+                    LogEditorWarning(
+                        "Quest ID Changed",
+                        $"Changed staged quest ID from {oldId} to {newId}. This can affect active save progress if saved to disk.");
                 }
 
                 q.Title = EditorGUILayout.TextField("Quest Title", q.Title);
@@ -338,10 +367,8 @@ namespace CozyLifeSim.Editor
             GUI.enabled = _isDirty;
             if (GUILayout.Button("Revert Changes", GUILayout.Height(35)))
             {
-                if (EditorUtility.DisplayDialog("Revert Staging Draft?", "Are you sure you want to discard all your unsaved modifications? This will re-load the exact database state from disk.", "Revert", "Cancel"))
-                {
-                    SyncToStaging();
-                }
+                SyncToStaging();
+                LogEditorWarning("Draft Reverted", "Discarded unsaved staged quest modifications and reloaded the database state from disk.");
             }
             GUI.enabled = true;
 

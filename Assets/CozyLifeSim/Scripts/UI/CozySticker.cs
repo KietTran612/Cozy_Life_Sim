@@ -13,6 +13,7 @@ namespace CozyLifeSim.UI
         [SerializeField] private int _stickerId;
         [SerializeField] private RectTransform _shadowOffset;
         [SerializeField] private CanvasGroup _canvasGroup;
+        [SerializeField] private Image _visualImage;
 
         private Vector3 _startPosition;
         private Transform _originalParent;
@@ -26,20 +27,55 @@ namespace CozyLifeSim.UI
 
         public int StickerId => _stickerId;
 
+        public void Setup(int stickerId, Sprite mainSprite, Sprite shadowSprite)
+        {
+            EnsureInitialized();
+            _stickerId = stickerId;
+
+            Image targetImg = _visualImage;
+            if (targetImg == null)
+            {
+                Transform visualChild = transform.Find("Visual_Image");
+                targetImg = visualChild != null ? visualChild.GetComponent<Image>() : GetComponent<Image>();
+            }
+
+            if (targetImg != null)
+            {
+                targetImg.sprite = mainSprite;
+            }
+
+            if (_shadowOffset != null)
+            {
+                var shadowImg = _shadowOffset.GetComponent<Image>();
+                if (shadowImg != null)
+                {
+                    shadowImg.sprite = shadowSprite != null ? shadowSprite : mainSprite;
+                    shadowImg.color = new Color(0f, 0f, 0f, 0.3f);
+                }
+            }
+        }
+
         [Inject]
         public void Construct(StickerBookPresenter presenter)
         {
             _presenter = presenter;
         }
 
-        private void Awake()
+        private bool _isInitialized;
+
+        private void EnsureInitialized()
         {
-            // CRITICAL: Cache essential RectTransform components IMMEDIATELY on Awake
-            // This guarantees they are loaded before Restoration loops call FinalizePlacement()
+            if (_isInitialized) return;
+            _isInitialized = true;
             _rectTransform = GetComponent<RectTransform>();
-            _startPosition = _rectTransform.anchoredPosition;
+            _startPosition = _rectTransform != null ? (Vector3)_rectTransform.anchoredPosition : Vector3.zero;
             _originalParent = transform.parent;
             _canvas = GetComponentInParent<Canvas>();
+        }
+
+        private void Awake()
+        {
+            EnsureInitialized();
         }
 
         private void Start()
@@ -56,6 +92,7 @@ namespace CozyLifeSim.UI
 
         public void OnBeginDrag(PointerEventData eventData)
         {
+            EnsureInitialized();
             if (_canvas == null) return;
             _isDragging = true;
 
@@ -83,6 +120,7 @@ namespace CozyLifeSim.UI
 
         public void OnDrag(PointerEventData eventData)
         {
+            EnsureInitialized();
             if (!_isDragging || _canvas == null) return;
             
             // Move using canvas scale factor
@@ -91,6 +129,7 @@ namespace CozyLifeSim.UI
 
         public void OnEndDrag(PointerEventData eventData)
         {
+            EnsureInitialized();
             if (!_isDragging) return;
             _isDragging = false;
 
@@ -132,6 +171,7 @@ namespace CozyLifeSim.UI
 
         public void FinalizePlacement(Transform pageParent, Vector2 pageAnchoredPosition, int pageIndex, bool saveToDisk = true)
         {
+            EnsureInitialized();
             _pageIndex = pageIndex;
             if (_canvasGroup != null)
             {
@@ -153,10 +193,9 @@ namespace CozyLifeSim.UI
                 _shadowTween = TweenAnchorPos(_shadowOffset, new Vector2(-3f, -4f), 0.2f).SetEase(Ease.OutQuad);
             }
 
-            // Only save when not initializing from restore loop
             if (saveToDisk)
             {
-                _presenter?.SaveStickerPosition(_stickerId, _pageIndex, pageAnchoredPosition.x, pageAnchoredPosition.y, transform.localScale.x, transform.localRotation.eulerAngles.z);
+                _presenter?.SaveStickerPosition(_stickerId, _pageIndex, pageAnchoredPosition.x, pageAnchoredPosition.y, 1.0f, transform.localRotation.eulerAngles.z);
             }
         }
 

@@ -58,8 +58,37 @@ namespace CozyLifeSim.Editor
             }
         }
 
+        [MenuItem("Tools/CozySim/Setup Test Scene Silent")]
+        public static void GenerateSceneSilent()
+        {
+            string scenePath = "Assets/CozyLifeSim/Scenes/Main.unity";
+            if (!System.IO.File.Exists(scenePath))
+            {
+                Debug.LogError($"[CozySim] Scene file not found at {scenePath}");
+                return;
+            }
+
+            UnityEditor.SceneManagement.EditorSceneManager.OpenScene(scenePath);
+            
+            CozySceneSetupWindow window = CreateInstance<CozySceneSetupWindow>();
+            window.GenerateScene();
+            DestroyImmediate(window);
+            
+            Debug.Log("<color=green>[CozySim]</color> Silent Scene Generation Completed and Saved.");
+        }
+
         private void GenerateScene()
         {
+            if (_styleConfig == null)
+            {
+                string[] guids = AssetDatabase.FindAssets("t:UIStyleConfig");
+                if (guids != null && guids.Length > 0)
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                    _styleConfig = AssetDatabase.LoadAssetAtPath<UIStyleConfig>(path);
+                }
+            }
+
             // 0. Setup Main Camera
             Camera camera = Camera.main;
             if (camera == null)
@@ -116,6 +145,9 @@ namespace CozyLifeSim.Editor
             }
 
             CozyLifeSim.UI.Settings.CropDatabase cropDb = CropDatabaseUtility.LoadOrCreateDatabase();
+            CozyLifeSim.UI.Settings.AnimalDatabase animalDb = AnimalDatabaseUtility.LoadOrCreateDatabase();
+            
+            CozyLifeSim.UI.Settings.StickerDatabase stickerDb = StickerDatabaseUtility.LoadOrCreateDatabase();
 
             SerializedObject soScope = new SerializedObject(lifetimeScope);
             if (_styleConfig != null)
@@ -140,6 +172,22 @@ namespace CozyLifeSim.Editor
                 if (propCropDb != null)
                 {
                     propCropDb.objectReferenceValue = cropDb;
+                }
+            }
+            if (animalDb != null)
+            {
+                SerializedProperty propAnimalDb = soScope.FindProperty("_animalDatabase");
+                if (propAnimalDb != null)
+                {
+                    propAnimalDb.objectReferenceValue = animalDb;
+                }
+            }
+            if (stickerDb != null)
+            {
+                SerializedProperty propStickerDb = soScope.FindProperty("_stickerDatabase");
+                if (propStickerDb != null)
+                {
+                    propStickerDb.objectReferenceValue = stickerDb;
                 }
             }
             soScope.ApplyModifiedProperties();
@@ -358,6 +406,7 @@ namespace CozyLifeSim.Editor
 
             // Auto-wire AnimalWidget
             SerializedObject soAnimal = new SerializedObject(animalWidget);
+            soAnimal.FindProperty("_animalVisual").objectReferenceValue = chickenVisual;
             soAnimal.FindProperty("_interactionButton").objectReferenceValue = interactBtn;
             soAnimal.FindProperty("_spawnRoot").objectReferenceValue = spawnRoot;
             soAnimal.FindProperty("_heartPrefab").objectReferenceValue = heartTemplate;
@@ -654,75 +703,63 @@ namespace CozyLifeSim.Editor
             trayGrid.spacing = new Vector2(20f, 20f);
             trayGrid.childAlignment = TextAnchor.MiddleCenter;
 
-            // Create Draggable Stickers inside Inventory Tray
-            List<CozySticker> spawnedTemplates = new List<CozySticker>();
-            string[] stickerAssetPaths = new string[]
-            {
-                "Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Bunny-Pink-256.png",
-                "Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Bear-256.png"
-            };
-
+            // Explicitly destroy obsolete Sticker_0 and Sticker_1 children from Inventory_Tray
             for (int i = 0; i < 2; i++)
             {
-                string stickerName = $"Sticker_{i}";
-                RectTransform stickerItem = SetupPanel(inventoryTray, stickerName);
-                stickerItem.sizeDelta = new Vector2(100f, 100f);
-
-                CozySticker sticker = stickerItem.gameObject.GetComponent<CozySticker>();
-                if (sticker == null)
+                Transform obsoleteChild = inventoryTray.Find($"Sticker_{i}");
+                if (obsoleteChild != null)
                 {
-                    sticker = stickerItem.gameObject.AddComponent<CozySticker>();
+                    DestroyImmediate(obsoleteChild.gameObject);
                 }
-
-                RectTransform shadowOffset = SetupPanel(stickerItem, "Shadow_Offset");
-                Image shadowImg = shadowOffset.gameObject.GetComponent<Image>();
-                if (shadowImg == null)
-                {
-                    shadowImg = shadowOffset.gameObject.AddComponent<Image>();
-                }
-                shadowImg.color = new Color(0f, 0f, 0f, 0.3f); // semi-transparent black shadow
-
-                Image visualImg = SetupImage(stickerItem, "Visual_Image");
-                
-                Sprite stickerSprite = AssetDatabase.LoadAssetAtPath<Sprite>(stickerAssetPaths[i % stickerAssetPaths.Length]);
-                if (stickerSprite != null)
-                {
-                    visualImg.sprite = stickerSprite;
-                    shadowImg.sprite = stickerSprite;
-                }
-                else if (defaultSprite != null)
-                {
-                    visualImg.sprite = defaultSprite;
-                    shadowImg.sprite = defaultSprite;
-                }
-
-                CanvasGroup group = stickerItem.gameObject.GetComponent<CanvasGroup>();
-                if (group == null)
-                {
-                    group = stickerItem.gameObject.AddComponent<CanvasGroup>();
-                }
-
-                // Wire CozySticker fields
-                SerializedObject soSticker = new SerializedObject(sticker);
-                soSticker.FindProperty("_stickerId").intValue = i + 1;
-                soSticker.FindProperty("_shadowOffset").objectReferenceValue = shadowOffset;
-                soSticker.FindProperty("_canvasGroup").objectReferenceValue = group;
-                soSticker.ApplyModifiedProperties();
-
-                spawnedTemplates.Add(sticker);
             }
 
-            // Wire templates list back to StickerBook
-            SerializedObject soBookUpdate = new SerializedObject(stickerBook);
-            SerializedProperty templatesProp = soBookUpdate.FindProperty("_stickerTemplates");
-            if (templatesProp != null)
+            // Create a single generic Sticker_Template clone source under Prefabs_Holder
+            RectTransform stickerTemplate = SetupPanel(prefabsHolder, "Sticker_Template");
+            stickerTemplate.sizeDelta = new Vector2(100f, 100f);
+            stickerTemplate.gameObject.SetActive(false); // Inactive in edit mode
+
+            CozySticker genericSticker = stickerTemplate.gameObject.GetComponent<CozySticker>();
+            if (genericSticker == null)
             {
-                templatesProp.ClearArray();
-                for (int i = 0; i < spawnedTemplates.Count; i++)
-                {
-                    templatesProp.InsertArrayElementAtIndex(i);
-                    templatesProp.GetArrayElementAtIndex(i).objectReferenceValue = spawnedTemplates[i];
-                }
+                genericSticker = stickerTemplate.gameObject.AddComponent<CozySticker>();
+            }
+
+            RectTransform shadowOffset = SetupPanel(stickerTemplate, "Shadow_Offset");
+            Image shadowImg = shadowOffset.gameObject.GetComponent<Image>();
+            if (shadowImg == null)
+            {
+                shadowImg = shadowOffset.gameObject.AddComponent<Image>();
+            }
+            shadowImg.color = new Color(0f, 0f, 0f, 0.3f);
+            if (defaultSprite != null) shadowImg.sprite = defaultSprite;
+
+            Image visualImg = SetupImage(stickerTemplate, "Visual_Image");
+            if (defaultSprite != null) visualImg.sprite = defaultSprite;
+
+            CanvasGroup group = stickerTemplate.gameObject.GetComponent<CanvasGroup>();
+            if (group == null)
+            {
+                group = stickerTemplate.gameObject.AddComponent<CanvasGroup>();
+            }
+
+            // Wire generic CozySticker fields
+            SerializedObject soSticker = new SerializedObject(genericSticker);
+            soSticker.FindProperty("_shadowOffset").objectReferenceValue = shadowOffset;
+            soSticker.FindProperty("_canvasGroup").objectReferenceValue = group;
+            soSticker.FindProperty("_visualImage").objectReferenceValue = visualImg;
+            soSticker.ApplyModifiedProperties();
+
+            // Wire templates/tray to StickerBook
+            SerializedObject soBookUpdate = new SerializedObject(stickerBook);
+            SerializedProperty trayRootProp = soBookUpdate.FindProperty("_inventoryTrayRoot");
+            if (trayRootProp != null)
+            {
+                trayRootProp.objectReferenceValue = inventoryTray;
+            }
+            SerializedProperty prefabProp = soBookUpdate.FindProperty("_stickerPrefabTemplate");
+            if (prefabProp != null)
+            {
+                prefabProp.objectReferenceValue = genericSticker;
             }
             soBookUpdate.ApplyModifiedProperties();
 

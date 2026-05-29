@@ -175,25 +175,81 @@ namespace CozyLifeSim.Editor
                 if (testLoadedCropDb.Crops[0].CropId != 1 || testLoadedCropDb.Crops[0].Name != "White Acorn") throw new System.Exception("Bootstrapped crop should be White Acorn (ID 1)");
                 Object.DestroyImmediate(testLoadedCropDb);
                 Debug.Log("<color=green>[PASS]</color> CropDatabase In-Memory Bootstrapping verified");
+
+                // Test 8: AnimalDatabase In-Memory Bootstrapping and Integrity (strictly side-effect free)
+                var testLoadedAnimalDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.AnimalDatabase>();
+                AnimalDatabaseUtility.BootstrapDefaultAnimal(testLoadedAnimalDb);
+                if (testLoadedAnimalDb == null) throw new System.Exception("Failed to load or create in-memory AnimalDatabase");
+                if (testLoadedAnimalDb.Animals == null || testLoadedAnimalDb.Animals.Count == 0) throw new System.Exception("AnimalDatabase should be bootstrapped with default Breathing Chicken");
+                if (testLoadedAnimalDb.Animals[0].AnimalId != 1 || testLoadedAnimalDb.Animals[0].Name != "Breathing Chicken") throw new System.Exception("Bootstrapped animal should be Breathing Chicken (ID 1)");
+                if (testLoadedAnimalDb.Animals[0].BreathScaleY <= 1.0f) throw new System.Exception("Bootstrapped animal breath scale should be greater than 1.0f");
+                Object.DestroyImmediate(testLoadedAnimalDb);
+                Debug.Log("<color=green>[PASS]</color> AnimalDatabase In-Memory Bootstrapping verified");
+
+                // Test 9: StickerDatabase In-Memory Validation (strictly side-effect free)
+                var testStickerDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.StickerDatabase>();
                 
-                // Print all-pass congratulations!
-                Debug.Log("<color=cyan>[CozySim]</color> <color=green>ALL LOGIC VERIFICATION TESTS PASSED SUCCESSFULLY!</color>");
-                
-                if (!Application.isBatchMode)
+                // 9.1 Valid list should pass
+                var testStickerSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0,0,1,1), Vector2.zero);
+                testStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(1, "Bunny Pink", testStickerSprite, testStickerSprite));
+                if (!testStickerDb.ValidateDatabase(out var stickerErrors))
                 {
-                    EditorUtility.DisplayDialog("Verification Tests Passed", "All core services, inventory modifications, quest progression and PlayerPrefs persistence verified successfully!", "OK");
+                    throw new System.Exception($"Valid sticker database failed validation: {string.Join(", ", stickerErrors)}");
                 }
+
+                // 9.2 Duplicate ID should fail
+                testStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(1, "Duplicate Bear", testStickerSprite, testStickerSprite));
+                if (testStickerDb.ValidateDatabase(out var dupStickerErrors))
+                {
+                    throw new System.Exception("Sticker database with duplicate ID should fail validation.");
+                }
+
+                // 9.3 Negative ID should fail
+                testStickerDb.Stickers.Clear();
+                testStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(-1, "Negative ID", testStickerSprite, testStickerSprite));
+                if (testStickerDb.ValidateDatabase(out var negIdErrors))
+                {
+                    throw new System.Exception("Sticker database with negative ID should fail validation.");
+                }
+
+                // 9.4 Missing main sprite should fail
+                testStickerDb.Stickers.Clear();
+                testStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(1, "Missing Sprite", null, testStickerSprite));
+                if (testStickerDb.ValidateDatabase(out var spriteErrors))
+                {
+                    throw new System.Exception("Sticker database with missing sprite should fail validation.");
+                }
+
+                Object.DestroyImmediate(testStickerDb);
+                if (testStickerSprite != null) Object.DestroyImmediate(testStickerSprite);
+                Debug.Log("<color=green>[PASS]</color> StickerDatabase In-Memory Validation verified");
+
+                // Test 9.5: StickerDatabase In-Memory Bootstrapping and Integrity (strictly side-effect free)
+                var testLoadedStickerDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.StickerDatabase>();
+                StickerDatabaseUtility.BootstrapDefaultStickers(testLoadedStickerDb);
+                if (testLoadedStickerDb == null) throw new System.Exception("Failed to load or create in-memory StickerDatabase");
+                if (testLoadedStickerDb.Stickers == null || testLoadedStickerDb.Stickers.Count == 0) throw new System.Exception("StickerDatabase should be bootstrapped with default stickers");
+                if (testLoadedStickerDb.Stickers[0].StickerId != 1 || testLoadedStickerDb.Stickers[0].Name != "Bunny Pink") throw new System.Exception("Bootstrapped sticker 1 should be Bunny Pink (ID 1)");
+                if (testLoadedStickerDb.Stickers[1].StickerId != 2 || testLoadedStickerDb.Stickers[1].Name != "Bear") throw new System.Exception("Bootstrapped sticker 2 should be Bear (ID 2)");
+                Object.DestroyImmediate(testLoadedStickerDb);
+                Debug.Log("<color=green>[PASS]</color> StickerDatabase In-Memory Bootstrapping verified");
+                
+                // Print all-pass congratulations in a highly prominent way!
+                Debug.Log("\n===================================================================================\n" +
+                          "⚡ <size=14><b>[CozySim ALL LOGIC VERIFICATION TESTS PASSED SUCCESSFULLY!]</b></size> ⚡\n" +
+                          "<b>All core services, inventory modifications, quest progression and PlayerPrefs persistence verified successfully!</b>\n" +
+                          "===================================================================================\n");
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"<color=red>[FAIL]</color> Verification test failed: {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError("\n===================================================================================\n" +
+                               "❌ <size=14><b>[CozySim LOGIC VERIFICATION TEST FAILED!]</b></size> ❌\n" +
+                               $"<b>Error:</b> <color=red>{ex.Message}</color>\n" +
+                               $"<b>Stack Trace:</b>\n{ex.StackTrace}\n" +
+                               "===================================================================================\n");
                 if (Application.isBatchMode)
                 {
                     throw;
-                }
-                else
-                {
-                    EditorUtility.DisplayDialog("Verification Test Failed", $"Test failed: {ex.Message}", "OK");
                 }
             }
         }

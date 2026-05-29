@@ -86,6 +86,47 @@ namespace CozyLifeSim.Editor
                 }
                 Debug.Log("<color=green>[CozySim]</color> Bootstrapped default 'Breathing Chicken' inside database (with safety fallbacks).");
             }
+
+            // Safety guard: if templates exist but their Sprites are null (e.g. package assets missing on this machine),
+            // auto-repair them using fallback sprites to ensure they can render and participate in validation.
+            bool addedAny = false;
+            foreach (var animal in database.Animals)
+            {
+                if (animal != null)
+                {
+                    if (animal.Sprite == null || animal.HeartFeedbackSprite == null)
+                    {
+                        var chickenSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Chicken-White-256.png");
+                        var heartSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Hearts/Heart-Red-256.png");
+
+                        if (chickenSprite == null || heartSprite == null)
+                        {
+                            string[] spriteGuids = AssetDatabase.FindAssets("t:Sprite");
+                            if (spriteGuids != null && spriteGuids.Length > 0)
+                            {
+                                var fallbackSprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GUIDToAssetPath(spriteGuids[0]));
+                                if (chickenSprite == null) chickenSprite = fallbackSprite;
+                                if (heartSprite == null) heartSprite = fallbackSprite;
+                            }
+                        }
+
+                        var builtInSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+                        if (chickenSprite == null) chickenSprite = builtInSprite;
+                        if (heartSprite == null) heartSprite = builtInSprite;
+
+                        if (animal.Sprite == null) animal.Sprite = chickenSprite;
+                        if (animal.HeartFeedbackSprite == null) animal.HeartFeedbackSprite = heartSprite;
+                        addedAny = true;
+                    }
+                }
+            }
+
+            if (addedAny && AssetDatabase.Contains(database))
+            {
+                EditorUtility.SetDirty(database);
+                AssetDatabase.SaveAssets();
+                Debug.Log("<color=green>[CozySim]</color> Auto-repaired missing animal sprites in database (with safety fallbacks).");
+            }
         }
     }
 }

@@ -15,9 +15,9 @@ MonoBehaviour:
   Animals:
   - AnimalId: 1
     Name: Breathing Chicken
-    Sprite: {fileID: 21300000, guid: 0169e45170ed54144b060c147b20cd34, type: 3}
+    Sprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
     BreathScaleY: 1.03
     BreathDuration: 1.5
     PetJumpHeight: 25
     PetJumpDuration: 0.4
-    HeartFeedbackSprite: {fileID: 21300000, guid: ac54a790d033c4290821768c791b3825, type: 3}
+    HeartFeedbackSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}

@@ -353,6 +353,21 @@ namespace CozyLifeSim.Editor
                 if (!shopService.TrySellCrop(1)) throw new System.Exception("TrySellCrop(1) should succeed with 2 crops");
                 if (testShopInv.Crops != 1 || testShopInv.Coins != 25) throw new System.Exception($"Balances incorrect after crop sale. Crops: {testShopInv.Crops}, Coins: {testShopInv.Coins}");
 
+                // 11.9 Invalid SellPrice validation (SellPrice <= 0 should fail and not consume crops or coins)
+                testCropTemp.SellPrice = 0;
+                testShopSave.ActiveSave.Crops = 1;
+                testShopSave.ActiveSave.Coins = 10;
+                testShopInv.ReloadFromSave();
+                if (shopService.TrySellCrop(1)) throw new System.Exception("TrySellCrop(1) should fail when SellPrice is 0");
+                if (testShopInv.Crops != 1 || testShopInv.Coins != 10) throw new System.Exception($"Balances mutated on invalid SellPrice. Crops: {testShopInv.Crops}, Coins: {testShopInv.Coins}");
+
+                testCropTemp.SellPrice = -5;
+                if (shopService.TrySellCrop(1)) throw new System.Exception("TrySellCrop(1) should fail when SellPrice is negative");
+                if (testShopInv.Crops != 1 || testShopInv.Coins != 10) throw new System.Exception($"Balances mutated on negative SellPrice. Crops: {testShopInv.Crops}, Coins: {testShopInv.Coins}");
+
+                // Restore SellPrice
+                testCropTemp.SellPrice = 15;
+
                 Object.DestroyImmediate(testShopCropDb);
                 Object.DestroyImmediate(testShopStickerDb);
 

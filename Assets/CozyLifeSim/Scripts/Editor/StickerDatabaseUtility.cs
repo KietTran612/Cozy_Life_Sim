@@ -78,6 +78,11 @@ namespace CozyLifeSim.Editor
                 }
             }
 
+            var builtInSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+            if (bunnySprite == null) bunnySprite = builtInSprite;
+            if (bearSprite == null) bearSprite = builtInSprite;
+            if (chickenSprite == null) chickenSprite = builtInSprite;
+
             if (!database.Stickers.Exists(x => x != null && x.StickerId == 1))
             {
                 database.Stickers.Add(new StickerTemplate(1, "Bunny Pink", bunnySprite, bunnySprite) { BuyPrice = 50 });
@@ -94,6 +99,31 @@ namespace CozyLifeSim.Editor
                 addedAny = true;
             }
 
+            // Safety guard: if templates exist but their Sprites are null (e.g. package assets missing on this machine),
+            // auto-repair them using fallback sprites to ensure they can spawn and participate in validation.
+            foreach (var sticker in database.Stickers)
+            {
+                if (sticker != null)
+                {
+                    if (sticker.Sprite == null)
+                    {
+                        if (sticker.StickerId == 1) sticker.Sprite = bunnySprite;
+                        else if (sticker.StickerId == 2) sticker.Sprite = bearSprite;
+                        else if (sticker.StickerId == 3) sticker.Sprite = chickenSprite;
+                        else sticker.Sprite = bunnySprite;
+                        addedAny = true;
+                    }
+                    if (sticker.ShadowSprite == null)
+                    {
+                        if (sticker.StickerId == 1) sticker.ShadowSprite = bunnySprite;
+                        else if (sticker.StickerId == 2) sticker.ShadowSprite = bearSprite;
+                        else if (sticker.StickerId == 3) sticker.ShadowSprite = chickenSprite;
+                        else sticker.ShadowSprite = bunnySprite;
+                        addedAny = true;
+                    }
+                }
+            }
+
             if (addedAny)
             {
                 if (AssetDatabase.Contains(database))
@@ -101,7 +131,7 @@ namespace CozyLifeSim.Editor
                     EditorUtility.SetDirty(database);
                     AssetDatabase.SaveAssets();
                 }
-                Debug.Log("<color=green>[CozySim]</color> Bootstrapped missing stickers inside database (with safety fallbacks).");
+                Debug.Log("<color=green>[CozySim]</color> Bootstrapped and auto-repaired missing stickers inside database (with safety fallbacks).");
             }
         }
 

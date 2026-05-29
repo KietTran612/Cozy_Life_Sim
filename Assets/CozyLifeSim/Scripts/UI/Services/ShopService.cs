@@ -81,6 +81,12 @@ namespace CozyLifeSim.UI.Services
                 return false;
             }
 
+            if (crop.SellPrice <= 0)
+            {
+                Debug.LogWarning($"[CozySim Shop] Cannot sell crop: Crop ID {cropId} has invalid sell price {crop.SellPrice}.");
+                return false;
+            }
+
             // Perform transaction: deduct aggregate crops, add coins
             if (_inventoryService.ConsumeCrops(1))
             {

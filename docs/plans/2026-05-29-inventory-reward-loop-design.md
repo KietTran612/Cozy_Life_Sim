@@ -6,7 +6,7 @@ This design document outlines the implementation plan to close the core gameplay
 
 ## 1. System Overview & Core Loop
 
-Currently, players have a hard limit of 5 seeds and no way to earn coins except by harvesting crops (which instantly gives 10 coins and adds 1 crop to inventory). Once those 5 seeds are gone, the gameplay loop halts. 
+Currently, players have a hard limit of 5 seeds and no way to earn coins except by harvesting crops (which instantly gives 10 coins and adds 1 crop to inventory). Once those 5 seeds are gone, the gameplay loop halts.
 
 This design establishes a sustainable and rewarding core loop:
 

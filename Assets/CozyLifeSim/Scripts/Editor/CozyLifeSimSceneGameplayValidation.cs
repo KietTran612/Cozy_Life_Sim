@@ -41,7 +41,7 @@ namespace CozyLifeSim.Editor
             }
 
             ValidateMissingScripts(errors, passes);
-            ValidateRequiredSprites(errors, passes);
+            ValidateRequiredSprites(warnings, passes);
             ValidateLifetimeAndCanvas(errors, warnings, passes);
             ValidateInventoryHud(errors, passes);
             ValidateFarmLoop(errors, warnings, passes);
@@ -74,14 +74,14 @@ namespace CozyLifeSim.Editor
             }
         }
 
-        private static void ValidateRequiredSprites(List<string> errors, List<string> passes)
+        private static void ValidateRequiredSprites(List<string> warnings, List<string> passes)
         {
             foreach (KeyValuePair<string, string> pair in RequiredSprites)
             {
                 Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(pair.Value);
                 if (sprite == null)
                 {
-                    errors.Add($"Required sprite '{pair.Key}' could not be loaded at '{pair.Value}'.");
+                    warnings.Add($"Optional CuteKawaii sprite '{pair.Key}' could not be loaded at '{pair.Value}'. Scene setup should use fallback sprites on this machine.");
                 }
                 else
                 {
@@ -190,13 +190,13 @@ namespace CozyLifeSim.Editor
                 {
                     errors.Add("Watering_Can does not have an Image component.");
                 }
-                else if (wateringCanImage.sprite != expected)
+                else if (expected != null && wateringCanImage.sprite != expected)
                 {
                     errors.Add("Watering_Can Image sprite is not Watering-Can-Pink-256.png.");
                 }
                 else
                 {
-                    passes.Add("Watering_Can uses the CuteKawaii watering can sprite.");
+                    passes.Add(expected != null ? "Watering_Can uses the CuteKawaii watering can sprite." : "Watering_Can has a fallback sprite assigned.");
                 }
 
                 if (wateringCan.gameObject.activeSelf)

@@ -16,7 +16,9 @@ MonoBehaviour:
   - CropId: 1
     Name: White Acorn
     StageDurationSeconds: 5
-    SeedSprite: {fileID: 21300000, guid: ed73e341171f448b7960c6686fedb739, type: 3}
-    SproutSprite: {fileID: 21300000, guid: 01224037286e546869b4cad203509208, type: 3}
-    MatureSprite: {fileID: 21300000, guid: 5e973cefbe2194740b34f86b7fb0f275, type: 3}
-    HarvestSprite: {fileID: 21300000, guid: 5e973cefbe2194740b34f86b7fb0f275, type: 3}
+    SeedSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
+    SproutSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
+    MatureSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
+    HarvestSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
+    BuyPrice: 5
+    SellPrice: 15

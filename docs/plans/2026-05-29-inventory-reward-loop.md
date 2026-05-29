@@ -61,14 +61,14 @@ Run logic validation in Editor. Expect compile/run failure because the fields do
   if (!ActiveSave.UnlockedStickerIds.Contains(1)) ActiveSave.UnlockedStickerIds.Add(1);
   if (!ActiveSave.UnlockedStickerIds.Contains(2)) ActiveSave.UnlockedStickerIds.Add(2);
   ```
-- In `StickerDatabaseUtility.cs`: 
+- In `StickerDatabaseUtility.cs`:
   Inside `BootstrapDefaultStickers(StickerDatabase database)`, explicitly check and ensure that IDs 1, 2, and 3 exist in the database Stickers list. If any ID is missing, add it dynamically (so that existing project databases on disk also get ID 3 bootstrapped correctly instead of being skipped!).
   Reuse the same safe fallback sprite lookup pattern for `chickenSprite` in case `Chicken-White-256.png` is not imported yet.
   ```csharp
   var bunnySprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Bunny-Pink-256.png");
   var bearSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Bear-256.png");
   var chickenSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Chicken-White-256.png");
-  
+
   // Fallback: If designated package sprites are null, auto-discover any available Sprite in the project
   if (bunnySprite == null || bearSprite == null || chickenSprite == null)
   {

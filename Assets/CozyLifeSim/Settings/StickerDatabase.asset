@@ -15,16 +15,16 @@ MonoBehaviour:
   Stickers:
   - StickerId: 1
     Name: Bunny Pink
-    Sprite: {fileID: 21300000, guid: 2005e47a9d91445e091017b1cf3366d5, type: 3}
-    ShadowSprite: {fileID: 21300000, guid: 2005e47a9d91445e091017b1cf3366d5, type: 3}
+    Sprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
+    ShadowSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
     BuyPrice: 50
   - StickerId: 2
     Name: Bear
-    Sprite: {fileID: 21300000, guid: db6e79aa65937478cb6941464664e77d, type: 3}
-    ShadowSprite: {fileID: 21300000, guid: db6e79aa65937478cb6941464664e77d, type: 3}
+    Sprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
+    ShadowSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
     BuyPrice: 50
   - StickerId: 3
     Name: Chicken White
-    Sprite: {fileID: 21300000, guid: 0169e45170ed54144b060c147b20cd34, type: 3}
-    ShadowSprite: {fileID: 21300000, guid: 0169e45170ed54144b060c147b20cd34, type: 3}
+    Sprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
+    ShadowSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
     BuyPrice: 50

@@ -10,7 +10,7 @@
 
 ## I. Phan Ra Va Thu Tu Thuc Thi Moi (Phase Dependencies Reordered)
 
-De giai quyet triet de viec Phase UI phu thuoc vao Data Model moi, thu thu thuc thi cac Phase duoc sap xep lai nhu sau:
+De giai quyet triet de viec Phase UI phu thuoc vao Data Model moi, thu tu thuc thi cac Phase duoc sap xep lai nhu sau:
 
 ```mermaid
 graph TD
@@ -61,36 +61,41 @@ graph TD
     ```
 
 ### 2.3. Tinh Nguyen Tu Giao Dich (Transaction Contract & Non-saving API) - [P1]
-Cac phuong thuc thay doi du lieu non-saving duoc khai bao truc tiep trong **Interface Contract** `IInventoryService` va `IMemoryService` de `StickerBookPresenter` co the dieu phoi an toan qua interface:
+Cac phuong thuc thay doi du lieu non-saving duoc khai bao truc tiep trong **Interface Contract** `IInventoryService` va `IMemoryService` de `StickerBookPresenter` hoac `ShopService` co the dieu phoi an toan qua interface:
 *   **Non-saving API in IInventoryService**:
     *   `void AddStickerCountNonSaving(int stickerId, int amount);`
     *   `bool ConsumeStickerNonSaving(int stickerId);`
+    *   `void AddCoinsNonSaving(int amount);`
+    *   `bool ConsumeCoinsNonSaving(int amount);`
 *   **Non-saving API in IMemoryService**:
     *   `void AddPlacedStickerNonSaving(StickerPlacedData data);`
     *   `void RemovePlacedStickerNonSaving(string placementId);`
 *   **Quy trinh dieu phoi nguyen tu (Orchestration & Rollback)**:
-    *   Toan bo giao dich duoc dieu phoi tap trung (vi du trong `StickerBookPresenter`):
-        1. Dan sticker: Goi `ConsumeStickerNonSaving(stickerId)` va `AddPlacedStickerNonSaving(data)`.
-        2. Goi `SaveService.Save()`.
-        3. Neu `Save()` bi throw exception -> Goi `AddStickerCountNonSaving(stickerId, 1)` va `RemovePlacedStickerNonSaving(data.PlacementId)` de rollback du lieu trong bo nho, sau do bao loi.
-        4. Thu hoi sticker: Goi `RemovePlacedStickerNonSaving(placementId)` va `AddStickerCountNonSaving(stickerId, 1)`.
-        5. Goi `SaveService.Save()`.
-        6. Neu `Save()` loi -> Rollback nguoc lai trong bo nho de dam bao tinh nguyen tu.
+    *   Toan bo giao dich duoc dieu phoi tap trung:
+        1. Dan sticker: Goi `ConsumeStickerNonSaving(stickerId)` va `AddPlacedStickerNonSaving(data)`. Goi `SaveService.Save()`. Rollback nguoc lai trong bo nho neu loi.
+        2. Thu hoi sticker: Goi `RemovePlacedStickerNonSaving(placementId)` va `AddStickerCountNonSaving(stickerId, 1)`. Goi `SaveService.Save()`. Rollback nguoc lai trong bo nho neu loi.
+        3. Mua sticker trong Shop: Goi `ConsumeCoinsNonSaving(price)` va `AddStickerCountNonSaving(stickerId, 1)`. Goi `SaveService.Save()`. Rollback (`AddCoinsNonSaving` + `ConsumeStickerNonSaving`) nguoc lai trong bo nho neu loi.
 
-### 2.4. Save Failure Hook phuc vu Automation Test - [P1]
-De kiem thu hoan hao tinh nguyen tu va rollback trong unit test `Test 11.11`:
-*   Bieu dien mot hook kiem thu trong `SaveService.cs` (va dinh nghia trong interface `ISaveService`):
-    `public bool ForceSaveFailure { get; set; }`
+### 2.4. Save Failure Hook phuc vu Automation Test - [P1] & [P2]
+De kiem thu hoan hao tinh nguyen tu va rollback trong unit test `Test 11.11` ma khong lam o nhiem runtime contract thuc te:
+*   Su dung chi thi tien xu ly **`#if UNITY_EDITOR`** bao boc thuoc tinh kiem thu trong interface `ISaveService` va `SaveService.cs`:
+    ```csharp
+    #if UNITY_EDITOR
+    public bool ForceSaveFailure { get; set; }
+    #endif
+    ```
 *   Trong `Save()` cua `SaveService.cs`:
     ```csharp
+    #if UNITY_EDITOR
     if (ForceSaveFailure)
     {
         throw new System.Exception("Simulated Save Failure for Atomicity Testing");
     }
+    #endif
     ```
-*   Trong unit test: Set `ForceSaveFailure = true`, goi giao dich dandan/thu hoi, kiem tra co nem Exception, va verify so luong/PlacedStickers hoan toan giu nguyen khong lech, sau do reset `ForceSaveFailure = false`.
+*   Trong unit test (chay trong editor context): Set `ForceSaveFailure = true`, goi giao dich dandan/thu hoi/mua sticker, verify nem Exception, va verify toan bo so luong/PlacedStickers giu nguyen 100% nho co che rollback trong bo nho, sau do reset `ForceSaveFailure = false`.
 
-### 2.5. Phân Dinh API Kho Sticker (Sticker Inventory API) - [P2]
+### 2.5. Phan Dinh API Kho Sticker (Sticker Inventory API) - [P2]
 Toan bo kho sticker duoc quan ly tap trung boi **`IInventoryService` va `InventoryService`**:
 *   `int GetStickerCount(int stickerId);`
 *   `void AddStickerCount(int stickerId, int amount);` (co bien the non-saving in interface)
@@ -99,13 +104,13 @@ Toan bo kho sticker duoc quan ly tap trung boi **`IInventoryService` va `Invento
 
 ### 2.6. Shop API, TryBuySticker Guards & Level Locks - [P2]
 *   `IShopService` giu nguyen API `TryBuySticker(int stickerId)` nhung loai bo hoan toan `IsStickerUnlocked`.
-*   **Cac guard an toan trong TryBuySticker**:
+*   **Cac guard an toan va transaction nguyen tu trong TryBuySticker**:
     1.  **Template check**: Lay template tu `StickerDatabase.GetSticker(stickerId)`. Neu null -> return false.
     2.  **Level Lock check**: Kiem tra neu `IProgressionService.PlayerLevel < template.RequiredLevel` -> return false.
     3.  **BuyPrice check**: Kiem tra neu `template.BuyPrice <= 0` -> return false.
     4.  **Balance check**: Kiem tra neu `IInventoryService.Coins < template.BuyPrice` -> return false.
-    5.  **Deduct Coins & Add Count**: Goi `IInventoryService.ConsumeCoins(template.BuyPrice)` va `IInventoryService.AddStickerCount(stickerId, 1)`.
-    6.  **Persist & Notify**: Goi `Save()` va kich hoat su kien `OnShopTransactionSuccess`.
+    5.  **Deduct Coins & Add Count (Non-saving)**: Goi `IInventoryService.ConsumeCoinsNonSaving(template.BuyPrice)` va `IInventoryService.AddStickerCountNonSaving(stickerId, 1)`.
+    6.  **Persist & Rollback**: Goi `SaveService.Save()`. Neu `Save()` loi -> goi `AddCoinsNonSaving` va `ConsumeStickerNonSaving` de khoi phuc bo nho truoc khi throw; neu thanh cong -> ban `OnShopTransactionSuccess`.
 *   **ShopPopup button state**:
     *   *Uu tien 1 (Level Lock)*: Neu `PlayerLevel < RequiredLevel` -> Hien thi text do `Can cap X`.
     *   *Uu tien 2 (Affordability)*: Neu `Coins < BuyPrice` -> Hien thi text do `Thieu Coin`.
@@ -134,7 +139,7 @@ Toan bo kho sticker duoc quan ly tap trung boi **`IInventoryService` va `Invento
 2.  **Sticker Consumable & Atomicity Test (Kiem tra tinh nguyen tu)**:
     *   Mua sticker ID 3 -> Tray tang count.
     *   Keo dan sticker -> Count giam 1. Thu hoi sticker -> Count tang 1.
-    *   Gia lap loi: Set `ForceSaveFailure = true`, goi giao dich dan/thu hoi, verify nem Exception va he thong thuc hien rollback dung nhu cu (kho va placed data khong bi lech).
+    *   Gia lap loi: Set `ForceSaveFailure = true` (Editor context), goi giao dich dan/thu hoi/mua sticker, verify nem Exception va he thong thuc hien rollback dung nhu cu (kho va placed data khong bi lech).
 3.  **Progression & Level Lock Test**:
     *   Quest hoan thanh -> Nhan XP -> Tang Level -> Shop mo khoa dung cap.
 4.  **Procedural Flat Fallback Test**:

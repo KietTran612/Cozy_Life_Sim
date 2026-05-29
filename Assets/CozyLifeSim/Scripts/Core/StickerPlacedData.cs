@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 namespace CozyLifeSim.Core
 {
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct StickerPlacedData
     {
         public int StickerId;
@@ -13,6 +12,7 @@ namespace CozyLifeSim.Core
         public float PositionY;
         public float Scale;
         public float Rotation;
+        public string PlacementId; // UUID duy nhat
 
         public StickerPlacedData(int stickerId, int pageIndex, float positionX, float positionY, float scale, float rotation)
         {
@@ -22,6 +22,7 @@ namespace CozyLifeSim.Core
             PositionY = positionY;
             Scale = scale;
             Rotation = rotation;
+            PlacementId = Guid.NewGuid().ToString();
         }
     }
 }

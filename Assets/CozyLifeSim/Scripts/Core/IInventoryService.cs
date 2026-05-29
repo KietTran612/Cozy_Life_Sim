@@ -20,5 +20,17 @@ namespace CozyLifeSim.Core
         void AddCrops(int amount);
         bool ConsumeCrops(int amount);
         void ReloadFromSave();
+
+        // Sticker Countable API
+        int GetStickerCount(int stickerId);
+        void AddStickerCount(int stickerId, int amount);
+        bool ConsumeSticker(int stickerId);
+        event Action<int, int> OnStickerCountChanged; // (stickerId, count)
+
+        // Non-Saving APIs
+        void AddStickerCountNonSaving(int stickerId, int amount);
+        bool ConsumeStickerNonSaving(int stickerId);
+        void AddCoinsNonSaving(int amount);
+        bool ConsumeCoinsNonSaving(int amount);
     }
 }

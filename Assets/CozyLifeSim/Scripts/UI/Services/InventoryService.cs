@@ -32,18 +32,32 @@ namespace CozyLifeSim.UI.Services
 
         public void AddCoins(int amount)
         {
-            if (amount <= 0) return;
-            ActiveSave.Coins += amount;
-            OnCoinsChanged?.Invoke(ActiveSave.Coins);
+            AddCoinsNonSaving(amount);
             _saveService.Save();
         }
 
         public bool ConsumeCoins(int amount)
         {
+            if (ConsumeCoinsNonSaving(amount))
+            {
+                _saveService.Save();
+                return true;
+            }
+            return false;
+        }
+
+        public void AddCoinsNonSaving(int amount)
+        {
+            if (amount <= 0) return;
+            ActiveSave.Coins += amount;
+            OnCoinsChanged?.Invoke(ActiveSave.Coins);
+        }
+
+        public bool ConsumeCoinsNonSaving(int amount)
+        {
             if (amount <= 0 || ActiveSave.Coins < amount) return false;
             ActiveSave.Coins -= amount;
             OnCoinsChanged?.Invoke(ActiveSave.Coins);
-            _saveService.Save();
             return true;
         }
 
@@ -78,6 +92,59 @@ namespace CozyLifeSim.UI.Services
             ActiveSave.Crops -= amount;
             OnCropsChanged?.Invoke(ActiveSave.Crops);
             _saveService.Save();
+            return true;
+        }
+
+        // Sticker Countable API
+        public event Action<int, int> OnStickerCountChanged;
+
+        public int GetStickerCount(int stickerId)
+        {
+            var item = ActiveSave.StickerOwned.Find(x => x.StickerId == stickerId);
+            return item?.Count ?? 0;
+        }
+
+        public void AddStickerCount(int stickerId, int amount)
+        {
+            AddStickerCountNonSaving(stickerId, amount);
+            _saveService.Save();
+        }
+
+        public bool ConsumeSticker(int stickerId)
+        {
+            if (ConsumeStickerNonSaving(stickerId))
+            {
+                _saveService.Save();
+                return true;
+            }
+            return false;
+        }
+
+        public void AddStickerCountNonSaving(int stickerId, int amount)
+        {
+            if (amount <= 0) return;
+            var list = ActiveSave.StickerOwned;
+            var item = list.Find(x => x.StickerId == stickerId);
+            if (item == null)
+            {
+                item = new StickerInventory(stickerId, amount);
+                list.Add(item);
+            }
+            else
+            {
+                item.Count += amount;
+            }
+            OnStickerCountChanged?.Invoke(stickerId, item.Count);
+        }
+
+        public bool ConsumeStickerNonSaving(int stickerId)
+        {
+            var list = ActiveSave.StickerOwned;
+            var item = list.Find(x => x.StickerId == stickerId);
+            if (item == null || item.Count <= 0) return false;
+
+            item.Count--;
+            OnStickerCountChanged?.Invoke(stickerId, item.Count);
             return true;
         }
     }

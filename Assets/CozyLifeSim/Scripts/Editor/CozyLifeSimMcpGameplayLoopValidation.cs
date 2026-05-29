@@ -190,7 +190,10 @@ namespace CozyLifeSim.Editor
             activeSave.PlacedStickers.Clear();
             activeSave.CompletedQuestIds.Clear();
             activeSave.ActiveQuestProgress.Clear();
-            activeSave.UnlockedStickerIds = new List<int> { 1, 2 };
+            activeSave.StickerOwned.Clear();
+            activeSave.StickerOwned.Add(new StickerInventory(1, 99));
+            activeSave.StickerOwned.Add(new StickerInventory(2, 99));
+            activeSave.HasMigratedStickerOwned = true;
             _saveService.Save();
 
             // Re-initialize the in-memory services to reflect the cleared save data and rehydrate events/UI
@@ -544,9 +547,9 @@ namespace CozyLifeSim.Editor
                 Fail($"Fresh save should restore {expectedFreshCoins} coins, got {freshInventory.Coins}.");
             }
 
-            if (freshSave.ActiveSave.UnlockedStickerIds == null || !freshSave.ActiveSave.UnlockedStickerIds.Contains(3))
+            if (freshInventory.GetStickerCount(3) <= 0)
             {
-                Fail("Fresh save should restore premium sticker ID 3 unlock.");
+                Fail("Fresh save should restore premium sticker ID 3 count.");
             }
 
             if (freshMemory.PlacedStickers.Count != 1)
@@ -717,6 +720,18 @@ namespace CozyLifeSim.Editor
             destination.Coins = source.Coins;
             destination.Seeds = source.Seeds;
             destination.Crops = source.Crops;
+            destination.PlayerLevel = source.PlayerLevel;
+            destination.PlayerXP = source.PlayerXP;
+            destination.HasMigratedStickerOwned = source.HasMigratedStickerOwned;
+
+            destination.StickerOwned.Clear();
+            if (source.StickerOwned != null)
+            {
+                foreach (StickerInventory sticker in source.StickerOwned)
+                {
+                    destination.StickerOwned.Add(new StickerInventory(sticker.StickerId, sticker.Count));
+                }
+            }
 
             destination.PlacedStickers.Clear();
             foreach (StickerPlacedData sticker in source.PlacedStickers)
@@ -734,22 +749,6 @@ namespace CozyLifeSim.Editor
             foreach (QuestProgressData quest in source.ActiveQuestProgress)
             {
                 destination.ActiveQuestProgress.Add(quest);
-            }
-
-            if (destination.UnlockedStickerIds == null)
-            {
-                destination.UnlockedStickerIds = new List<int>();
-            }
-
-            destination.UnlockedStickerIds.Clear();
-            if (source.UnlockedStickerIds == null)
-            {
-                return;
-            }
-
-            foreach (int stickerId in source.UnlockedStickerIds)
-            {
-                destination.UnlockedStickerIds.Add(stickerId);
             }
         }
 

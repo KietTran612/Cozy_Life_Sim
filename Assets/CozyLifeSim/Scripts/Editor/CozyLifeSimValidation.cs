@@ -16,14 +16,14 @@ namespace CozyLifeSim.Editor
             int expectedWarningCount = 0;
 
             Debug.Log("<color=cyan>[CozySim TestRunner]</color> Starting core logic verification tests...");
-            
+
             CozyLifeSim.UI.Settings.QuestDatabase questDb = null;
             try
             {
                 // Reset ONLY our game's save key to prevent wiping other editor/project settings
                 PlayerPrefs.DeleteKey("CozyLifeSim_SaveGame");
                 PlayerPrefs.Save();
-                
+
                 // Test 1: Save & Load
                 SaveService saveService = new SaveService();
                 if (saveService.ActiveSave == null) throw new System.Exception("ActiveSave is null");
@@ -34,22 +34,22 @@ namespace CozyLifeSim.Editor
                 InventoryService invService = new InventoryService(saveService);
                 int coinsChangedCount = 0;
                 invService.OnCoinsChanged += (val) => coinsChangedCount++;
-                
+
                 invService.AddCoins(100);
                 if (invService.Coins != 200) throw new System.Exception($"Coins should be 200 (100 default + 100 added), got {invService.Coins}");
                 if (coinsChangedCount != 1) throw new System.Exception($"OnCoinsChanged should be fired once, got {coinsChangedCount}");
-                
+
                 bool consumed = invService.ConsumeCoins(40);
                 if (!consumed) throw new System.Exception("Should consume 40 coins successfully");
                 if (invService.Coins != 160) throw new System.Exception($"Coins should be 160 (200 - 40 consumed), got {invService.Coins}");
-                
+
                 invService.AddSeeds(10);
                 if (invService.Seeds != 15) throw new System.Exception($"Seeds should be 15 (5 default + 10 added), got {invService.Seeds}");
-                
+
                 bool seedConsumed = invService.ConsumeSeeds(3);
                 if (!seedConsumed) throw new System.Exception("Should consume 3 seeds successfully");
                 if (invService.Seeds != 12) throw new System.Exception($"Seeds should be 12 (15 - 3 consumed), got {invService.Seeds}");
-                
+
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "InventoryService and SaveService logic verified");
 
@@ -62,40 +62,40 @@ namespace CozyLifeSim.Editor
                 // Test 3: Quest Progression & Rewards
                 QuestService questService = new QuestService(saveService, invService, questDb);
                 if (questService.ActiveQuests.Count != 3) throw new System.Exception("Quests should contain 3 entries");
-                
+
                 QuestData waterQuest = questService.ActiveQuests[0]; // QuestId = 1: Water 3 Crops
                 if (waterQuest.IsCompleted) throw new System.Exception("Water Quest should not be completed yet");
-                
+
                 int questProgressCount = 0;
                 int questCompletedCount = 0;
                 questService.OnQuestProgressed += (q) => questProgressCount++;
                 questService.OnQuestCompleted += (q) => questCompletedCount++;
-                
+
                 // Progress Quest
                 questService.ProgressQuest(QuestType.WaterCrops, 1);
                 if (waterQuest.CurrentCount != 1) throw new System.Exception("Quest progress should be 1");
                 if (questProgressCount != 1) throw new System.Exception("OnQuestProgressed should fire");
-                
+
                 // Progress to Completion
                 questService.ProgressQuest(QuestType.WaterCrops, 2);
                 if (!waterQuest.IsCompleted) throw new System.Exception("Quest should be completed");
                 if (questCompletedCount != 1) throw new System.Exception("OnQuestCompleted should fire");
-                
+
                 // Verify Reward Coins (160 + 50 reward = 210)
                 if (invService.Coins != 210) throw new System.Exception($"Coins after quest reward should be 210, got {invService.Coins}");
-                
+
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "QuestService progression and rewards verified");
-                
+
                 // Test 4: Reload and Persistence
                 SaveService reloadSaveService = new SaveService();
                 InventoryService reloadInvService = new InventoryService(reloadSaveService);
                 if (reloadInvService.Coins != 210) throw new System.Exception($"Reloaded Coins should be 210, got {reloadInvService.Coins}");
                 if (reloadInvService.Seeds != 12) throw new System.Exception($"Reloaded Seeds should be 12, got {reloadInvService.Seeds}");
-                
+
                 QuestService reloadQuestService = new QuestService(reloadSaveService, reloadInvService, questDb);
                 if (!reloadQuestService.ActiveQuests[0].IsCompleted) throw new System.Exception("Reloaded Quest should remain completed");
-                
+
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "Save/Load Persistence verified");
 
@@ -111,7 +111,7 @@ namespace CozyLifeSim.Editor
 
                 // Test 5: Quest Editor Data Integrity Validation
                 var testDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.QuestDatabase>();
-                
+
                 // 5.1 Valid list should pass
                 testDb.Quests.Add(new QuestTemplate(1, "Valid Quest 1", 3, 50, QuestType.WaterCrops));
                 testDb.Quests.Add(new QuestTemplate(2, "Valid Quest 2", 5, 100, QuestType.HarvestCrops));
@@ -154,10 +154,10 @@ namespace CozyLifeSim.Editor
                 Object.DestroyImmediate(testDb);
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "Quest Editor Data Integrity Validation verified");
-                
+
                 // Test 6: Crop Editor Data Integrity Validation
                 var testCropDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.CropDatabase>();
-                
+
                 // 6.1 Valid list should pass
                 var testSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0,0,1,1), Vector2.zero);
                 testCropDb.Crops.Add(new CozyLifeSim.UI.Settings.CropTemplate(1, "Acorn", 5f, testSprite, testSprite, testSprite, testSprite));
@@ -217,7 +217,7 @@ namespace CozyLifeSim.Editor
 
                 // Test 9: StickerDatabase In-Memory Validation (strictly side-effect free)
                 var testStickerDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.StickerDatabase>();
-                
+
                 // 9.1 Valid list should pass
                 var testStickerSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0,0,1,1), Vector2.zero);
                 testStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(1, "Bunny Pink", testStickerSprite, testStickerSprite));
@@ -267,6 +267,7 @@ namespace CozyLifeSim.Editor
 
                 // Test 10: Task 23 Data Model Prices & UnlockedStickers defaults
                 var testSaveData = new SaveData();
+#pragma warning disable CS0618
                 if (testSaveData.UnlockedStickerIds == null || testSaveData.UnlockedStickerIds.Count != 2)
                 {
                     throw new System.Exception("UnlockedStickerIds list should be initialized and contain exactly 2 defaults (ID 1, 2)");
@@ -275,6 +276,7 @@ namespace CozyLifeSim.Editor
                 {
                     throw new System.Exception("UnlockedStickerIds must contain default sticker IDs 1 and 2");
                 }
+#pragma warning restore CS0618
 
                 var testCrop = new CozyLifeSim.UI.Settings.CropTemplate { BuyPrice = 5, SellPrice = 15 };
                 if (testCrop.BuyPrice != 5 || testCrop.SellPrice != 15)
@@ -299,7 +301,10 @@ namespace CozyLifeSim.Editor
                 testShopSave.ActiveSave.Coins = 100;
                 testShopSave.ActiveSave.Seeds = 5;
                 testShopSave.ActiveSave.Crops = 0;
-                testShopSave.ActiveSave.UnlockedStickerIds = new List<int> { 1, 2 };
+                testShopSave.ActiveSave.StickerOwned.Clear();
+                testShopSave.ActiveSave.StickerOwned.Add(new StickerInventory(1, 99));
+                testShopSave.ActiveSave.StickerOwned.Add(new StickerInventory(2, 99));
+                testShopSave.ActiveSave.HasMigratedStickerOwned = true;
                 testShopSave.Save();
 
                 var testShopCropDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.CropDatabase>();
@@ -321,22 +326,24 @@ namespace CozyLifeSim.Editor
                 // 11.2 TryBuySeed(999) (invalid ID) -> Expect False (clean abort, return false, no throw)
                 if (shopService.TryBuySeed(999)) throw new System.Exception("TryBuySeed(999) should return false on missing template");
 
-                // 11.3 TryBuySticker(1) (already unlocked) -> Expect False
-                if (shopService.TryBuySticker(1)) throw new System.Exception("TryBuySticker(1) should fail because default sticker is already unlocked");
+                // 11.3 Default sticker starts owned through countable inventory
+                if (!shopService.IsStickerUnlocked(1)) throw new System.Exception("Sticker ID 1 should be owned by default");
 
-                // 11.4 TryBuySticker(3) with sufficient coins -> Expect True. Coins = 45, ID 3 added.
+                // 11.4 TryBuySticker(3) with sufficient coins -> Expect True. Coins = 45, ID 3 count added.
                 if (!shopService.TryBuySticker(3)) throw new System.Exception("TryBuySticker(3) should succeed with 95 coins");
                 if (testShopInv.Coins != 45) throw new System.Exception($"Coins incorrect after sticker purchase. Coins: {testShopInv.Coins}");
-                if (!shopService.IsStickerUnlocked(3)) throw new System.Exception("Sticker ID 3 should be unlocked");
+                if (testShopInv.GetStickerCount(3) != 1) throw new System.Exception($"Sticker ID 3 count should be 1, got {testShopInv.GetStickerCount(3)}");
 
-                // 11.5 Repeated TryBuySticker(3) -> Expect False (already unlocked)
-                if (shopService.TryBuySticker(3)) throw new System.Exception("Repeated TryBuySticker(3) should fail");
-                if (testShopInv.Coins != 45) throw new System.Exception("Coins balance should not change on failed repeated sticker purchase");
+                // 11.5 Repeated TryBuySticker(3) -> Expect another countable copy
+                testShopSave.ActiveSave.Coins = 100;
+                testShopInv.ReloadFromSave();
+                if (!shopService.TryBuySticker(3)) throw new System.Exception("Repeated TryBuySticker(3) should add another countable copy");
+                if (testShopInv.GetStickerCount(3) != 2) throw new System.Exception($"Sticker ID 3 count should be 2 after repeated purchase, got {testShopInv.GetStickerCount(3)}");
+                if (testShopInv.Coins != 50) throw new System.Exception("Coins balance should deduct price on repeated sticker purchase");
 
                 // 11.6 Insufficient Coins validation
                 testShopSave.ActiveSave.Coins = 10;
                 testShopInv.ReloadFromSave();
-                if (shopService.TryBuySticker(3)) throw new System.Exception("TryBuySticker(3) should fail because it is already unlocked");
                 testShopStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(4, "Sticker 4", null, null) { BuyPrice = 50 });
                 if (shopService.TryBuySticker(4)) throw new System.Exception("TryBuySticker(4) should fail with insufficient coins");
                 if (testShopInv.Coins != 10) throw new System.Exception("Coins balance should not change on failed purchase due to insufficient funds");
@@ -375,6 +382,155 @@ namespace CozyLifeSim.Editor
                 CozyValidationLog.Pass("CozySim Logic", "Task 23 IShopService Transaction Safety verified");
 
 
+
+                // Test 11.10: ProgressionService XP & Level Up
+                SaveService testProgSave = new SaveService();
+                testProgSave.ActiveSave.PlayerLevel = 1;
+                testProgSave.ActiveSave.PlayerXP = 0;
+                testProgSave.Save();
+
+                ProgressionService progService = new ProgressionService(testProgSave);
+                int levelUpCount = 0;
+                int xpChangedCount = 0;
+                int newLevelVal = 0;
+                int newXpVal = 0;
+
+                progService.OnLevelUp += (lvl) => { levelUpCount++; newLevelVal = lvl; };
+                progService.OnXPChanged += (xp) => { xpChangedCount++; newXpVal = xp; };
+
+                progService.AddXP(50);
+                if (progService.PlayerXP != 50) throw new System.Exception($"PlayerXP should be 50, got {progService.PlayerXP}");
+                if (progService.PlayerLevel != 1) throw new System.Exception($"PlayerLevel should be 1, got {progService.PlayerLevel}");
+                if (xpChangedCount != 1) throw new System.Exception($"OnXPChanged should be called 1 time, got {xpChangedCount}");
+
+                // Nguong level 1 la 1 * 100 = 100 XP
+                progService.AddXP(60);
+                if (progService.PlayerLevel != 2) throw new System.Exception($"PlayerLevel should level up to 2, got {progService.PlayerLevel}");
+                if (progService.PlayerXP != 10) throw new System.Exception($"PlayerXP should carry over leftover 10 XP, got {progService.PlayerXP}");
+                if (levelUpCount != 1) throw new System.Exception($"OnLevelUp should fire once, got {levelUpCount}");
+                if (newLevelVal != 2) throw new System.Exception($"OnLevelUp payload should be 2, got {newLevelVal}");
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "ProgressionService XP and Level Up verified");
+
+                // Test 11.11: SaveData Migration, Struct-Safe Backfill & Null-Safety Invariants
+                SaveService testMigSave = new SaveService();
+                var save = testMigSave.ActiveSave;
+
+                // Gia lap save cu bi null/corrupt do du lieu truoc do
+                save.StickerOwned = null;
+                save.PlacedStickers = null;
+                save.HasMigratedStickerOwned = false;
+
+                // Gia lap co locked sticker cu ID = 3 va placed stickers thieu PlacementId
+                #pragma warning disable CS0618
+                save.UnlockedStickerIds = new List<int> { 3 };
+                #pragma warning restore CS0618
+
+                // Tao mock placed stickers, co 1 cai null GUID, 2 cai bi trung GUID de test seenIds regenerate
+                var placed1 = new StickerPlacedData { StickerId = 1, PageIndex = 1, PlacementId = null };
+                var placed2 = new StickerPlacedData { StickerId = 2, PageIndex = 1, PlacementId = "duplicate_id" };
+                var placed3 = new StickerPlacedData { StickerId = 3, PageIndex = 1, PlacementId = "duplicate_id" };
+
+                // Vi struct, ta phai khoi tao list va add
+                save.PlacedStickers = new List<StickerPlacedData> { placed1, placed2, placed3 };
+
+                // Chay normalize de bat dau di dan
+                testMigSave.NormalizeSaveData();
+
+                // 1. Kiem tra Null-Safety Invariants khoi tao thanh cong
+                if (save.StickerOwned == null) throw new System.Exception("StickerOwned should be initialized to a non-null list");
+                if (save.PlacedStickers == null) throw new System.Exception("PlacedStickers should be initialized to a non-null list");
+                if (save.CompletedQuestIds == null) throw new System.Exception("CompletedQuestIds should be initialized to a non-null list");
+
+                // 2. Kiem tra di dan sticker an toan
+                if (!save.HasMigratedStickerOwned) throw new System.Exception("HasMigratedStickerOwned should be set to true");
+                var id1 = save.StickerOwned.Find(x => x.StickerId == 1);
+                var id2 = save.StickerOwned.Find(x => x.StickerId == 2);
+                var id3 = save.StickerOwned.Find(x => x.StickerId == 3);
+
+                if (id1 == null || id1.Count != 99) throw new System.Exception($"Default sticker ID 1 should be refilled to 99, got {id1?.Count}");
+                if (id2 == null || id2.Count != 99) throw new System.Exception($"Default sticker ID 2 should be refilled to 99, got {id2?.Count}");
+                if (id3 == null || id3.Count != 1) throw new System.Exception($"Legacy unlocked sticker ID 3 should be merged with Count = 1, got {id3?.Count}");
+
+                // 3. Kiem tra backfill PlacementId (struct-safe & duplicate-safe)
+                if (string.IsNullOrEmpty(save.PlacedStickers[0].PlacementId)) throw new System.Exception("PlacedSticker 0 should have backfilled PlacementId");
+                if (string.IsNullOrEmpty(save.PlacedStickers[1].PlacementId)) throw new System.Exception("PlacedSticker 1 should have backfilled PlacementId");
+                if (string.IsNullOrEmpty(save.PlacedStickers[2].PlacementId)) throw new System.Exception("PlacedSticker 2 should have backfilled PlacementId");
+
+                if (save.PlacedStickers[1].PlacementId == save.PlacedStickers[2].PlacementId)
+                    throw new System.Exception("Duplicate PlacementIds must be regenerated to ensure uniqueness");
+
+                // Kiem tra no thuc su duoc ghi file (Normalize save tu dong khi isDirty == true)
+                SaveService reloadMigSave = new SaveService();
+                if (reloadMigSave.ActiveSave.StickerOwned.Find(x => x.StickerId == 3)?.Count != 1)
+                    throw new System.Exception("Migrated data was not properly persisted to disk");
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "SaveData Migration and Null-Safety Invariants verified");
+
+                // Test 11.12: Sticker Placement, Atomic Transaction & Memory Rollback
+                SaveService testAtomicSave = new SaveService();
+
+                // Clear save dau test de side-effect free
+                testAtomicSave.ActiveSave.StickerOwned.Clear();
+                testAtomicSave.ActiveSave.PlacedStickers.Clear();
+                testAtomicSave.Save();
+
+                InventoryService inventoryService = new InventoryService(testAtomicSave);
+                MemoryService memoryService = new MemoryService(testAtomicSave);
+
+                // Dam bao co san sticker trong kho
+                inventoryService.AddStickerCountNonSaving(3, 1);
+                testAtomicSave.Save();
+
+                int initialCount = inventoryService.GetStickerCount(3);
+                if (initialCount != 1) throw new System.Exception($"Initial count of sticker ID 3 should be 1, got {initialCount}");
+
+                // Kich hoat ForceSaveFailure de gia lap loi IO
+#if UNITY_EDITOR
+                testAtomicSave.ForceSaveFailure = true;
+#endif
+
+                // Giao dich dan sticker (Co che rollback trong Presenter)
+                bool transactionSuccess = false;
+                var data = new StickerPlacedData(3, 1, 10f, 10f, 1f, 0f);
+
+                // 1. Consume sticker count
+                if (inventoryService.ConsumeStickerNonSaving(3))
+                {
+                    // 2. Add placed sticker (Tra ve struct co GUID duoc sinh defensive)
+                    data = memoryService.AddPlacedStickerNonSaving(data);
+
+                    try
+                    {
+                        // 3. Persist to disk
+                        testAtomicSave.Save();
+                        transactionSuccess = true;
+                    }
+                    catch (System.Exception)
+                    {
+                        // 4. Rollback neu luu dia that bai
+                        inventoryService.AddStickerCountNonSaving(3, 1);
+                        memoryService.TryRemovePlacedStickerNonSaving(data.PlacementId, out _);
+                    }
+                }
+
+#if UNITY_EDITOR
+                testAtomicSave.ForceSaveFailure = false;
+#endif
+
+                if (transactionSuccess) throw new System.Exception("Transaction should fail due to simulated IO Save error");
+
+                // Kiem tra bo nho duoc khoi phuc hoàn toan ve trang thai cu
+                int currentCount = inventoryService.GetStickerCount(3);
+                if (currentCount != 1) throw new System.Exception($"After rollback, count of sticker ID 3 should be 1, got {currentCount}");
+
+                bool removedSuccessfully = memoryService.TryRemovePlacedStickerNonSaving(data.PlacementId, out _);
+                if (removedSuccessfully) throw new System.Exception("After rollback, placed sticker must not exist on the book");
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Sticker placement atomic transactions and memory rollback verified");
 
                 if (questDb != null)
                 {

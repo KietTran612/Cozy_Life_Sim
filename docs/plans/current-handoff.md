@@ -2,18 +2,13 @@
 
 ## Snapshot
 
-- Current phase: Task 23.1 Unity log cleanup after Task 23 review is completed and verified.
-- Last completed implementation commit: `4c19b22 do task 23`.
-- Task 22 and Task 22.5 remain completed and previously verified.
-- Task 23 plan files:
-  - `docs/plans/2026-05-29-inventory-reward-loop-design.md`
-  - `docs/plans/2026-05-29-inventory-reward-loop.md`
+- Current phase: Task 24: [Phase 2.1] Progression & Countable Sticker Backend setup.
+- Last completed implementation commit: `a45418d docs: finalize phase 2 technical design with safe struct migration, GUID backfill, and transactional rollback`.
+- Task 23 and 23.1 remain completed and previously verified.
+- Task 24 plan files:
+  - `docs/plans/2026-05-29-polish-and-content-expansion-design.md`
+  - `docs/plans/2026-05-30-progression-countable-backend.md`
 
-## Task 23 Progress
-
-- Added Task 23 data fields and normalization for crop/sticker prices and unlocked sticker IDs.
-- Added `IShopService`, `ShopService`, and `ShopPresenter`, registered through `GameLifetimeScope`.
-- Added reusable popup and shop UI components: `CozyPopup`, `QuestPopup`, `ShopPopup`, and `ShopItemWidget`.
 - Refactored `CozySidebar` into a navigation dock and updated `StickerBook` to spawn only unlocked stickers.
 - Updated scene setup to generate Quest/Shop popups, dim blockers, shop widgets, sidebar buttons, and in-world `CozyInteractiveObject` targets.
 - Added scene validation coverage for popup blockers, navigation dock, `GraphicRaycaster`, world interactives, colliders, and target popup references.
@@ -36,6 +31,11 @@
 
 ## Latest Verification
 
+- Unity MCP verification during Task 24 warning cleanup:
+  - Cleared Unity Console, waited for compile/import readiness, and ran `Tools/CozySim/Run Logic Verification Tests`.
+  - `CozyLifeSimValidation.RunTests`: PASS, 15 passed, 0 failed, 1 expected warning.
+  - Console readback after the run contained only `log` entries; no `warning` or `error` entries remained from shop guard validation.
+  - `git diff --check -- Assets/CozyLifeSim/Scripts/UI/Services/ShopService.cs Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimValidation.cs Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimMcpGameplayLoopValidation.cs`: PASS.
 - Static checks:
   - `git diff --check`: PASS after Task 23.1 changes.
   - New Unity script `.meta` files are present for Task 23.
@@ -53,9 +53,9 @@
 
 ## Current Uncommitted Scope
 
-- Task 23 was already committed at `4c19b22`.
-- Current uncommitted changes: Task 23 review feedback fixes plus Task 23.1 Unity log cleanup (ShopService `SellPrice <= 0` guard, regression tests, database fallback repairs, scene validation fallback warnings, generated scene/database asset updates, and handoff docs).
-- New `.meta` files already exist for the new Unity scripts; do not manually create or rewrite `.meta` files.
+- Technical Design final changes were already committed.
+- Current uncommitted changes: Modified SaveData, ISaveService, SaveService, IInventoryService, InventoryService, IMemoryService, MemoryService, ShopService, CozyLifeSimValidation, and CozyLifeSimMcpGameplayLoopValidation; created IProgressionService.cs and ProgressionService.cs; updated index.md, task.md and current-handoff.md.
+- New `.meta` files already exist for all newly created Unity C# scripts; do not manually create or rewrite `.meta` files.
 - `.agent/scratch/` is untracked and belongs to the Antigravity profile boundary. Do not modify it unless explicitly requested.
 
 Do not commit or push unless the user explicitly asks.

@@ -30,21 +30,21 @@ namespace CozyLifeSim.UI.Services
         {
             if (_cropDatabase == null)
             {
-                Debug.LogWarning("[CozySim Shop] Cannot buy seed: CropDatabase is missing.");
+                Debug.Log("[CozySim Shop] Cannot buy seed: CropDatabase is missing.");
                 return false;
             }
 
             var crop = _cropDatabase.GetCrop(cropId);
             if (crop == null)
             {
-                Debug.LogWarning($"[CozySim Shop] Cannot buy seed: Crop template for ID {cropId} not found.");
+                Debug.Log($"[CozySim Shop] Cannot buy seed: Crop template for ID {cropId} not found.");
                 return false;
             }
 
             int price = crop.BuyPrice;
             if (_inventoryService.Coins < price)
             {
-                Debug.LogWarning($"[CozySim Shop] Insufficient coins to buy seed for crop ID {cropId}. Cost: {price}, owned: {_inventoryService.Coins}");
+                Debug.Log($"[CozySim Shop] Insufficient coins to buy seed for crop ID {cropId}. Cost: {price}, owned: {_inventoryService.Coins}");
                 return false;
             }
 
@@ -64,26 +64,26 @@ namespace CozyLifeSim.UI.Services
         {
             if (_cropDatabase == null)
             {
-                Debug.LogWarning("[CozySim Shop] Cannot sell crop: CropDatabase is missing.");
+                Debug.Log("[CozySim Shop] Cannot sell crop: CropDatabase is missing.");
                 return false;
             }
 
             var crop = _cropDatabase.GetCrop(cropId);
             if (crop == null)
             {
-                Debug.LogWarning($"[CozySim Shop] Cannot sell crop: Crop template for ID {cropId} not found.");
+                Debug.Log($"[CozySim Shop] Cannot sell crop: Crop template for ID {cropId} not found.");
                 return false;
             }
 
             if (_inventoryService.Crops < 1)
             {
-                Debug.LogWarning($"[CozySim Shop] Insufficient crops in inventory to sell crop ID {cropId}.");
+                Debug.Log($"[CozySim Shop] Insufficient crops in inventory to sell crop ID {cropId}.");
                 return false;
             }
 
             if (crop.SellPrice <= 0)
             {
-                Debug.LogWarning($"[CozySim Shop] Cannot sell crop: Crop ID {cropId} has invalid sell price {crop.SellPrice}.");
+                Debug.Log($"[CozySim Shop] Cannot sell crop: Crop ID {cropId} has invalid sell price {crop.SellPrice}.");
                 return false;
             }
 
@@ -103,53 +103,53 @@ namespace CozyLifeSim.UI.Services
         {
             if (_stickerDatabase == null)
             {
-                Debug.LogWarning("[CozySim Shop] Cannot buy sticker: StickerDatabase is missing.");
+                Debug.Log("[CozySim Shop] Cannot buy sticker: StickerDatabase is missing.");
                 return false;
             }
 
             var sticker = _stickerDatabase.GetSticker(stickerId);
             if (sticker == null)
             {
-                Debug.LogWarning($"[CozySim Shop] Cannot buy sticker: Sticker template for ID {stickerId} not found.");
-                return false;
-            }
-
-            if (IsStickerUnlocked(stickerId))
-            {
-                Debug.LogWarning($"[CozySim Shop] Sticker ID {stickerId} is already unlocked.");
+                Debug.Log($"[CozySim Shop] Cannot buy sticker: Sticker template for ID {stickerId} not found.");
                 return false;
             }
 
             int price = sticker.BuyPrice;
-            if (_inventoryService.Coins < price)
+            if (price <= 0)
             {
-                Debug.LogWarning($"[CozySim Shop] Insufficient coins to unlock sticker ID {stickerId}. Cost: {price}, owned: {_inventoryService.Coins}");
+                Debug.Log($"[CozySim Shop] Cannot buy sticker: Sticker ID {stickerId} has invalid buy price {price}.");
                 return false;
             }
 
-            // Perform transaction: deduct coins, unlock sticker
-            if (_inventoryService.ConsumeCoins(price))
+            if (_inventoryService.Coins < price)
             {
-                if (_saveService.ActiveSave.UnlockedStickerIds == null)
-                {
-                    _saveService.ActiveSave.UnlockedStickerIds = new System.Collections.Generic.List<int>();
-                }
-                _saveService.ActiveSave.UnlockedStickerIds.Add(stickerId);
+                Debug.Log($"[CozySim Shop] Insufficient coins to buy sticker ID {stickerId}. Cost: {price}, owned: {_inventoryService.Coins}");
+                return false;
+            }
+
+            if (!_inventoryService.ConsumeCoinsNonSaving(price))
+            {
+                return false;
+            }
+
+            _inventoryService.AddStickerCountNonSaving(stickerId, 1);
+            try
+            {
                 _saveService.Save();
                 OnShopTransactionSuccess?.Invoke();
                 return true;
             }
-
-            return false;
+            catch
+            {
+                _inventoryService.AddCoinsNonSaving(price);
+                _inventoryService.ConsumeStickerNonSaving(stickerId);
+                throw;
+            }
         }
 
         public bool IsStickerUnlocked(int stickerId)
         {
-            if (_saveService.ActiveSave == null || _saveService.ActiveSave.UnlockedStickerIds == null)
-            {
-                return false;
-            }
-            return _saveService.ActiveSave.UnlockedStickerIds.Contains(stickerId);
+            return _inventoryService.GetStickerCount(stickerId) > 0;
         }
     }
 }

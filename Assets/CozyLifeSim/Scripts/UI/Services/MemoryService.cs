@@ -17,9 +17,7 @@ namespace CozyLifeSim.UI.Services
 
         public void PlaceSticker(StickerPlacedData sticker)
         {
-            // Remove existing placement of same sticker on this page
-            ActiveSave.PlacedStickers.RemoveAll(x => x.StickerId == sticker.StickerId && x.PageIndex == sticker.PageIndex);
-            ActiveSave.PlacedStickers.Add(sticker);
+            AddPlacedStickerNonSaving(sticker);
             _saveService.Save();
         }
 
@@ -27,6 +25,51 @@ namespace CozyLifeSim.UI.Services
         {
             ActiveSave.PlacedStickers.RemoveAll(x => x.StickerId == stickerId && x.PageIndex == pageIndex);
             _saveService.Save();
+        }
+
+        public void RemovePlacedSticker(int pageIndex, StickerPlacedData data)
+        {
+            if (TryRemovePlacedStickerNonSaving(data.PlacementId, out _))
+            {
+                _saveService.Save();
+            }
+        }
+
+        public StickerPlacedData AddPlacedStickerNonSaving(StickerPlacedData data)
+        {
+            var list = ActiveSave.PlacedStickers;
+
+            // Defensive validation: Ngan ngua UUID rong hoac trung lap
+            bool hasDuplicate = false;
+            if (!string.IsNullOrEmpty(data.PlacementId))
+            {
+                hasDuplicate = list.Exists(x => x.PlacementId == data.PlacementId);
+            }
+
+            if (string.IsNullOrEmpty(data.PlacementId) || hasDuplicate)
+            {
+                data.PlacementId = System.Guid.NewGuid().ToString();
+            }
+
+            // Pure append (Khong overwrite phan tu trung stickerId/pageIndex de cho phep nhieu ban sao)
+            list.Add(data);
+            return data;
+        }
+
+        public bool TryRemovePlacedStickerNonSaving(string placementId, out StickerPlacedData removedData)
+        {
+            removedData = default;
+            if (string.IsNullOrEmpty(placementId)) return false;
+
+            var list = ActiveSave.PlacedStickers;
+            int idx = list.FindIndex(x => x.PlacementId == placementId);
+            if (idx >= 0)
+            {
+                removedData = list[idx];
+                list.RemoveAt(idx);
+                return true;
+            }
+            return false;
         }
     }
 }

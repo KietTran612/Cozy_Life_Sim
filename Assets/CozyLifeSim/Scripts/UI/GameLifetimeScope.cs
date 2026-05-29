@@ -33,6 +33,7 @@ namespace CozyLifeSim.UI
             // Register Save and Inventory Services as singletons
             builder.Register<ISaveService, SaveService>(Lifetime.Singleton);
             builder.Register<IInventoryService, InventoryService>(Lifetime.Singleton);
+            builder.Register<IProgressionService, ProgressionService>(Lifetime.Singleton);
 
             // Register Memory and Quest singletons
             builder.Register<IMemoryService, MemoryService>(Lifetime.Singleton);

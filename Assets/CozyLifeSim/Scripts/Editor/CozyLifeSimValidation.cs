@@ -11,8 +11,13 @@ namespace CozyLifeSim.Editor
         [MenuItem("Tools/CozySim/Run Logic Verification Tests")]
         public static void RunTests()
         {
+            int passCount = 0;
+            int failCount = 0;
+            int expectedWarningCount = 0;
+
             Debug.Log("<color=cyan>[CozySim TestRunner]</color> Starting core logic verification tests...");
             
+            CozyLifeSim.UI.Settings.QuestDatabase questDb = null;
             try
             {
                 // Reset ONLY our game's save key to prevent wiping other editor/project settings
@@ -22,7 +27,8 @@ namespace CozyLifeSim.Editor
                 // Test 1: Save & Load
                 SaveService saveService = new SaveService();
                 if (saveService.ActiveSave == null) throw new System.Exception("ActiveSave is null");
-                Debug.Log("<color=green>[PASS]</color> SaveService initialized successfully");
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "SaveService initialized successfully");
 
                 // Test 2: Inventory Actions (SaveData defaults: Coins = 100, Seeds = 5, Crops = 0)
                 InventoryService invService = new InventoryService(saveService);
@@ -44,10 +50,17 @@ namespace CozyLifeSim.Editor
                 if (!seedConsumed) throw new System.Exception("Should consume 3 seeds successfully");
                 if (invService.Seeds != 12) throw new System.Exception($"Seeds should be 12 (15 - 3 consumed), got {invService.Seeds}");
                 
-                Debug.Log("<color=green>[PASS]</color> InventoryService and SaveService logic verified");
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "InventoryService and SaveService logic verified");
+
+                // Prepare standard QuestDatabase for normal path testing
+                questDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.QuestDatabase>();
+                questDb.Quests.Add(new QuestTemplate(1, "Water 3 Crops", 3, 50, QuestType.WaterCrops));
+                questDb.Quests.Add(new QuestTemplate(2, "Harvest 2 Mature Crops", 2, 80, QuestType.HarvestCrops));
+                questDb.Quests.Add(new QuestTemplate(3, "Pet the Breathing Chicken 5 times", 5, 40, QuestType.PetAnimal));
 
                 // Test 3: Quest Progression & Rewards
-                QuestService questService = new QuestService(saveService, invService, null); // Test Null Fallback
+                QuestService questService = new QuestService(saveService, invService, questDb);
                 if (questService.ActiveQuests.Count != 3) throw new System.Exception("Quests should contain 3 entries");
                 
                 QuestData waterQuest = questService.ActiveQuests[0]; // QuestId = 1: Water 3 Crops
@@ -71,7 +84,8 @@ namespace CozyLifeSim.Editor
                 // Verify Reward Coins (160 + 50 reward = 210)
                 if (invService.Coins != 210) throw new System.Exception($"Coins after quest reward should be 210, got {invService.Coins}");
                 
-                Debug.Log("<color=green>[PASS]</color> QuestService progression and rewards verified");
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "QuestService progression and rewards verified");
                 
                 // Test 4: Reload and Persistence
                 SaveService reloadSaveService = new SaveService();
@@ -79,10 +93,21 @@ namespace CozyLifeSim.Editor
                 if (reloadInvService.Coins != 210) throw new System.Exception($"Reloaded Coins should be 210, got {reloadInvService.Coins}");
                 if (reloadInvService.Seeds != 12) throw new System.Exception($"Reloaded Seeds should be 12, got {reloadInvService.Seeds}");
                 
-                QuestService reloadQuestService = new QuestService(reloadSaveService, reloadInvService, null); // Test Null Fallback
+                QuestService reloadQuestService = new QuestService(reloadSaveService, reloadInvService, questDb);
                 if (!reloadQuestService.ActiveQuests[0].IsCompleted) throw new System.Exception("Reloaded Quest should remain completed");
                 
-                Debug.Log("<color=green>[PASS]</color> Save/Load Persistence verified");
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Save/Load Persistence verified");
+
+                // Test 4.5: Explicit expected fallback test
+                QuestService fallbackQuestService = new QuestService(saveService, invService, null, false);
+                if (fallbackQuestService.ActiveQuests.Count != 3)
+                {
+                    throw new System.Exception("Fallback quest service should contain 3 default quests.");
+                }
+
+                expectedWarningCount++;
+                CozyValidationLog.ExpectedWarning("CozySim Logic", "QuestDatabase null fallback was intentionally exercised.");
 
                 // Test 5: Quest Editor Data Integrity Validation
                 var testDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.QuestDatabase>();
@@ -127,7 +152,8 @@ namespace CozyLifeSim.Editor
                 }
 
                 Object.DestroyImmediate(testDb);
-                Debug.Log("<color=green>[PASS]</color> Quest Editor Data Integrity Validation verified");
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Quest Editor Data Integrity Validation verified");
                 
                 // Test 6: Crop Editor Data Integrity Validation
                 var testCropDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.CropDatabase>();
@@ -165,7 +191,8 @@ namespace CozyLifeSim.Editor
 
                 Object.DestroyImmediate(testCropDb);
                 if (testSprite != null) Object.DestroyImmediate(testSprite);
-                Debug.Log("<color=green>[PASS]</color> Crop Editor Data Integrity Validation verified");
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Crop Editor Data Integrity Validation verified");
 
                 // Test 7: CropDatabase In-Memory Bootstrapping and Integrity (strictly side-effect free)
                 var testLoadedCropDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.CropDatabase>();
@@ -174,7 +201,8 @@ namespace CozyLifeSim.Editor
                 if (testLoadedCropDb.Crops == null || testLoadedCropDb.Crops.Count == 0) throw new System.Exception("CropDatabase should be bootstrapped with default White Acorn");
                 if (testLoadedCropDb.Crops[0].CropId != 1 || testLoadedCropDb.Crops[0].Name != "White Acorn") throw new System.Exception("Bootstrapped crop should be White Acorn (ID 1)");
                 Object.DestroyImmediate(testLoadedCropDb);
-                Debug.Log("<color=green>[PASS]</color> CropDatabase In-Memory Bootstrapping verified");
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "CropDatabase In-Memory Bootstrapping verified");
 
                 // Test 8: AnimalDatabase In-Memory Bootstrapping and Integrity (strictly side-effect free)
                 var testLoadedAnimalDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.AnimalDatabase>();
@@ -184,7 +212,8 @@ namespace CozyLifeSim.Editor
                 if (testLoadedAnimalDb.Animals[0].AnimalId != 1 || testLoadedAnimalDb.Animals[0].Name != "Breathing Chicken") throw new System.Exception("Bootstrapped animal should be Breathing Chicken (ID 1)");
                 if (testLoadedAnimalDb.Animals[0].BreathScaleY <= 1.0f) throw new System.Exception("Bootstrapped animal breath scale should be greater than 1.0f");
                 Object.DestroyImmediate(testLoadedAnimalDb);
-                Debug.Log("<color=green>[PASS]</color> AnimalDatabase In-Memory Bootstrapping verified");
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "AnimalDatabase In-Memory Bootstrapping verified");
 
                 // Test 9: StickerDatabase In-Memory Validation (strictly side-effect free)
                 var testStickerDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.StickerDatabase>();
@@ -222,7 +251,8 @@ namespace CozyLifeSim.Editor
 
                 Object.DestroyImmediate(testStickerDb);
                 if (testStickerSprite != null) Object.DestroyImmediate(testStickerSprite);
-                Debug.Log("<color=green>[PASS]</color> StickerDatabase In-Memory Validation verified");
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "StickerDatabase In-Memory Validation verified");
 
                 // Test 9.5: StickerDatabase In-Memory Bootstrapping and Integrity (strictly side-effect free)
                 var testLoadedStickerDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.StickerDatabase>();
@@ -232,21 +262,28 @@ namespace CozyLifeSim.Editor
                 if (testLoadedStickerDb.Stickers[0].StickerId != 1 || testLoadedStickerDb.Stickers[0].Name != "Bunny Pink") throw new System.Exception("Bootstrapped sticker 1 should be Bunny Pink (ID 1)");
                 if (testLoadedStickerDb.Stickers[1].StickerId != 2 || testLoadedStickerDb.Stickers[1].Name != "Bear") throw new System.Exception("Bootstrapped sticker 2 should be Bear (ID 2)");
                 Object.DestroyImmediate(testLoadedStickerDb);
-                Debug.Log("<color=green>[PASS]</color> StickerDatabase In-Memory Bootstrapping verified");
-                
-                // Print all-pass congratulations in a highly prominent way!
-                Debug.Log("\n===================================================================================\n" +
-                          "⚡ <size=14><b>[CozySim ALL LOGIC VERIFICATION TESTS PASSED SUCCESSFULLY!]</b></size> ⚡\n" +
-                          "<b>All core services, inventory modifications, quest progression and PlayerPrefs persistence verified successfully!</b>\n" +
-                          "===================================================================================\n");
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "StickerDatabase In-Memory Bootstrapping verified");
+
+                if (questDb != null)
+                {
+                    Object.DestroyImmediate(questDb);
+                    questDb = null;
+                }
+
+                CozyValidationLog.Summary("CozySim Logic", passCount, failCount, expectedWarningCount);
             }
             catch (System.Exception ex)
             {
-                Debug.LogError("\n===================================================================================\n" +
-                               "❌ <size=14><b>[CozySim LOGIC VERIFICATION TEST FAILED!]</b></size> ❌\n" +
-                               $"<b>Error:</b> <color=red>{ex.Message}</color>\n" +
-                               $"<b>Stack Trace:</b>\n{ex.StackTrace}\n" +
-                               "===================================================================================\n");
+                failCount = 1;
+                if (questDb != null)
+                {
+                    Object.DestroyImmediate(questDb);
+                    questDb = null;
+                }
+
+                CozyValidationLog.Fail("CozySim Logic", $"{ex.Message}\n{ex.StackTrace}");
+                CozyValidationLog.Summary("CozySim Logic", passCount, failCount, expectedWarningCount);
                 if (Application.isBatchMode)
                 {
                     throw;

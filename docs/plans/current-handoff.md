@@ -2,49 +2,41 @@
 
 ## Snapshot
 
-- Current phase: core gameplay prototype foundation is complete through Task 21.
-- Last completed commit: `c396dfe feat: add animal and sticker database editors`.
-- Completed scope in that commit: Task 19 Animal Database/Editor, Task 20 Sticker Database/Editor, Task 21 Sticker database utility and scale stability, plus editor logging cleanup that removes blocking `EditorUtility.DisplayDialog` popups.
-- Current recommended next work: create a Task 22 plan, likely either UI polish/runtime loop validation or Inventory + Reward Loop progression.
+- Current phase: core gameplay prototype foundation is complete through Task 22.
+- Last completed commit: `407588c docs: add lightweight project handoff` (Task 22 is implemented and validated locally, pending commit upon request).
+- Completed gameplay scope: Task 22 Runtime Loop Polish & Validation, creating a unified ASCII-safe validation logger, cleaning logic and scene validation output, adding precise quest/inventory/sticker assertions, converting MCP play-mode loop validation into an update-driven async runner, and ensuring PlayerPrefs persistence can be verified through fresh, decoupled service instances.
+- Current recommended next work: Implement Inventory & Reward progression loop.
 
 ## Latest Verification
 
 - Unity version used: 6000.3.11f1.
-- Unity MCP verification after Task 21:
-  - `CozySceneSetupWindow.GenerateSceneSilent`: scene generated and saved successfully.
-  - `CozyLifeSimValidation.RunTests`: PASS.
-  - `CozyLifeSimSceneGameplayValidation.RunValidation`: PASS, `51 passed, 0 warnings, 0 errors`.
-  - Console errors: `0`.
-- Known expected warnings during logic tests:
-  - `QuestDatabase is null or empty. Falling back to default hardcoded quests.`
-  - This appears when tests intentionally construct `QuestService` without a database to verify fallback behavior.
+- Verification results:
+  - `CozySceneSetupWindow.GenerateSceneSilent`: PASS. Test scene generated and wired successfully.
+  - `CozyLifeSimValidation.RunTests` (Logic verification): PASS (10 passed, 0 failed, 1 expected warning for quest fallback).
+  - `CozyLifeSimSceneGameplayValidation.RunValidation` (Scene setup verification): PASS (51 passed, 0 errors).
+  - `CozyLifeSimMcpGameplayLoopValidation.RunGameplayLoopValidation` (Play Mode loop verification): PASS (13/13 steps completed asynchronously, verified planting, watering, harvest coin reward, water quest completion, harvest quest partial progress 1/2, pet quest partial progress 1/5, sticker placement page/coordinate/scale=1.0f persistence, and data reload from freshly constructed PlayerPrefs services).
+- Expected warnings:
+  - `QuestDatabase null fallback was intentionally exercised.` - cleanly marked as `EXPECTED WARNING` in logic test logs.
 
 ## Implemented Systems
 
 - VContainer lifetime scope registers style, save, inventory, memory, quest service, presenters, and data assets for crop, animal, and sticker databases.
 - Quest/Crop/Animal/Sticker database assets and custom editor windows exist under `Assets/CozyLifeSim`.
 - Scene setup scaffolds the runtime UI, wires `GameLifetimeScope`, widget references, dynamic sticker template, inventory tray, pages, and sidebar.
-- Sticker inventory is database-driven via `StickerDatabase`, with one generic `Sticker_Template` and stable saved scale `1.0f`.
-- Validation runners:
-  - `Tools/CozySim/Setup Test Scene Silent`
-  - `Tools/CozySim/Run Logic Verification Tests`
-  - `Tools/CozySim/Run Scene Gameplay Loop Validation`
-  - `Tools/CozySim/Run MCP Gameplay Loop Validation` for play-mode loop checks.
-
-## Local Tooling Notes
-
-- `Assets/StreamingAssets/realvirtual-MCP` is embedded Unity MCP tooling and is tracked as a gitlink in this repository.
-- The embedded MCP repo includes `.mcp-version` and should be kept in sync intentionally when the MCP tooling changes.
-- Do not commit or push unless the user explicitly asks.
+- Shared validation logger `CozyValidationLog.cs` standardizes logic, scene, and gameplay loop outputs with ASCII-safe status indicators.
+- Asynchronous gameplay loop validator `CozyLifeSimMcpGameplayLoopValidation.cs` hooks into `EditorApplication.update` in Play Mode, removing blocking loops.
+- Quest service `QuestService.cs` supports explicit suppression of fallback warnings for validation tests.
 
 ## Current Uncommitted Scope
 
-- `AGENTS.md`: context-loading rules now prefer lightweight handoff files before large historical plans.
-- `docs/plans/current-handoff.md`: this short current-state file.
-- `docs/plans/index.md`: map from topic to detailed plan file.
-- `Assets/StreamingAssets/realvirtual-MCP`: gitlink updated to include the embedded repo commit that tracks `.mcp-version`.
+- [CozyValidationLog.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/CozyValidationLog.cs): Shared ASCII validation logger.
+- [CozyLifeSimValidation.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimValidation.cs): Refactored logic tests using shared logger, clean fallback verification.
+- [CozyLifeSimSceneGameplayValidation.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.cs): Refactored scene tests using shared logger.
+- [CozyLifeSimMcpGameplayLoopValidation.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimMcpGameplayLoopValidation.cs): Decoupled update-driven async loop validator with quest and persistence assertions.
+- [QuestService.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/UI/Services/QuestService.cs): Construction parameter to hide fallback warning noise.
+- [task.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/task.md): Task 22 marked as complete `[x]`.
 
-No runtime Unity script or scene asset changes are part of this handoff cleanup.
+Do not commit or push unless the user explicitly asks.
 
 ## Next-Agent Read Order
 
@@ -53,15 +45,3 @@ No runtime Unity script or scene asset changes are part of this handoff cleanup.
 3. Read this file.
 4. Read `docs/plans/index.md` only to locate detailed plans.
 5. Read large architecture/gameplay plans only when the next task specifically needs them.
-
-## After Each Completed Task
-
-Update this file with:
-
-- latest completed task and commit, if any;
-- latest Unity MCP verification result;
-- known expected warnings or real blockers;
-- recommended next task;
-- any important uncommitted scope.
-
-Keep this file short. Link to detailed plans instead of copying implementation details here.

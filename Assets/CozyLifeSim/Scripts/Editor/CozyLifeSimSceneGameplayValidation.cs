@@ -498,42 +498,22 @@ namespace CozyLifeSim.Editor
         {
             foreach (string pass in passes)
             {
-                Debug.Log($"<color=green>[SCENE PASS]</color> {pass}");
+                CozyValidationLog.Pass("CozySim Scene", pass);
             }
 
             foreach (string warning in warnings)
             {
-                Debug.LogWarning($"<color=yellow>[SCENE WARN]</color> {warning}");
+                CozyValidationLog.Warn("CozySim Scene", warning);
             }
 
             foreach (string error in errors)
             {
-                Debug.LogError($"<color=red>[SCENE FAIL]</color> {error}");
+                CozyValidationLog.Fail("CozySim Scene", error);
             }
 
             PrintManualChecklist();
 
-            string summary = $"{passes.Count} passed, {warnings.Count} warnings, {errors.Count} errors.";
-            string statusColor = errors.Count > 0 ? "red" : "green";
-            string statusText = errors.Count > 0 ? "FAILED" : "PASSED";
-            string icon = errors.Count > 0 ? "❌" : "⚡";
-
-            if (errors.Count > 0)
-            {
-                Debug.LogError("\n===================================================================================\n" +
-                               $"{icon} <size=14><b>[CozySim Scene Gameplay Validation: <color={statusColor}>{statusText}</color>]</b></size> {icon}\n" +
-                               $"<b>Summary:</b> <color=red>{summary}</color>\n" +
-                               "<b>Please fix the reference or compilation errors in your Scene!</b>\n" +
-                               "===================================================================================\n");
-            }
-            else
-            {
-                Debug.Log("\n===================================================================================\n" +
-                          $"{icon} <size=14><b>[CozySim Scene Gameplay Validation: <color={statusColor}>{statusText}</color>]</b></size> {icon}\n" +
-                          $"<b>Summary:</b> <color=green>{summary}</color>\n" +
-                          "<b>All core UI and gameplay structures are validated successfully!</b>\n" +
-                          "===================================================================================\n");
-            }
+            CozyValidationLog.Summary("CozySim Scene", passes.Count, errors.Count);
         }
 
         private static void PrintManualChecklist()

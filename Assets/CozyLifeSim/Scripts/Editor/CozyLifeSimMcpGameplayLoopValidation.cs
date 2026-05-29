@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using CozyLifeSim.Core;
 using CozyLifeSim.UI;
+using CozyLifeSim.UI.Services;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,7 +14,6 @@ namespace CozyLifeSim.Editor
 {
     public static class CozyLifeSimMcpGameplayLoopValidation
     {
-        private const string LogPrefix = "[CozySim MCP Gameplay Validation]";
         private const float StepTimeoutSeconds = 8f;
 
         private static readonly List<string> Passes = new List<string>();
@@ -25,8 +25,12 @@ namespace CozyLifeSim.Editor
         private static ISaveService _saveService;
         private static IInventoryService _inventoryService;
         private static IMemoryService _memoryService;
+        private static IQuestService _questService;
+        private static InventoryHudWidget _inventoryHud;
+        private static QuestHudWidget _questHud;
         private static SaveData _saveBackup;
         private static int _stepIndex;
+        private static int _waterCount;
         private static float _deadline;
         private static bool _isRunning;
         private static bool _restoreSaveOnFinish;
@@ -48,6 +52,7 @@ namespace CozyLifeSim.Editor
             new Step("Harvest crop", HarvestCrop),
             new Step("Pet chicken", PetChicken),
             new Step("Place sticker", PlaceSticker),
+            new Step("Verify PlayerPrefs persistence with fresh services", VerifyFreshServicePersistence),
             new Step("Restore test save", RestoreTestSave)
         };
 
@@ -56,53 +61,34 @@ namespace CozyLifeSim.Editor
         {
             if (!Application.isPlaying)
             {
-                Debug.LogError($"{LogPrefix} Enter Play Mode before running this validation. MCP flow: sim_play, then editor_invoke_method.");
+                CozyValidationLog.Fail("CozySim RuntimeLoop", "Enter Play Mode before running this validation. MCP flow: sim_play, then editor_invoke_method.");
                 return;
             }
 
             if (_isRunning)
             {
-                Debug.LogWarning($"{LogPrefix} Validation is already running.");
+                CozyValidationLog.Warn("CozySim RuntimeLoop", "Validation is already running.");
                 return;
             }
 
             Passes.Clear();
             Errors.Clear();
             _stepIndex = 0;
+            _waterCount = 0;
             _isRunning = true;
             _restoreSaveOnFinish = false;
+            _deadline = Time.realtimeSinceStartup + StepTimeoutSeconds;
 
-            Debug.Log($"{LogPrefix} Started.");
+            EditorApplication.update -= Tick;
+            EditorApplication.update += Tick;
 
-            for (_stepIndex = 0; _stepIndex < Steps.Length; _stepIndex++)
-            {
-                Step step = Steps[_stepIndex];
-                bool completed;
-                try
-                {
-                    completed = step.Execute();
-                }
-                catch (Exception ex)
-                {
-                    Fail($"{step.Name}: threw {ex.GetType().Name}: {ex.Message}");
-                    break;
-                }
+            CozyValidationLog.Pass("CozySim RuntimeLoop", "Started runtime validation.");
+        }
 
-                if (!completed)
-                {
-                    Fail($"{step.Name}: did not complete in synchronous MCP validation.");
-                    break;
-                }
-
-                if (HasErrors())
-                {
-                    break;
-                }
-
-                Pass(step.Name);
-            }
-
-            Finish();
+        [MenuItem("Tools/CozySim/Check Loop Validation Status")]
+        public static void CheckLoopValidationStatus()
+        {
+            Debug.Log($"[CozySim Status] isRunning={_isRunning}, stepIndex={_stepIndex}, passes={Passes.Count}, errors={Errors.Count}, deadline={_deadline - Time.realtimeSinceStartup}s remaining");
         }
 
         private static void Tick()
@@ -166,12 +152,16 @@ namespace CozyLifeSim.Editor
             _saveService = scope.Container.Resolve<ISaveService>();
             _inventoryService = scope.Container.Resolve<IInventoryService>();
             _memoryService = scope.Container.Resolve<IMemoryService>();
+            _questService = scope.Container.Resolve<IQuestService>();
 
-            if (_saveService == null || _inventoryService == null || _memoryService == null)
+            if (_saveService == null || _inventoryService == null || _memoryService == null || _questService == null)
             {
                 Fail("Required services could not be resolved from VContainer.");
                 return true;
             }
+
+            _inventoryHud = FindSceneComponent<InventoryHudWidget>("Header_Panel");
+            _questHud = FindSceneComponent<QuestHudWidget>("Quest_Content");
 
             _saveBackup = CloneSave(_saveService.ActiveSave);
             _restoreSaveOnFinish = true;
@@ -184,6 +174,25 @@ namespace CozyLifeSim.Editor
             activeSave.CompletedQuestIds.Clear();
             activeSave.ActiveQuestProgress.Clear();
             _saveService.Save();
+
+            // Re-initialize the in-memory QuestService to reflect the cleared save data
+            if (_questService != null)
+            {
+                FieldInfo questsField = _questService.GetType().GetField("_quests", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (questsField != null)
+                {
+                    var list = questsField.GetValue(_questService) as List<QuestData>;
+                    if (list != null)
+                    {
+                        list.Clear();
+                    }
+                }
+                MethodInfo initQuestsMethod = _questService.GetType().GetMethod("InitializeQuests", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (initQuestsMethod != null)
+                {
+                    initQuestsMethod.Invoke(_questService, new object[] { false });
+                }
+            }
 
             _initialCoins = _inventoryService.Coins;
             _initialSeeds = _inventoryService.Seeds;
@@ -225,6 +234,8 @@ namespace CozyLifeSim.Editor
                 Fail("Required button, page, sticker, or spawn references are missing.");
             }
 
+            CozyValidationLog.ExpectedWarning("CozySim RuntimeLoop", "Crop growth is accelerated through validation hooks to keep MCP runtime tests deterministic.");
+
             return true;
         }
 
@@ -256,6 +267,16 @@ namespace CozyLifeSim.Editor
                 InvokeCropMethod("CompleteWatering");
             }
 
+            _waterCount++;
+            if (_waterCount == 3)
+            {
+                QuestData waterQuest = FindQuest(QuestType.WaterCrops);
+                if (waterQuest == null || !waterQuest.IsCompleted || waterQuest.CurrentCount != waterQuest.TargetCount)
+                {
+                    Fail("Water quest was not completed after 3 watering actions.");
+                }
+            }
+
             return true;
         }
 
@@ -284,10 +305,16 @@ namespace CozyLifeSim.Editor
                 Fail($"Harvest did not add one crop. Expected {_initialCrops + 1}, got {_inventoryService.Crops}.");
             }
 
-            int expectedCoins = _initialCoins + 10;
+            int expectedCoins = _initialCoins + 60; // 50 quest reward + 10 harvest
             if (_inventoryService.Coins != expectedCoins)
             {
-                Fail($"Harvest did not add 10 coins. Expected {expectedCoins}, got {_inventoryService.Coins}.");
+                Fail($"Harvest did not add expected coins. Expected {expectedCoins}, got {_inventoryService.Coins}.");
+            }
+
+            QuestData harvestQuest = FindQuest(QuestType.HarvestCrops);
+            if (harvestQuest == null || harvestQuest.CurrentCount != 1 || harvestQuest.IsCompleted)
+            {
+                Fail("Harvest quest should persist partial progress 1/2 after one harvest.");
             }
 
             return true;
@@ -300,15 +327,21 @@ namespace CozyLifeSim.Editor
             int beforeHeartCount = _animal.SpawnRoot.childCount;
             _animal.Button.onClick.Invoke();
 
-            int expectedCoins = _initialCoins + 15;
+            int expectedCoins = _initialCoins + 65; // 50 quest reward + 10 harvest + 5 petting
             if (_inventoryService.Coins != expectedCoins)
             {
-                Fail($"Pet chicken did not add 5 coins after harvest. Expected {expectedCoins}, got {_inventoryService.Coins}.");
+                Fail($"Pet chicken did not result in expected coins. Expected {expectedCoins}, got {_inventoryService.Coins}.");
             }
 
             if (_animal.SpawnRoot.childCount <= beforeHeartCount)
             {
                 Fail("Pet chicken did not spawn a heart feedback instance.");
+            }
+
+            QuestData petQuest = FindQuest(QuestType.PetAnimal);
+            if (petQuest == null || petQuest.CurrentCount != 1 || petQuest.IsCompleted)
+            {
+                Fail("Pet quest should persist partial progress 1/5 after one pet.");
             }
 
             return true;
@@ -323,6 +356,70 @@ namespace CozyLifeSim.Editor
             if (_memoryService.PlacedStickers.Count != _initialStickerCount + 1)
             {
                 Fail($"Sticker placement was not saved. Expected {_initialStickerCount + 1}, got {_memoryService.PlacedStickers.Count}.");
+            }
+
+            StickerPlacedData sticker = _memoryService.PlacedStickers[0];
+            if (sticker.PageIndex != 0 || Mathf.Abs(sticker.PositionX - 24f) > 0.01f || Mathf.Abs(sticker.PositionY - (-18f)) > 0.01f)
+            {
+                Fail("Sticker placement data did not persist the expected page position.");
+            }
+
+            if (Mathf.Abs(sticker.Scale - 1.0f) > 0.001f)
+            {
+                Fail($"Sticker scale should persist as 1.0, got {sticker.Scale:0.###}.");
+            }
+
+            return true;
+        }
+
+        private static bool VerifyFreshServicePersistence()
+        {
+            if (HasErrors()) return true;
+
+            var freshSave = new CozyLifeSim.UI.Services.SaveService();
+            var freshInventory = new CozyLifeSim.UI.Services.InventoryService(freshSave);
+            var freshMemory = new CozyLifeSim.UI.Services.MemoryService(freshSave);
+            
+            var questDatabase = GetQuestDatabase();
+            var freshQuest = new CozyLifeSim.UI.Services.QuestService(freshSave, freshInventory, questDatabase, false);
+
+            if (freshInventory.Seeds != 4)
+            {
+                Fail($"Fresh save should restore 4 seeds, got {freshInventory.Seeds}.");
+            }
+
+            if (freshInventory.Crops != 1)
+            {
+                Fail($"Fresh save should restore 1 crop, got {freshInventory.Crops}.");
+            }
+
+            if (freshInventory.Coins != 165)
+            {
+                Fail($"Fresh save should restore 165 coins, got {freshInventory.Coins}.");
+            }
+
+            if (freshMemory.PlacedStickers.Count != 1)
+            {
+                Fail($"Fresh save should restore 1 placed sticker, got {freshMemory.PlacedStickers.Count}.");
+            }
+
+            QuestData waterQuest = FindQuest(freshQuest, QuestType.WaterCrops);
+            QuestData harvestQuest = FindQuest(freshQuest, QuestType.HarvestCrops);
+            QuestData petQuest = FindQuest(freshQuest, QuestType.PetAnimal);
+
+            if (waterQuest == null || !waterQuest.IsCompleted)
+            {
+                Fail("Fresh quest service should restore completed Water quest.");
+            }
+
+            if (harvestQuest == null || harvestQuest.CurrentCount != 1 || harvestQuest.IsCompleted)
+            {
+                Fail("Fresh quest service should restore Harvest quest partial progress 1/2.");
+            }
+
+            if (petQuest == null || petQuest.CurrentCount != 1 || petQuest.IsCompleted)
+            {
+                Fail("Fresh quest service should restore Pet quest partial progress 1/5.");
             }
 
             return true;
@@ -383,6 +480,8 @@ namespace CozyLifeSim.Editor
 
         private static void Finish()
         {
+            EditorApplication.update -= Tick;
+
             if (_restoreSaveOnFinish)
             {
                 RestoreSaveBackup();
@@ -390,25 +489,20 @@ namespace CozyLifeSim.Editor
 
             _isRunning = false;
 
+            int passedCount = Passes.Count;
+            int failedCount = Errors.Count;
+
             foreach (string pass in Passes)
             {
-                Debug.Log($"<color=green>{LogPrefix} PASS</color> {pass}");
+                CozyValidationLog.Pass("CozySim RuntimeLoop", pass);
             }
 
             foreach (string error in Errors)
             {
-                Debug.LogError($"<color=red>{LogPrefix} FAIL</color> {error}");
+                CozyValidationLog.Fail("CozySim RuntimeLoop", error);
             }
 
-            string summary = $"{Passes.Count} passed, {Errors.Count} errors.";
-            if (Errors.Count > 0)
-            {
-                Debug.LogError($"<color=red>{LogPrefix}</color> {summary}");
-            }
-            else
-            {
-                Debug.Log($"<color=cyan>{LogPrefix}</color> {summary}");
-            }
+            CozyValidationLog.Summary("CozySim RuntimeLoop", passedCount, failedCount);
         }
 
         private static void RestoreSaveBackup()
@@ -527,6 +621,34 @@ namespace CozyLifeSim.Editor
 
                 yield return item;
             }
+        }
+
+        private static CozyLifeSim.UI.Settings.QuestDatabase GetQuestDatabase()
+        {
+            GameLifetimeScope scope = LifetimeScope.Find<GameLifetimeScope>() as GameLifetimeScope;
+            if (scope == null) return null;
+
+            SerializedObject so = new SerializedObject(scope);
+            SerializedProperty property = so.FindProperty("_questDatabase");
+            return property == null ? null : property.objectReferenceValue as CozyLifeSim.UI.Settings.QuestDatabase;
+        }
+
+        private static QuestData FindQuest(QuestType type)
+        {
+            return FindQuest(_questService, type);
+        }
+
+        private static QuestData FindQuest(IQuestService service, QuestType type)
+        {
+            if (service == null) return null;
+            foreach (QuestData quest in service.ActiveQuests)
+            {
+                if (quest.Type == type)
+                {
+                    return quest;
+                }
+            }
+            return null;
         }
 
         private readonly struct Step

@@ -18,6 +18,7 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 
 - Scene setup scaffold: `2026-05-28-unity-scene-setup-plan.md`
 - Quest UI panel: `2026-05-28-quest-ui-panel.md`
+- Runtime loop polish and validation: `2026-05-29-runtime-loop-polish-validation.md`
 
 ## Database Editors
 
@@ -29,7 +30,9 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 
 ## Suggested Next Plan
 
-No Task 22 implementation plan exists yet. Create one before changing runtime/editor code, likely one of:
+Task 22 implementation plan exists at `2026-05-29-runtime-loop-polish-validation.md`.
 
-- `YYYY-MM-DD-runtime-loop-polish.md`
+After Task 22 is complete, choose the next plan based on validation results. Likely candidates:
+
 - `YYYY-MM-DD-inventory-reward-loop.md`
+- `YYYY-MM-DD-content-expansion-pass.md`

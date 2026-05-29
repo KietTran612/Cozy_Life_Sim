@@ -17,6 +17,7 @@
 # Personal settings
 .vs/
 .idea/
+.superpowers/
 .gradle/
 .recommenders/
 *.suo

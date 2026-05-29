@@ -17,16 +17,16 @@ namespace CozyLifeSim.UI.Services
         public event Action<QuestData> OnQuestProgressed;
         public event Action<QuestData> OnQuestCompleted;
 
-        public QuestService(ISaveService saveService, IInventoryService inventoryService, CozyLifeSim.UI.Settings.QuestDatabase questDatabase)
+        public QuestService(ISaveService saveService, IInventoryService inventoryService, CozyLifeSim.UI.Settings.QuestDatabase questDatabase, bool logFallbackWarning = true)
         {
             _saveService = saveService;
             _inventoryService = inventoryService;
             _questDatabase = questDatabase;
 
-            InitializeQuests();
+            InitializeQuests(logFallbackWarning);
         }
 
-        private void InitializeQuests()
+        private void InitializeQuests(bool logFallbackWarning)
         {
             if (_questDatabase != null && _questDatabase.Quests != null && _questDatabase.Quests.Count > 0)
             {
@@ -40,7 +40,10 @@ namespace CozyLifeSim.UI.Services
             }
             else
             {
-                UnityEngine.Debug.LogWarning("[CozySim] QuestDatabase is null or empty. Falling back to default hardcoded quests.");
+                if (logFallbackWarning)
+                {
+                    UnityEngine.Debug.LogWarning("[CozySim] QuestDatabase is null or empty. Falling back to default hardcoded quests.");
+                }
                 _quests.Add(new QuestData(1, "Water 3 Crops", 3, 50, QuestType.WaterCrops));
                 _quests.Add(new QuestData(2, "Harvest 2 Mature Crops", 2, 80, QuestType.HarvestCrops));
                 _quests.Add(new QuestData(3, "Pet the Breathing Chicken 5 times", 5, 40, QuestType.PetAnimal));

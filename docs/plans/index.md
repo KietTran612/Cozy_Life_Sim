@@ -22,6 +22,7 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Address review feedback for Task 22: `2026-05-29-address-review-feedback.md`
 - Task 23 Shop & Progression Design: `2026-05-29-inventory-reward-loop-design.md`
 - Task 23 Shop & Progression Implementation: `2026-05-29-inventory-reward-loop.md`
+- Phase 2 Polish & Progression Design: [2026-05-29-polish-and-content-expansion-design.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-29-polish-and-content-expansion-design.md)
 
 
 ## Database Editors

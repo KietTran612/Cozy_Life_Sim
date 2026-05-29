@@ -24,6 +24,7 @@ namespace CozyLifeSim.UI
             {
                 _questService.OnQuestProgressed -= OnQuestChanged;
                 _questService.OnQuestCompleted -= OnQuestChanged;
+                _questService.OnQuestsReloaded -= OnQuestsReloadedHandler;
                 _isSubscribed = false;
             }
 
@@ -33,6 +34,7 @@ namespace CozyLifeSim.UI
             {
                 _questService.OnQuestProgressed += OnQuestChanged;
                 _questService.OnQuestCompleted += OnQuestChanged;
+                _questService.OnQuestsReloaded += OnQuestsReloadedHandler;
                 _isSubscribed = true;
 
                 // Initial UI update
@@ -61,6 +63,11 @@ namespace CozyLifeSim.UI
         }
 
         private void OnQuestChanged(QuestData quest)
+        {
+            RefreshQuests();
+        }
+
+        private void OnQuestsReloadedHandler()
         {
             RefreshQuests();
         }
@@ -112,6 +119,7 @@ namespace CozyLifeSim.UI
             {
                 _questService.OnQuestProgressed -= OnQuestChanged;
                 _questService.OnQuestCompleted -= OnQuestChanged;
+                _questService.OnQuestsReloaded -= OnQuestsReloadedHandler;
                 _isSubscribed = false;
             }
         }

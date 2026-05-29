@@ -22,6 +22,8 @@ namespace CozyLifeSim.UI
         private Tween _scaleTween;
         private Tween _shadowTween;
         private bool _isDragging;
+        private Vector3 _startScale;
+        private Quaternion _startRotation;
         private StickerBookPresenter _presenter;
         private int _pageIndex;
 
@@ -71,6 +73,8 @@ namespace CozyLifeSim.UI
             _startPosition = _rectTransform != null ? (Vector3)_rectTransform.anchoredPosition : Vector3.zero;
             _originalParent = transform.parent;
             _canvas = GetComponentInParent<Canvas>();
+            _startScale = transform.localScale;
+            _startRotation = transform.localRotation;
         }
 
         private void Awake()
@@ -196,6 +200,31 @@ namespace CozyLifeSim.UI
             if (saveToDisk)
             {
                 _presenter?.SaveStickerPosition(_stickerId, _pageIndex, pageAnchoredPosition.x, pageAnchoredPosition.y, 1.0f, transform.localRotation.eulerAngles.z);
+            }
+        }
+
+        public void ResetToTray(Transform trayParent, Vector2 trayPosition)
+        {
+            EnsureInitialized();
+            
+            _scaleTween?.Kill();
+            _shadowTween?.Kill();
+
+            transform.SetParent(trayParent, false);
+            _rectTransform.anchoredPosition = trayPosition;
+            _originalParent = trayParent;
+            _startPosition = trayPosition;
+            _pageIndex = 0;
+            if (_canvasGroup != null)
+            {
+                _canvasGroup.blocksRaycasts = true;
+                _canvasGroup.alpha = 1.0f;
+            }
+            transform.localScale = _startScale;
+            transform.localRotation = _startRotation;
+            if (_shadowOffset != null)
+            {
+                _shadowOffset.anchoredPosition = Vector2.zero;
             }
         }
 

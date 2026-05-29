@@ -3,7 +3,7 @@
 ## Snapshot
 
 - Current phase: core gameplay prototype foundation is complete through Task 22.
-- Last completed commit: `407588c docs: add lightweight project handoff` (Task 22 is implemented and validated locally, pending commit upon request).
+- Last completed commit: `a50ddc4 feat: standardise log formatting and implement play-mode loop validation runner (Task 22)`.
 - Completed gameplay scope: Task 22 Runtime Loop Polish & Validation, creating a unified ASCII-safe validation logger, cleaning logic and scene validation output, adding precise quest/inventory/sticker assertions, converting MCP play-mode loop validation into an update-driven async runner, and ensuring PlayerPrefs persistence can be verified through fresh, decoupled service instances.
 - Current recommended next work: Implement Inventory & Reward progression loop.
 
@@ -29,12 +29,7 @@
 
 ## Current Uncommitted Scope
 
-- [CozyValidationLog.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/CozyValidationLog.cs): Shared ASCII validation logger.
-- [CozyLifeSimValidation.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimValidation.cs): Refactored logic tests using shared logger, clean fallback verification.
-- [CozyLifeSimSceneGameplayValidation.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.cs): Refactored scene tests using shared logger.
-- [CozyLifeSimMcpGameplayLoopValidation.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimMcpGameplayLoopValidation.cs): Decoupled update-driven async loop validator with quest and persistence assertions.
-- [QuestService.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/UI/Services/QuestService.cs): Construction parameter to hide fallback warning noise.
-- [task.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/task.md): Task 22 marked as complete `[x]`.
+- None. All Task 22 work has been successfully committed. Work is now in progress for Task 22.5 review feedback fixes.
 
 Do not commit or push unless the user explicitly asks.
 

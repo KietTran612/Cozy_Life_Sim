@@ -1,7 +1,9 @@
+using System;
 using System.Runtime.InteropServices;
 
 namespace CozyLifeSim.Core
 {
+    [Serializable]
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct StickerPlacedData
     {

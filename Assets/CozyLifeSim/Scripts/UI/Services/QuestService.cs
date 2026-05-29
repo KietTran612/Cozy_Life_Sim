@@ -16,6 +16,7 @@ namespace CozyLifeSim.UI.Services
 
         public event Action<QuestData> OnQuestProgressed;
         public event Action<QuestData> OnQuestCompleted;
+        public event Action OnQuestsReloaded;
 
         public QuestService(ISaveService saveService, IInventoryService inventoryService, CozyLifeSim.UI.Settings.QuestDatabase questDatabase, bool logFallbackWarning = true)
         {
@@ -73,6 +74,13 @@ namespace CozyLifeSim.UI.Services
                     }
                 }
             }
+        }
+
+        public void ReloadFromSave(bool logFallbackWarning = true)
+        {
+            _quests.Clear();
+            InitializeQuests(logFallbackWarning);
+            OnQuestsReloaded?.Invoke();
         }
 
         public void ProgressQuest(QuestType type, int amount)

@@ -24,5 +24,6 @@
 | **Task 20: Implement Sticker Database & Custom Editor Window** | [x] | Completed all implementation, registered StickerDatabase in GameLifetimeScope, refactored CozySticker and StickerBook to spawn dynamically, and scaffolded in CozySceneSetupWindow. |
 | **Task 21: Refactor Sticker Database Auto-Creation & Scale Stability** | [x] | Address P2 reviews: created StickerDatabaseUtility, refactored SceneSetup / EditorWindow, and fixed drag/restore scale stability. |
 | **Task 22: Runtime Loop Polish & Validation** | [x] | Completed accelerated MCP runtime loop validation with save/load persistence, clean validation logs, and targeted UI/runtime fixes. |
+| **Task 22.5: Address P1, P2, P3 Review Feedback for Task 22** | [x] | Completed all review feedback fixes: ReloadFromSave, sticker visual reset, stuck petting state sanitization, serializable StickerPlacedData, and dynamic coin reward resolution. |
 
 

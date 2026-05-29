@@ -11,6 +11,7 @@ namespace CozyLifeSim.Core
         event Action<int> OnCoinsChanged;
         event Action<int> OnSeedsChanged;
         event Action<int> OnCropsChanged;
+        event Action OnInventoryReloaded;
 
         void AddCoins(int amount);
         bool ConsumeCoins(int amount);
@@ -18,5 +19,6 @@ namespace CozyLifeSim.Core
         bool ConsumeSeeds(int amount);
         void AddCrops(int amount);
         bool ConsumeCrops(int amount);
+        void ReloadFromSave();
     }
 }

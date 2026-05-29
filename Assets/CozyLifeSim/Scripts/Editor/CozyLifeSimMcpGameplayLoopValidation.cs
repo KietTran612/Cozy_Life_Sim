@@ -4,6 +4,7 @@ using System.Reflection;
 using CozyLifeSim.Core;
 using CozyLifeSim.UI;
 using CozyLifeSim.UI.Services;
+using DG.Tweening;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -38,6 +39,9 @@ namespace CozyLifeSim.Editor
         private static int _initialSeeds;
         private static int _initialCrops;
         private static int _initialStickerCount;
+        private static Transform _originalStickerParent;
+        private static Vector2 _originalStickerAnchoredPosition;
+        private static int _waterQuestReward;
 
         private static readonly Step[] Steps =
         {
@@ -175,24 +179,27 @@ namespace CozyLifeSim.Editor
             activeSave.ActiveQuestProgress.Clear();
             _saveService.Save();
 
-            // Re-initialize the in-memory QuestService to reflect the cleared save data
+            // Re-initialize the in-memory services to reflect the cleared save data and rehydrate events/UI
             if (_questService != null)
             {
-                FieldInfo questsField = _questService.GetType().GetField("_quests", BindingFlags.Instance | BindingFlags.NonPublic);
-                if (questsField != null)
+                _questService.ReloadFromSave(false);
+            }
+            if (_inventoryService != null)
+            {
+                _inventoryService.ReloadFromSave();
+            }
+
+            if (_stickers.Sticker != null)
+            {
+                _originalStickerParent = _stickers.Sticker.transform.parent;
+                var rect = _stickers.Sticker.GetComponent<RectTransform>();
+                if (rect != null)
                 {
-                    var list = questsField.GetValue(_questService) as List<QuestData>;
-                    if (list != null)
-                    {
-                        list.Clear();
-                    }
-                }
-                MethodInfo initQuestsMethod = _questService.GetType().GetMethod("InitializeQuests", BindingFlags.Instance | BindingFlags.NonPublic);
-                if (initQuestsMethod != null)
-                {
-                    initQuestsMethod.Invoke(_questService, new object[] { false });
+                    _originalStickerAnchoredPosition = rect.anchoredPosition;
                 }
             }
+
+            _waterQuestReward = GetWaterQuestReward(_questService);
 
             _initialCoins = _inventoryService.Coins;
             _initialSeeds = _inventoryService.Seeds;
@@ -202,6 +209,29 @@ namespace CozyLifeSim.Editor
             CropWidget crop = FindSceneComponent<CropWidget>("Farm_Plot");
             AnimalWidget animal = FindSceneComponent<AnimalWidget>("Animal_Pen");
             StickerBook stickerBook = FindSceneComponent<StickerBook>("StickerBook_Panel");
+
+            if (animal != null)
+            {
+                FieldInfo isPettingField = typeof(AnimalWidget).GetField("_isPetting", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (isPettingField != null)
+                {
+                    isPettingField.SetValue(animal, false);
+                }
+                
+                FieldInfo petSeqField = typeof(AnimalWidget).GetField("_petSequence", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (petSeqField != null)
+                {
+                    var seq = petSeqField.GetValue(animal) as Sequence;
+                    seq?.Kill();
+                }
+
+                FieldInfo breathTweenField = typeof(AnimalWidget).GetField("_breathTween", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (breathTweenField != null)
+                {
+                    var tween = breathTweenField.GetValue(animal) as Tween;
+                    tween?.Play();
+                }
+            }
             if (crop == null || animal == null || stickerBook == null)
             {
                 Fail("One or more gameplay widgets are missing from the scene.");
@@ -231,7 +261,9 @@ namespace CozyLifeSim.Editor
 
             if (!_farm.IsValid || !_animal.IsValid || !_stickers.IsValid)
             {
-                Fail("Required button, page, sticker, or spawn references are missing.");
+                Fail($"Required references missing: farm={_farm.IsValid} (widget={_farm.Widget!=null}, plant={_farm.PlantButton!=null}, water={_farm.WaterButton!=null}, harvest={_farm.HarvestButton!=null}), " +
+                     $"animal={_animal.IsValid} (widget={_animal.Widget!=null}, button={_animal.Button!=null}, spawn={_animal.SpawnRoot!=null}), " +
+                     $"stickers={_stickers.IsValid} (book={_stickers.Book!=null}, page={_stickers.Page!=null}, sticker={_stickers.Sticker!=null})");
             }
 
             CozyValidationLog.ExpectedWarning("CozySim RuntimeLoop", "Crop growth is accelerated through validation hooks to keep MCP runtime tests deterministic.");
@@ -305,7 +337,7 @@ namespace CozyLifeSim.Editor
                 Fail($"Harvest did not add one crop. Expected {_initialCrops + 1}, got {_inventoryService.Crops}.");
             }
 
-            int expectedCoins = _initialCoins + 60; // 50 quest reward + 10 harvest
+            int expectedCoins = _initialCoins + 10 + _waterQuestReward;
             if (_inventoryService.Coins != expectedCoins)
             {
                 Fail($"Harvest did not add expected coins. Expected {expectedCoins}, got {_inventoryService.Coins}.");
@@ -327,7 +359,7 @@ namespace CozyLifeSim.Editor
             int beforeHeartCount = _animal.SpawnRoot.childCount;
             _animal.Button.onClick.Invoke();
 
-            int expectedCoins = _initialCoins + 65; // 50 quest reward + 10 harvest + 5 petting
+            int expectedCoins = _initialCoins + 10 + 5 + _waterQuestReward;
             if (_inventoryService.Coins != expectedCoins)
             {
                 Fail($"Pet chicken did not result in expected coins. Expected {expectedCoins}, got {_inventoryService.Coins}.");
@@ -393,9 +425,10 @@ namespace CozyLifeSim.Editor
                 Fail($"Fresh save should restore 1 crop, got {freshInventory.Crops}.");
             }
 
-            if (freshInventory.Coins != 165)
+            int expectedFreshCoins = 100 + 10 + 5 + GetWaterQuestReward(freshQuest);
+            if (freshInventory.Coins != expectedFreshCoins)
             {
-                Fail($"Fresh save should restore 165 coins, got {freshInventory.Coins}.");
+                Fail($"Fresh save should restore {expectedFreshCoins} coins, got {freshInventory.Coins}.");
             }
 
             if (freshMemory.PlacedStickers.Count != 1)
@@ -514,6 +547,23 @@ namespace CozyLifeSim.Editor
 
             CopySave(_saveBackup, _saveService.ActiveSave);
             _saveService.Save();
+
+            // Rehydrate quest and inventory services to trigger HUD widget updates
+            if (_questService != null)
+            {
+                _questService.ReloadFromSave(false);
+            }
+            if (_inventoryService != null)
+            {
+                _inventoryService.ReloadFromSave();
+            }
+
+            // Restore sticker visual layout to inventory tray
+            if (_stickers.Sticker != null && _originalStickerParent != null)
+            {
+                _stickers.Sticker.ResetToTray(_originalStickerParent, _originalStickerAnchoredPosition);
+            }
+
             _restoreSaveOnFinish = false;
         }
 
@@ -571,7 +621,7 @@ namespace CozyLifeSim.Editor
         {
             foreach (CozySticker sticker in FindSceneObjects<CozySticker>())
             {
-                if (sticker.GetComponentInParent<StickerBookPage>() == null)
+                if (sticker.gameObject.activeInHierarchy && sticker.GetComponentInParent<StickerBookPage>() == null)
                 {
                     return sticker;
                 }
@@ -631,6 +681,12 @@ namespace CozyLifeSim.Editor
             SerializedObject so = new SerializedObject(scope);
             SerializedProperty property = so.FindProperty("_questDatabase");
             return property == null ? null : property.objectReferenceValue as CozyLifeSim.UI.Settings.QuestDatabase;
+        }
+
+        private static int GetWaterQuestReward(IQuestService questService)
+        {
+            QuestData waterQuest = FindQuest(questService, QuestType.WaterCrops);
+            return waterQuest != null ? waterQuest.RewardCoins : 50;
         }
 
         private static QuestData FindQuest(QuestType type)

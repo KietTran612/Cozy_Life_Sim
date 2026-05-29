@@ -15,10 +15,19 @@ namespace CozyLifeSim.UI.Services
         public event Action<int> OnCoinsChanged;
         public event Action<int> OnSeedsChanged;
         public event Action<int> OnCropsChanged;
+        public event Action OnInventoryReloaded;
 
         public InventoryService(ISaveService saveService)
         {
             _saveService = saveService;
+        }
+
+        public void ReloadFromSave()
+        {
+            OnCoinsChanged?.Invoke(ActiveSave.Coins);
+            OnSeedsChanged?.Invoke(ActiveSave.Seeds);
+            OnCropsChanged?.Invoke(ActiveSave.Crops);
+            OnInventoryReloaded?.Invoke();
         }
 
         public void AddCoins(int amount)

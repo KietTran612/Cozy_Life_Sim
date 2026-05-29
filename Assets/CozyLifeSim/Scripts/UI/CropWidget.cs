@@ -9,6 +9,7 @@ using UnityEngine.UI;
 using VContainer; // Required DI import
 using VContainer.Unity; // Required LifetimeScope import
 using CozyLifeSim.UI.Presenters; // Required Presenter import
+using CozyLifeSim.UI.Settings; // Import Crop settings
 
 namespace CozyLifeSim.UI
 {
@@ -37,11 +38,21 @@ namespace CozyLifeSim.UI
         private Tween _cropFeedbackTween;
         private bool _isWatering;
         private FarmPresenter _presenter;
+        private CropDatabase _cropDatabase;
+        private CropTemplate _cropTemplate;
 
         [Inject]
-        public void Construct(FarmPresenter presenter)
+        public void Construct(FarmPresenter presenter, CropDatabase cropDatabase = null)
         {
             _presenter = presenter;
+            _cropDatabase = cropDatabase;
+            _cropTemplate = _cropDatabase != null ? _cropDatabase.GetCrop(_cropId) : null;
+        }
+
+        private float GetStageDuration()
+        {
+            float rawDuration = _cropTemplate != null ? _cropTemplate.StageDurationSeconds : _stageDurationSeconds;
+            return Mathf.Max(1f, rawDuration);
         }
 
         private void Start()
@@ -56,9 +67,8 @@ namespace CozyLifeSim.UI
                 }
             }
 
-            float stageDuration = Mathf.Max(1f, _stageDurationSeconds);
-            // Start in empty soil stage (-1)
-            _state = new CropState(_cropId, -1, stageDuration, false);
+            // Retrieve stage duration via safe GetStageDuration helper
+            _state = new CropState(_cropId, -1, GetStageDuration(), false);
             UpdateVisuals();
 
             if (_wateringCan != null)
@@ -119,7 +129,7 @@ namespace CozyLifeSim.UI
 
             if (_presenter.TryPlantCrop())
             {
-                _state = new CropState(_cropId, 0, Mathf.Max(1f, _stageDurationSeconds), false);
+                _state = new CropState(_cropId, 0, GetStageDuration(), false);
                 UpdateVisuals();
             }
         }
@@ -131,14 +141,14 @@ namespace CozyLifeSim.UI
             _presenter.HarvestCrop();
 
             // Reset plot back to empty soil (-1)
-            _state = new CropState(_cropId, -1, Mathf.Max(1f, _stageDurationSeconds), false);
+            _state = new CropState(_cropId, -1, GetStageDuration(), false);
             UpdateVisuals();
         }
 
         private void AdvanceStage()
         {
             int nextStage = Mathf.Min(_state.GrowthStage + 1, 3);
-            _state = new CropState(_state.CropId, nextStage, Mathf.Max(1f, _stageDurationSeconds), false);
+            _state = new CropState(_state.CropId, nextStage, GetStageDuration(), false);
 
             if (_cropVisual != null)
             {
@@ -205,14 +215,28 @@ namespace CozyLifeSim.UI
                 _cropVisual.gameObject.SetActive(_state.GrowthStage >= 0);
                 if (_state.GrowthStage >= 0)
                 {
-                    _cropVisual.sprite = _state.GrowthStage switch
+                    if (_cropTemplate != null)
                     {
-                        0 => _seedSprite,
-                        1 => _sproutSprite,
-                        2 => _matureSprite,
-                        3 => _harvestSprite,
-                        _ => _seedSprite
-                    };
+                        _cropVisual.sprite = _state.GrowthStage switch
+                        {
+                            0 => _cropTemplate.SeedSprite,
+                            1 => _cropTemplate.SproutSprite,
+                            2 => _cropTemplate.MatureSprite,
+                            3 => _cropTemplate.HarvestSprite,
+                            _ => _cropTemplate.SeedSprite
+                        };
+                    }
+                    else
+                    {
+                        _cropVisual.sprite = _state.GrowthStage switch
+                        {
+                            0 => _seedSprite,
+                            1 => _sproutSprite,
+                            2 => _matureSprite,
+                            3 => _harvestSprite,
+                            _ => _seedSprite
+                        };
+                    }
                 }
             }
 
@@ -278,3 +302,4 @@ namespace CozyLifeSim.UI
         }
     }
 }
+

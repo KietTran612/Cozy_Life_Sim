@@ -129,6 +129,44 @@ namespace CozyLifeSim.Editor
                 Object.DestroyImmediate(testDb);
                 Debug.Log("<color=green>[PASS]</color> Quest Editor Data Integrity Validation verified");
                 
+                // Test 6: Crop Editor Data Integrity Validation
+                var testCropDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.CropDatabase>();
+                
+                // 6.1 Valid list should pass
+                var testSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0,0,1,1), Vector2.zero);
+                testCropDb.Crops.Add(new CozyLifeSim.UI.Settings.CropTemplate(1, "Acorn", 5f, testSprite, testSprite, testSprite, testSprite));
+                if (!testCropDb.ValidateDatabase(out var cropErrors))
+                {
+                    throw new System.Exception($"Valid crop database failed validation: {string.Join(", ", cropErrors)}");
+                }
+
+                // 6.2 Duplicate ID should fail
+                testCropDb.Crops.Add(new CozyLifeSim.UI.Settings.CropTemplate(1, "Duplicate Acorn", 10f, testSprite, testSprite, testSprite, testSprite));
+                if (testCropDb.ValidateDatabase(out var dupCropErrors))
+                {
+                    throw new System.Exception("Crop database with duplicate ID should fail validation.");
+                }
+
+                // 6.3 Negative duration should fail
+                testCropDb.Crops.Clear();
+                testCropDb.Crops.Add(new CozyLifeSim.UI.Settings.CropTemplate(1, "Negative Duration", -1f, testSprite, testSprite, testSprite, testSprite));
+                if (testCropDb.ValidateDatabase(out var durCropErrors))
+                {
+                    throw new System.Exception("Crop database with negative stage duration should fail validation.");
+                }
+
+                // 6.4 Missing sprites should fail
+                testCropDb.Crops.Clear();
+                testCropDb.Crops.Add(new CozyLifeSim.UI.Settings.CropTemplate(1, "Missing Sprites", 5f, null, testSprite, testSprite, testSprite));
+                if (testCropDb.ValidateDatabase(out var spriteCropErrors))
+                {
+                    throw new System.Exception("Crop database with missing sprites should fail validation.");
+                }
+
+                Object.DestroyImmediate(testCropDb);
+                if (testSprite != null) Object.DestroyImmediate(testSprite);
+                Debug.Log("<color=green>[PASS]</color> Crop Editor Data Integrity Validation verified");
+                
                 // Print all-pass congratulations!
                 Debug.Log("<color=cyan>[CozySim]</color> <color=green>ALL LOGIC VERIFICATION TESTS PASSED SUCCESSFULLY!</color>");
                 

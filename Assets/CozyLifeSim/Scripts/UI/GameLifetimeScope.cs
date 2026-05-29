@@ -12,11 +12,15 @@ namespace CozyLifeSim.UI
     {
         [SerializeField] private UIStyleConfig _defaultStyleConfig;
         [SerializeField] private CozyLifeSim.UI.Settings.QuestDatabase _questDatabase;
+        [SerializeField] private CozyLifeSim.UI.Settings.CropDatabase _cropDatabase;
 
         protected override void Configure(IContainerBuilder builder)
         {
             // Register Style Service as Singleton in Presentation boundary
             builder.Register<IStyleService>(container => new StyleService(_defaultStyleConfig), Lifetime.Singleton);
+
+            // Null-safe singleton register: always resolves to _cropDatabase (even if null) without exception
+            builder.Register<CozyLifeSim.UI.Settings.CropDatabase>(resolver => _cropDatabase, Lifetime.Singleton);
 
             // Register Save and Inventory Services as singletons
             builder.Register<ISaveService, SaveService>(Lifetime.Singleton);

@@ -52,6 +52,16 @@ namespace CozyLifeSim.Editor
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
                 Debug.Log($"<color=green>[CozySim]</color> Created new QuestDatabase asset at {assetPath}");
+                
+                // Ping newly created database asset
+                EditorApplication.delayCall += () =>
+                {
+                    if (_database != null)
+                    {
+                        EditorGUIUtility.PingObject(_database);
+                        Selection.activeObject = _database;
+                    }
+                };
             }
 
             if (_database != null && _database.Quests.Count == 0)
@@ -175,9 +185,16 @@ namespace CozyLifeSim.Editor
             };
             GUILayout.Label("Cozy Life Sim - Quest Database Designer", headerStyle);
 
-            // Display Dirty Indicator & Sync info
-            EditorGUILayout.BeginHorizontal();
+            // Display Dirty Indicator, Sync info and Ping Button
+            EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
             GUILayout.Label($"Editing Asset: {AssetDatabase.GetAssetPath(_database)}", EditorStyles.miniLabel);
+            
+            if (GUILayout.Button("Ping Asset", EditorStyles.miniButton, GUILayout.Width(80)))
+            {
+                EditorGUIUtility.PingObject(_database);
+                Selection.activeObject = _database;
+            }
+
             if (_isDirty)
             {
                 GUI.color = Color.yellow;

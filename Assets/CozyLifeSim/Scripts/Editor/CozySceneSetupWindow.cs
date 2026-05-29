@@ -102,7 +102,7 @@ namespace CozyLifeSim.Editor
                 lifetimeScope = lifetimeScopeGo.AddComponent<GameLifetimeScope>();
             }
 
-            // Find and wire up QuestDatabase and UIStyleConfig to GameLifetimeScope
+            // Find and wire up QuestDatabase, CropDatabase, and UIStyleConfig to GameLifetimeScope
             CozyLifeSim.UI.Settings.QuestDatabase questDb = null;
             string[] dbGuids = AssetDatabase.FindAssets("t:QuestDatabase");
             if (dbGuids == null || dbGuids.Length == 0)
@@ -113,6 +113,18 @@ namespace CozyLifeSim.Editor
             {
                 string dbPath = AssetDatabase.GUIDToAssetPath(dbGuids[0]);
                 questDb = AssetDatabase.LoadAssetAtPath<CozyLifeSim.UI.Settings.QuestDatabase>(dbPath);
+            }
+
+            CozyLifeSim.UI.Settings.CropDatabase cropDb = null;
+            string[] cropGuids = AssetDatabase.FindAssets("t:CropDatabase");
+            if (cropGuids == null || cropGuids.Length == 0)
+            {
+                cropGuids = AssetDatabase.FindAssets("CropDatabase");
+            }
+            if (cropGuids != null && cropGuids.Length > 0)
+            {
+                string cropPath = AssetDatabase.GUIDToAssetPath(cropGuids[0]);
+                cropDb = AssetDatabase.LoadAssetAtPath<CozyLifeSim.UI.Settings.CropDatabase>(cropPath);
             }
 
             SerializedObject soScope = new SerializedObject(lifetimeScope);
@@ -130,6 +142,14 @@ namespace CozyLifeSim.Editor
                 if (propQuestDb != null)
                 {
                     propQuestDb.objectReferenceValue = questDb;
+                }
+            }
+            if (cropDb != null)
+            {
+                SerializedProperty propCropDb = soScope.FindProperty("_cropDatabase");
+                if (propCropDb != null)
+                {
+                    propCropDb.objectReferenceValue = cropDb;
                 }
             }
             soScope.ApplyModifiedProperties();

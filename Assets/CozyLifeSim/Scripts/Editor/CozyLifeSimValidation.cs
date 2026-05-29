@@ -569,6 +569,64 @@ namespace CozyLifeSim.Editor
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "Quest completion XP reward and active progress cleanup verified");
 
+                // Test 11.14: ShopService Purchase & Level Locks
+                SaveService testShopLockSave = new SaveService();
+                testShopLockSave.ActiveSave.Coins = 100;
+                testShopLockSave.ActiveSave.Seeds = 0; // Reset seeds to 0 to make test assertion deterministic
+                testShopLockSave.ActiveSave.PlayerLevel = 1; // Start at level 1
+                testShopLockSave.ActiveSave.PlayerXP = 0;
+                testShopLockSave.ActiveSave.StickerOwned.Clear();
+                testShopLockSave.ActiveSave.StickerOwned.Add(new StickerInventory(1, 99));
+                testShopLockSave.ActiveSave.StickerOwned.Add(new StickerInventory(2, 99));
+                testShopLockSave.ActiveSave.HasMigratedStickerOwned = true;
+                testShopLockSave.Save();
+
+                InventoryService testShopLockInv = new InventoryService(testShopLockSave);
+                ProgressionService testShopLockProg = new ProgressionService(testShopLockSave);
+
+                var testShopLockCropDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.CropDatabase>();
+                var testCropLockTemp = new CozyLifeSim.UI.Settings.CropTemplate(1, "Test Level Lock Crop", 1f, null, null, null, null) { BuyPrice = 5, RequiredLevel = 2 }; // Level 2 required
+                testShopLockCropDb.Crops.Add(testCropLockTemp);
+
+                var testShopLockStickerDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.StickerDatabase>();
+                var testStickerLockTemp = new CozyLifeSim.UI.Settings.StickerTemplate(3, "Premium Chicken", null, null) { BuyPrice = 50, RequiredLevel = 2 }; // Level 2 required
+                testShopLockStickerDb.Stickers.Add(testStickerLockTemp);
+
+                // Construct IShopService with the progression service!
+                IShopService shopLockService = new ShopService(testShopLockSave, testShopLockInv, testShopLockProg, testShopLockCropDb, testShopLockStickerDb);
+
+                // 1. Try to buy crop seed at Level 1 (should fail)
+                if (shopLockService.TryBuySeed(1))
+                    throw new System.Exception("TryBuySeed(1) should fail at PlayerLevel 1 because it requires level 2");
+
+                // 2. Try to buy premium sticker at Level 1 (should fail)
+                if (shopLockService.TryBuySticker(3))
+                    throw new System.Exception("TryBuySticker(3) should fail at PlayerLevel 1 because it requires level 2");
+
+                // 3. Level up to 2
+                testShopLockProg.AddXP(100); // Trigger level up!
+                if (testShopLockProg.PlayerLevel != 2)
+                    throw new System.Exception($"Player level should be 2, got {testShopLockProg.PlayerLevel}");
+
+                // 4. Try to buy crop seed at Level 2 (should succeed)
+                if (!shopLockService.TryBuySeed(1))
+                    throw new System.Exception("TryBuySeed(1) should succeed at PlayerLevel 2");
+                if (testShopLockInv.Coins != 95 || testShopLockInv.Seeds != 1)
+                    throw new System.Exception($"Balances incorrect after crop purchase at level 2. Coins: {testShopLockInv.Coins}, Seeds: {testShopLockInv.Seeds}");
+
+                // 5. Try to buy premium sticker at Level 2 (should succeed)
+                if (!shopLockService.TryBuySticker(3))
+                    throw new System.Exception("TryBuySticker(3) should succeed at PlayerLevel 2");
+                if (testShopLockInv.Coins != 45)
+                    throw new System.Exception($"Coins incorrect after sticker purchase at level 2. Coins: {testShopLockInv.Coins}");
+                if (testShopLockInv.GetStickerCount(3) != 1)
+                    throw new System.Exception($"Sticker count should be 1, got {testShopLockInv.GetStickerCount(3)}");
+
+                Object.DestroyImmediate(testShopLockCropDb);
+                Object.DestroyImmediate(testShopLockStickerDb);
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "ShopService purchase level locks verified successfully");
+
                 if (questDb != null)
                 {
                     Object.DestroyImmediate(questDb);

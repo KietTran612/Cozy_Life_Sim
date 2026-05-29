@@ -9,6 +9,7 @@ namespace CozyLifeSim.UI.Services
     {
         private readonly ISaveService _saveService;
         private readonly IInventoryService _inventoryService;
+        private readonly IProgressionService _progressionService;
         private readonly CropDatabase _cropDatabase;
         private readonly StickerDatabase _stickerDatabase;
 
@@ -17,13 +18,25 @@ namespace CozyLifeSim.UI.Services
         public ShopService(
             ISaveService saveService,
             IInventoryService inventoryService,
+            IProgressionService progressionService,
             CropDatabase cropDatabase,
             StickerDatabase stickerDatabase)
         {
             _saveService = saveService;
             _inventoryService = inventoryService;
+            _progressionService = progressionService;
             _cropDatabase = cropDatabase;
             _stickerDatabase = stickerDatabase;
+        }
+
+        // Backward compatibility constructor
+        public ShopService(
+            ISaveService saveService,
+            IInventoryService inventoryService,
+            CropDatabase cropDatabase,
+            StickerDatabase stickerDatabase)
+            : this(saveService, inventoryService, null, cropDatabase, stickerDatabase)
+        {
         }
 
         public bool TryBuySeed(int cropId)
@@ -41,6 +54,13 @@ namespace CozyLifeSim.UI.Services
                 return false;
             }
 
+            int currentLevel = _progressionService != null ? _progressionService.PlayerLevel : 999;
+            if (currentLevel < crop.RequiredLevel)
+            {
+                Debug.Log($"[CozySim Shop] Cannot buy seed: Player level {currentLevel} is lower than required level {crop.RequiredLevel}.");
+                return false;
+            }
+
             int price = crop.BuyPrice;
             if (_inventoryService.Coins < price)
             {
@@ -48,11 +68,10 @@ namespace CozyLifeSim.UI.Services
                 return false;
             }
 
-            // Perform transaction: deduct coins, add aggregate seeds
-            if (_inventoryService.ConsumeCoins(price))
+            // Perform transaction: deduct coins non-saving, then add seeds (which saves)
+            if (_inventoryService.ConsumeCoinsNonSaving(price))
             {
                 _inventoryService.AddSeeds(1);
-                _saveService.Save();
                 OnShopTransactionSuccess?.Invoke();
                 return true;
             }
@@ -111,6 +130,13 @@ namespace CozyLifeSim.UI.Services
             if (sticker == null)
             {
                 Debug.Log($"[CozySim Shop] Cannot buy sticker: Sticker template for ID {stickerId} not found.");
+                return false;
+            }
+
+            int currentLevel = _progressionService != null ? _progressionService.PlayerLevel : 999;
+            if (currentLevel < sticker.RequiredLevel)
+            {
+                Debug.Log($"[CozySim Shop] Cannot buy sticker: Player level {currentLevel} is lower than required level {sticker.RequiredLevel}.");
                 return false;
             }
 

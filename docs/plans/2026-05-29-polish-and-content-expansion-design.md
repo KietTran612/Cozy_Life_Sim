@@ -10,7 +10,7 @@
 
 ## I. Phan Ra Va Thu Tu Thuc Thi Moi (Phase Dependencies Reordered)
 
-De giai quyet triet de viec Phase UI phu thuoc vao Data Model moi, thu tu thuc thi cac Phase duoc sap xep lai nhu sau:
+De giai quyet triet de viec Phase UI phu thuoc vao Data Model moi, cac sub-plan con phat sinh trong phien hom nay (2026-05-30) duoc sap xep va dat ten nhat quan nhu sau:
 
 ```mermaid
 graph TD
@@ -19,28 +19,27 @@ graph TD
     Phase_2_3 --> Phase_2_4[Phase 2.4: Settings Popup & Audio]
 ```
 
-| Phase | Output Plan File | Task ID Prefix | Muc Tieu & Acceptance Criteria (Tieu Chi Nghiem Thu) |
+| Phase | Output Plan File | Task ID Prefix | Muc Tieu & Acceptance Criteria (Tieu Chi Nghiiem Thu) |
 | :--- | :--- | :--- | :--- |
-| **Phase 2.1** | `2026-05-29-progression-countable-backend.md` | `P2.1` | **Muc tieu:** SaveData level/XP, StickerOwned model, migration an toan voi co HasMigratedStickerOwned, unique serializable placement ID, IProgressionService, non-saving API va rollback.<br>**Acceptance:** Chuyen doi save cu sang save moi an toan; Unit test validated. |
-| **Phase 2.2** | `2026-05-29-ui-juice-polish.md` | `P2.2` | **Muc tieu:** Phan tab Shop, Sticker Tray cuon ngang hien thi count, DOTween bay xu, Return/Remove UX.<br>**Acceptance:** Shop chuyen tab muot ma; Tray cuon ngang hien thi dung count; Thu hoi sticker duoc. |
-| **Phase 2.3** | `2026-05-29-heritage-content-fallback.md` | `P2.3` | **Muc tieu:** Bo sung data hoai niem Viet Nam that; Flat Fallback ve bang code.<br>**Acceptance:** Tu dong ve Flat color + Shadow + Outline khi thieu Art. |
-| **Phase 2.4** | `2026-05-29-settings-audio.md` | `P2.4` | **Muc tieu:** Settings Popup (Audio Toggles, Player Profile), AudioService.<br>**Acceptance:** Toggle luu PlayerPrefs; Khong co nut Reset Progress. |
+| **Phase 2.1** | `2026-05-30-progression-countable-backend.md` | `P2.1` | **Muc tieu:** SaveData level/XP, StickerOwned model, migration an toan voi co HasMigratedStickerOwned, unique serializable placement ID, IProgressionService, non-saving API va rollback.<br>**Acceptance:** Chuyen doi save cu sang save moi an toan; Unit test validated. |
+| **Phase 2.2** | `2026-05-30-ui-juice-polish.md` | `P2.2` | **Muc tieu:** Phan tab Shop, Sticker Tray cuon ngang hien thi count, DOTween bay xu, Return/Remove UX.<br>**Acceptance:** Shop chuyen tab muot ma; Tray cuon ngang hien thi dung count; Thu hoi sticker duoc. |
+| **Phase 2.3** | `2026-05-30-heritage-content-fallback.md` | `P2.3` | **Muc tieu:** Bo sung data hoai niem Viet Nam that; Flat Fallback ve bang code.<br>**Acceptance:** Tu dong ve Flat color + Shadow + Outline khi thieu Art. |
+| **Phase 2.4** | `2026-05-30-settings-audio.md` | `P2.4` | **Muc tieu:** Settings Popup (Audio Toggles, Player Profile), AudioService.<br>**Acceptance:** Toggle luu PlayerPrefs; Khong co nut Reset Progress. |
 
 ---
 
 ## II. Giai Quyet Cac Bai Toan Ky Thuat Cot Loi (Technical Architecture)
 
-### 2.1. Di Dan Du Lieu Cu & Refill Guard Chuan Xac - [P1]
+### 2.1. Di Dan Du Lieu Cu & Merge An Toan (Migration & Refill Guard) - [P1] & [P2]
 *   **Vi tri xu ly**: Trong ham `NormalizeSaveData()` cua `SaveService.cs`.
 *   **Bo sung Migration Marker trong SaveData.cs**:
     `public bool HasMigratedStickerOwned = false;`
 *   **Quy tac di dan (Migration & Refill Guard)**:
     *   Ham `NormalizeSaveData()` kiem tra neu `!HasMigratedStickerOwned`:
-        1. **Partial-upgrade check**: Kiem tra truoc neu `ActiveSave.StickerOwned != null && ActiveSave.StickerOwned.Count > 0` (save co san tu build trung gian hoac dev). Neu dung, lap tuc gan `HasMigratedStickerOwned = true` va bo qua toan bo buoc duoi de bao toan tuyet doi du lieu thuc te.
-        2. Khoi tao list `StickerOwned` moi.
-        3. **Default Stickers (ID 1, 2)**: Gan `Count = 99` cho ID 1 va 2 trong `StickerOwned`. Vi tri nay chi chay duy nhat mot lan.
-        4. **Sticker Dac Biet da unlock (ID 3)**: Check tu list cu `UnlockedStickerIds` (van duoc giu lai trong class `SaveData.cs` de tuong thich nguoc deserialization nhung danh dau `[System.Obsolete]`). Neu ID 3 ton tai, migrate sang `StickerOwned` voi `Count = 1`. Sau do, goi `UnlockedStickerIds.Clear()` de don dep file save.
-        5. Gan `HasMigratedStickerOwned = true` va goi `Save()`.
+        1. **Khoi tao neu moi hoan toan**: Neu `ActiveSave.StickerOwned` null hoac rong, khoi tao list moi va gan default stickers ID 1, 2 co `Count = 99`.
+        2. **Partial-upgrade check & Merge**: Neu `ActiveSave.StickerOwned` da co san du lieu (save tu build trung gian/dev), he thong **tuyet doi khong** thuc hien refill default ve 99 de tranh overwrite. Tuy nhien, he thong **van thuc hien merge**: duyet qua list cu `UnlockedStickerIds` (danh dau `[System.Obsolete]`), neu co bat ky ID nao chua ton tai trong `StickerOwned` hien tai (vi du ID 3), thuc hien add them vao voi `Count = 1` de khong lam mat sticker da unlock truoc do.
+        3. **Don dep**: Goi `UnlockedStickerIds.Clear()` de lam sach file save.
+        4. **Danh dau hoan thanh**: Gan `HasMigratedStickerOwned = true` va goi `Save()`.
     *   Neu `HasMigratedStickerOwned == true`, he thong **tuyet doi bo qua** moi buoc khoi tao hoac refill de tranh viec tu dong nap lai sticker khi so luong da ve 0 do tieu thu.
 
 ### 2.2. Dinh Danh PlacedStickerId Serializable & StructLayout - [P1] & [P2]
@@ -60,16 +59,17 @@ graph TD
     }
     ```
 
-### 2.3. Tinh Nguyen Tu Giao Dich (Transaction Contract & Non-saving API) - [P1]
-Cac phuong thuc thay doi du lieu non-saving duoc khai bao truc tiep trong **Interface Contract** `IInventoryService` va `IMemoryService` de `StickerBookPresenter` hoac `ShopService` co the dieu phoi an toan qua interface:
-*   **Non-saving API in IInventoryService**:
-    *   `void AddStickerCountNonSaving(int stickerId, int amount);`
-    *   `bool ConsumeStickerNonSaving(int stickerId);`
-    *   `void AddCoinsNonSaving(int amount);`
-    *   `bool ConsumeCoinsNonSaving(int amount);`
-*   **Non-saving API in IMemoryService**:
-    *   `void AddPlacedStickerNonSaving(StickerPlacedData data);`
-    *   `void RemovePlacedStickerNonSaving(string placementId);`
+### 2.3. Tinh Nguyen Tu Trong Bo Nho (Runtime State Atomicity & Non-saving API) - [P1] & [P2]
+Muc tieu chinh cua he thong la **dam bao tinh nguyen tu trong bo nho (Runtime State Atomicity)** de RAM luon dong bo 100% voi dia/persistence khi co loi IO xay ra:
+*   Cac phuong thuc thay doi du lieu non-saving duoc khai bao truc tiep trong **Interface Contract** `IInventoryService` va `IMemoryService` de `StickerBookPresenter` hoac `ShopService` co the dieu phoi an toan qua interface:
+    *   **Non-saving API in IInventoryService**:
+        *   `void AddStickerCountNonSaving(int stickerId, int amount);`
+        *   `bool ConsumeStickerNonSaving(int stickerId);`
+        *   `void AddCoinsNonSaving(int amount);`
+        *   `bool ConsumeCoinsNonSaving(int amount);`
+    *   **Non-saving API in IMemoryService**:
+        *   `void AddPlacedStickerNonSaving(StickerPlacedData data);`
+        *   `void RemovePlacedStickerNonSaving(string placementId);`
 *   **Quy trinh dieu phoi nguyen tu (Orchestration & Rollback)**:
     *   Toan bo giao dich duoc dieu phoi tap trung:
         1. Dan sticker: Goi `ConsumeStickerNonSaving(stickerId)` va `AddPlacedStickerNonSaving(data)`. Goi `SaveService.Save()`. Rollback nguoc lai trong bo nho neu loi.
@@ -93,7 +93,7 @@ De kiem thu hoan hao tinh nguyen tu va rollback trong unit test `Test 11.11` ma 
     }
     #endif
     ```
-*   Trong unit test (chay trong editor context): Set `ForceSaveFailure = true`, goi giao dich dandan/thu hoi/mua sticker, verify nem Exception, va verify toan bo so luong/PlacedStickers giu nguyen 100% nho co che rollback trong bo nho, sau do reset `ForceSaveFailure = false`.
+*   Trong unit test (chay trong editor context): Set `ForceSaveFailure = true`, goi giao dich dan/thu hoi/mua sticker, verify nem Exception, va verify toan bo so luong/PlacedStickers giu nguyen 100% nho co che rollback trong bo nho, sau do reset `ForceSaveFailure = false`.
 
 ### 2.5. Phan Dinh API Kho Sticker (Sticker Inventory API) - [P2]
 Toan bo kho sticker duoc quan ly tap trung boi **`IInventoryService` va `InventoryService`**:
@@ -135,11 +135,11 @@ Toan bo kho sticker duoc quan ly tap trung boi **`IInventoryService` va `Invento
 1.  **Save Migration Test (Kiem tra di dan save cu)**:
     *   Ghi de file save cu chua `UnlockedStickerIds`. Verify list `StickerOwned` moi tu dong sinh, default sticker 1 va 2 co `Count = 99`, sticker 3 co `Count = 1`.
     *   Kiem tra Normalize sau do: Verify **khong** refill lai ve 99 neu so luong hien tai khac 99 vi co `HasMigratedStickerOwned` da duoc set.
-    *   *Partial-upgrade case*: Ghi de save da co StickerOwned nhung `HasMigratedStickerOwned = false`. Verify he thong tu dong set marker true va **bo qua** gan lai count.
+    *   *Partial-upgrade case*: Ghi de save da co StickerOwned nhung `HasMigratedStickerOwned = false` va co UnlockedStickerIds cu. Verify he thong tu dong set marker true, **bo qua** gan lai count default, nhung **van merge thanh cong** cac ID chua co (ID 3) vao StickerOwned voi `Count = 1`.
 2.  **Sticker Consumable & Atomicity Test (Kiem tra tinh nguyen tu)**:
     *   Mua sticker ID 3 -> Tray tang count.
     *   Keo dan sticker -> Count giam 1. Thu hoi sticker -> Count tang 1.
-    *   Gia lap loi: Set `ForceSaveFailure = true` (Editor context), goi giao dich dan/thu hoi/mua sticker, verify nem Exception va he thong thuc hien rollback dung nhu cu (kho va placed data khong bi lech).
+    *   Gia lap loi: Set `ForceSaveFailure = true` (Editor context), goi giao dich dan/thu hoi/mua sticker, verify nem Exception va he thong thuc hien rollback dung nhu cu trong bo nho (kho va placed data khong bi lech).
 3.  **Progression & Level Lock Test**:
     *   Quest hoan thanh -> Nhan XP -> Tang Level -> Shop mo khoa dung cap.
 4.  **Procedural Flat Fallback Test**:

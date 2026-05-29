@@ -166,6 +166,15 @@ namespace CozyLifeSim.Editor
                 Object.DestroyImmediate(testCropDb);
                 if (testSprite != null) Object.DestroyImmediate(testSprite);
                 Debug.Log("<color=green>[PASS]</color> Crop Editor Data Integrity Validation verified");
+
+                // Test 7: CropDatabase In-Memory Bootstrapping and Integrity (strictly side-effect free)
+                var testLoadedCropDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.CropDatabase>();
+                CropDatabaseUtility.BootstrapDefaultCrop(testLoadedCropDb);
+                if (testLoadedCropDb == null) throw new System.Exception("Failed to load or create in-memory CropDatabase");
+                if (testLoadedCropDb.Crops == null || testLoadedCropDb.Crops.Count == 0) throw new System.Exception("CropDatabase should be bootstrapped with default White Acorn");
+                if (testLoadedCropDb.Crops[0].CropId != 1 || testLoadedCropDb.Crops[0].Name != "White Acorn") throw new System.Exception("Bootstrapped crop should be White Acorn (ID 1)");
+                Object.DestroyImmediate(testLoadedCropDb);
+                Debug.Log("<color=green>[PASS]</color> CropDatabase In-Memory Bootstrapping verified");
                 
                 // Print all-pass congratulations!
                 Debug.Log("<color=cyan>[CozySim]</color> <color=green>ALL LOGIC VERIFICATION TESTS PASSED SUCCESSFULLY!</color>");

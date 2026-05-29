@@ -115,17 +115,7 @@ namespace CozyLifeSim.Editor
                 questDb = AssetDatabase.LoadAssetAtPath<CozyLifeSim.UI.Settings.QuestDatabase>(dbPath);
             }
 
-            CozyLifeSim.UI.Settings.CropDatabase cropDb = null;
-            string[] cropGuids = AssetDatabase.FindAssets("t:CropDatabase");
-            if (cropGuids == null || cropGuids.Length == 0)
-            {
-                cropGuids = AssetDatabase.FindAssets("CropDatabase");
-            }
-            if (cropGuids != null && cropGuids.Length > 0)
-            {
-                string cropPath = AssetDatabase.GUIDToAssetPath(cropGuids[0]);
-                cropDb = AssetDatabase.LoadAssetAtPath<CozyLifeSim.UI.Settings.CropDatabase>(cropPath);
-            }
+            CozyLifeSim.UI.Settings.CropDatabase cropDb = CropDatabaseUtility.LoadOrCreateDatabase();
 
             SerializedObject soScope = new SerializedObject(lifetimeScope);
             if (_styleConfig != null)

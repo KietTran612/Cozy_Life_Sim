@@ -29,80 +29,27 @@ namespace CozyLifeSim.Editor
 
         private void LoadOrCreateDatabase()
         {
-            string[] guids = AssetDatabase.FindAssets("t:CropDatabase");
-            if (guids != null && guids.Length > 0)
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-                _database = AssetDatabase.LoadAssetAtPath<CropDatabase>(path);
-            }
-            else
-            {
-                string dir = "Assets/CozyLifeSim/Settings";
-                if (!Directory.Exists(dir))
-                {
-                    Directory.CreateDirectory(dir);
-                    AssetDatabase.Refresh();
-                }
-                string assetPath = $"{dir}/CropDatabase.asset";
-                _database = ScriptableObject.CreateInstance<CropDatabase>();
-                AssetDatabase.CreateAsset(_database, assetPath);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-                Debug.Log($"<color=green>[CozySim]</color> Created new CropDatabase asset at {assetPath}");
-                
-                // Ping newly created database asset
-                EditorApplication.delayCall += () =>
-                {
-                    if (_database != null)
-                    {
-                        EditorGUIUtility.PingObject(_database);
-                        Selection.activeObject = _database;
-                    }
-                };
-            }
+            _database = CropDatabaseUtility.LoadOrCreateDatabase();
 
             if (_database != null)
             {
-                // Bootstrap default Crop database content if empty
-                if (_database.Crops.Count == 0)
-                {
-                    var seedSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Plants/Acorn-256.png");
-                    var sproutSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Plants/Sapling-256.png");
-                    var matureSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Flowers/Flower-Tulip-Red-256.png");
-
-                    // Fallback: If designated package sprites are null, auto-discover any available Sprite in the project
-                    if (seedSprite == null || sproutSprite == null || matureSprite == null)
-                    {
-                        string[] spriteGuids = AssetDatabase.FindAssets("t:Sprite");
-                        if (spriteGuids != null && spriteGuids.Length > 0)
-                        {
-                            var fallbackSprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GUIDToAssetPath(spriteGuids[0]));
-                            if (seedSprite == null) seedSprite = fallbackSprite;
-                            if (sproutSprite == null) sproutSprite = fallbackSprite;
-                            if (matureSprite == null) matureSprite = fallbackSprite;
-                        }
-                    }
-
-                    _database.Crops.Add(new CropTemplate(1, "White Acorn", 5f, seedSprite, sproutSprite, matureSprite, matureSprite));
-                    EditorUtility.SetDirty(_database);
-                    AssetDatabase.SaveAssets();
-                    Debug.Log("<color=green>[CozySim]</color> Bootstrapped default 'White Acorn' crop inside database (with safety fallbacks).");
-                }
-
                 _stagingCrops.Clear();
-                foreach (var crop in _database.Crops)
+                if (_database.Crops != null)
                 {
-                    if (crop != null)
+                    foreach (var crop in _database.Crops)
                     {
-                        _stagingCrops.Add(new CropTemplate(
-                            crop.CropId,
-                            crop.Name,
-                            crop.StageDurationSeconds,
-                            crop.SeedSprite,
-                            crop.SproutSprite,
-                            crop.MatureSprite,
-                            crop.HarvestSprite
-                        ));
+                        if (crop != null)
+                        {
+                            _stagingCrops.Add(new CropTemplate(
+                                crop.CropId,
+                                crop.Name,
+                                crop.StageDurationSeconds,
+                                crop.SeedSprite,
+                                crop.SproutSprite,
+                                crop.MatureSprite,
+                                crop.HarvestSprite
+                            ));
+                        }
                     }
                 }
                 _isDirty = false;

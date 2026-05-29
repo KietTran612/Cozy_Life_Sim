@@ -10,6 +10,7 @@ namespace CozyLifeSim.UI.Settings
 
         public CropTemplate GetCrop(int cropId)
         {
+            if (Crops == null) return null;
             return Crops.Find(x => x != null && x.CropId == cropId);
         }
 

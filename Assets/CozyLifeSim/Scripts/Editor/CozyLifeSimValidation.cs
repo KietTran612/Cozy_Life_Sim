@@ -265,6 +265,102 @@ namespace CozyLifeSim.Editor
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "StickerDatabase In-Memory Bootstrapping verified");
 
+                // Test 10: Task 23 Data Model Prices & UnlockedStickers defaults
+                var testSaveData = new SaveData();
+                if (testSaveData.UnlockedStickerIds == null || testSaveData.UnlockedStickerIds.Count != 2)
+                {
+                    throw new System.Exception("UnlockedStickerIds list should be initialized and contain exactly 2 defaults (ID 1, 2)");
+                }
+                if (!testSaveData.UnlockedStickerIds.Contains(1) || !testSaveData.UnlockedStickerIds.Contains(2))
+                {
+                    throw new System.Exception("UnlockedStickerIds must contain default sticker IDs 1 and 2");
+                }
+
+                var testCrop = new CozyLifeSim.UI.Settings.CropTemplate { BuyPrice = 5, SellPrice = 15 };
+                if (testCrop.BuyPrice != 5 || testCrop.SellPrice != 15)
+                {
+                    throw new System.Exception("CropTemplate prices must be initialized correctly");
+                }
+
+                var testSticker = new CozyLifeSim.UI.Settings.StickerTemplate { BuyPrice = 50 };
+                if (testSticker.BuyPrice != 50)
+                {
+                    throw new System.Exception("StickerTemplate price must be initialized correctly");
+                }
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Task 23 Pricing & UnlockedStickers defaults verified");
+
+                // Test 11: Task 23 IShopService Transaction Safety
+                var testShopSave = new SaveService();
+                var testShopInv = new InventoryService(testShopSave);
+
+                // Clear save
+                testShopSave.ActiveSave.Coins = 100;
+                testShopSave.ActiveSave.Seeds = 5;
+                testShopSave.ActiveSave.Crops = 0;
+                testShopSave.ActiveSave.UnlockedStickerIds = new List<int> { 1, 2 };
+                testShopSave.Save();
+
+                var testShopCropDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.CropDatabase>();
+                var testCropTemp = new CozyLifeSim.UI.Settings.CropTemplate(1, "Test White Acorn", 1f, null, null, null, null) { BuyPrice = 5, SellPrice = 15 };
+                testShopCropDb.Crops.Add(testCropTemp);
+
+                var testShopStickerDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.StickerDatabase>();
+                testShopStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(1, "Bunny Pink", null, null) { BuyPrice = 50 });
+                testShopStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(2, "Bear", null, null) { BuyPrice = 50 });
+                testShopStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(3, "Chicken White", null, null) { BuyPrice = 50 });
+
+                // Construct IShopService with in-memory databases.
+                IShopService shopService = new ShopService(testShopSave, testShopInv, testShopCropDb, testShopStickerDb);
+
+                // 11.1 TryBuySeed(1) with 100 coins -> Expect True. Coins = 95, Seeds = 6.
+                if (!shopService.TryBuySeed(1)) throw new System.Exception("TryBuySeed(1) should succeed with 100 coins");
+                if (testShopInv.Coins != 95 || testShopInv.Seeds != 6) throw new System.Exception($"Balances incorrect after seed purchase. Coins: {testShopInv.Coins}, Seeds: {testShopInv.Seeds}");
+
+                // 11.2 TryBuySeed(999) (invalid ID) -> Expect False (clean abort, return false, no throw)
+                if (shopService.TryBuySeed(999)) throw new System.Exception("TryBuySeed(999) should return false on missing template");
+
+                // 11.3 TryBuySticker(1) (already unlocked) -> Expect False
+                if (shopService.TryBuySticker(1)) throw new System.Exception("TryBuySticker(1) should fail because default sticker is already unlocked");
+
+                // 11.4 TryBuySticker(3) with sufficient coins -> Expect True. Coins = 45, ID 3 added.
+                if (!shopService.TryBuySticker(3)) throw new System.Exception("TryBuySticker(3) should succeed with 95 coins");
+                if (testShopInv.Coins != 45) throw new System.Exception($"Coins incorrect after sticker purchase. Coins: {testShopInv.Coins}");
+                if (!shopService.IsStickerUnlocked(3)) throw new System.Exception("Sticker ID 3 should be unlocked");
+
+                // 11.5 Repeated TryBuySticker(3) -> Expect False (already unlocked)
+                if (shopService.TryBuySticker(3)) throw new System.Exception("Repeated TryBuySticker(3) should fail");
+                if (testShopInv.Coins != 45) throw new System.Exception("Coins balance should not change on failed repeated sticker purchase");
+
+                // 11.6 Insufficient Coins validation
+                testShopSave.ActiveSave.Coins = 10;
+                testShopInv.ReloadFromSave();
+                if (shopService.TryBuySticker(3)) throw new System.Exception("TryBuySticker(3) should fail because it is already unlocked");
+                testShopStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(4, "Sticker 4", null, null) { BuyPrice = 50 });
+                if (shopService.TryBuySticker(4)) throw new System.Exception("TryBuySticker(4) should fail with insufficient coins");
+                if (testShopInv.Coins != 10) throw new System.Exception("Coins balance should not change on failed purchase due to insufficient funds");
+
+                // 11.7 Insufficient Crops validation
+                testShopSave.ActiveSave.Crops = 0;
+                testShopInv.ReloadFromSave();
+                if (shopService.TrySellCrop(1)) throw new System.Exception("TrySellCrop(1) should fail with 0 crops");
+                if (testShopInv.Crops != 0) throw new System.Exception("Crops balance should not change on failed sale due to insufficient crops");
+
+                // 11.8 Successful TrySellCrop(1) -> Crops = 1, Coins = 10 + 15 = 25
+                testShopSave.ActiveSave.Crops = 2;
+                testShopInv.ReloadFromSave();
+                if (!shopService.TrySellCrop(1)) throw new System.Exception("TrySellCrop(1) should succeed with 2 crops");
+                if (testShopInv.Crops != 1 || testShopInv.Coins != 25) throw new System.Exception($"Balances incorrect after crop sale. Crops: {testShopInv.Crops}, Coins: {testShopInv.Coins}");
+
+                Object.DestroyImmediate(testShopCropDb);
+                Object.DestroyImmediate(testShopStickerDb);
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Task 23 IShopService Transaction Safety verified");
+
+
+
                 if (questDb != null)
                 {
                     Object.DestroyImmediate(questDb);

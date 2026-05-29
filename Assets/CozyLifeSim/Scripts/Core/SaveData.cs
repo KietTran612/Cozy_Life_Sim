@@ -22,6 +22,7 @@ namespace CozyLifeSim.Core
         public int Coins = 100;
         public int Seeds = 5;
         public int Crops = 0;
+        public List<int> UnlockedStickerIds = new List<int> { 1, 2 };
         public List<StickerPlacedData> PlacedStickers = new List<StickerPlacedData>();
         public List<int> CompletedQuestIds = new List<int>();
         public List<QuestProgressData> ActiveQuestProgress = new List<QuestProgressData>();

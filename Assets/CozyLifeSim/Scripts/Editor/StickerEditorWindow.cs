@@ -39,18 +39,21 @@ namespace CozyLifeSim.Editor
                 {
                     if (sticker != null)
                     {
-                        _stagingStickers.Add(new StickerTemplate(
+                        var copy = new StickerTemplate(
                             sticker.StickerId,
                             sticker.Name,
                             sticker.Sprite,
                             sticker.ShadowSprite
-                        ));
+                        );
+                        copy.BuyPrice = sticker.BuyPrice;
+                        _stagingStickers.Add(copy);
                     }
                 }
                 _isDirty = false;
                 ValidateStaging();
             }
         }
+
 
         private void ValidateStaging()
         {
@@ -70,8 +73,10 @@ namespace CozyLifeSim.Editor
                 else ids.Add(s.StickerId);
                 if (string.IsNullOrWhiteSpace(s.Name)) _validationErrors.Add($"ID {s.StickerId}: Name cannot be empty.");
                 if (s.Sprite == null) _validationErrors.Add($"ID {s.StickerId}: Sprite must be assigned.");
+                if (s.BuyPrice <= 0) _validationErrors.Add($"ID {s.StickerId}: Buy price must be greater than zero.");
             }
         }
+
 
         private static void LogEditorError(string title, IEnumerable<string> details)
         {
@@ -156,6 +161,10 @@ namespace CozyLifeSim.Editor
                 selected.ShadowSprite = (Sprite)EditorGUILayout.ObjectField("Shadow/Silhouette Sprite", selected.ShadowSprite, typeof(Sprite), false);
                 if (selected.ShadowSprite != oldShadow) { _isDirty = true; ValidateStaging(); }
 
+                int oldBuyPrice = selected.BuyPrice;
+                selected.BuyPrice = EditorGUILayout.IntField("Buy Price (Coins)", selected.BuyPrice);
+                if (selected.BuyPrice != oldBuyPrice) { _isDirty = true; ValidateStaging(); }
+
                 EditorGUILayout.EndScrollView();
 
                 EditorGUILayout.Space();
@@ -202,9 +211,10 @@ namespace CozyLifeSim.Editor
                     _database.Stickers.Clear();
                     foreach (var s in _stagingStickers)
                     {
-                        _database.Stickers.Add(new StickerTemplate(s.StickerId, s.Name, s.Sprite, s.ShadowSprite));
+                        _database.Stickers.Add(new StickerTemplate(s.StickerId, s.Name, s.Sprite, s.ShadowSprite) { BuyPrice = s.BuyPrice });
                     }
                     EditorUtility.SetDirty(_database);
+
                     AssetDatabase.SaveAssets();
                     _isDirty = false;
                     LogEditorSuccess("Sticker Database saved successfully.");

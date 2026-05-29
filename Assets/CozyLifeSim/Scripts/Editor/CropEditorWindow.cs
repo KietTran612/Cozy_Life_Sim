@@ -40,7 +40,7 @@ namespace CozyLifeSim.Editor
                     {
                         if (crop != null)
                         {
-                            _stagingCrops.Add(new CropTemplate(
+                            var copy = new CropTemplate(
                                 crop.CropId,
                                 crop.Name,
                                 crop.StageDurationSeconds,
@@ -48,13 +48,17 @@ namespace CozyLifeSim.Editor
                                 crop.SproutSprite,
                                 crop.MatureSprite,
                                 crop.HarvestSprite
-                            ));
+                            );
+                            copy.BuyPrice = crop.BuyPrice;
+                            copy.SellPrice = crop.SellPrice;
+                            _stagingCrops.Add(copy);
                         }
                     }
                 }
                 _isDirty = false;
                 ValidateStaging();
             }
+
         }
 
         private void ValidateStaging()
@@ -71,8 +75,11 @@ namespace CozyLifeSim.Editor
                 if (c.StageDurationSeconds <= 0f) _validationErrors.Add($"ID {c.CropId}: Stage duration must be > 0.");
                 if (c.SeedSprite == null || c.SproutSprite == null || c.MatureSprite == null || c.HarvestSprite == null)
                     _validationErrors.Add($"ID {c.CropId}: Missing stage sprites.");
+                if (c.BuyPrice <= 0) _validationErrors.Add($"ID {c.CropId}: Buy price must be greater than zero.");
+                if (c.SellPrice <= 0) _validationErrors.Add($"ID {c.CropId}: Sell price must be greater than zero.");
             }
         }
+
 
         private void OnGUI()
         {
@@ -181,6 +188,14 @@ namespace CozyLifeSim.Editor
                 selected.HarvestSprite = (Sprite)EditorGUILayout.ObjectField("Harvest Sprite", selected.HarvestSprite, typeof(Sprite), false);
                 if (selected.HarvestSprite != oldHarvest) { _isDirty = true; ValidateStaging(); }
 
+                int oldBuy = selected.BuyPrice;
+                selected.BuyPrice = EditorGUILayout.IntField("Buy Price (Coins)", selected.BuyPrice);
+                if (selected.BuyPrice != oldBuy) { _isDirty = true; ValidateStaging(); }
+
+                int oldSell = selected.SellPrice;
+                selected.SellPrice = EditorGUILayout.IntField("Sell Price (Coins)", selected.SellPrice);
+                if (selected.SellPrice != oldSell) { _isDirty = true; ValidateStaging(); }
+
                 EditorGUILayout.EndScrollView();
 
                 EditorGUILayout.Space();
@@ -216,12 +231,12 @@ namespace CozyLifeSim.Editor
             GUI.enabled = _isDirty && _validationErrors.Count == 0;
             if (GUILayout.Button("Save Changes", GUILayout.Height(40)))
             {
-                _database.Crops.Clear();
-                foreach (var s in _stagingCrops)
-                {
-                    _database.Crops.Add(new CropTemplate(s.CropId, s.Name, s.StageDurationSeconds, s.SeedSprite, s.SproutSprite, s.MatureSprite, s.HarvestSprite));
-                }
-                EditorUtility.SetDirty(_database);
+                 _database.Crops.Clear();
+                 foreach (var s in _stagingCrops)
+                 {
+                     _database.Crops.Add(new CropTemplate(s.CropId, s.Name, s.StageDurationSeconds, s.SeedSprite, s.SproutSprite, s.MatureSprite, s.HarvestSprite) { BuyPrice = s.BuyPrice, SellPrice = s.SellPrice });
+                 }
+                 EditorUtility.SetDirty(_database);
                 AssetDatabase.SaveAssets();
                 _isDirty = false;
                 Debug.Log("<color=green>[CozySim]</color> Crop Database saved successfully!");

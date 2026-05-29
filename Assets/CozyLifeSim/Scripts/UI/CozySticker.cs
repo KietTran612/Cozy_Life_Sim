@@ -84,13 +84,17 @@ namespace CozyLifeSim.UI
 
         private void Start()
         {
-            if (Application.isPlaying)
+            EnsurePresenterInjected();
+        }
+
+        private void EnsurePresenterInjected()
+        {
+            if (_presenter != null || !Application.isPlaying) return;
+
+            var scope = LifetimeScope.Find<GameLifetimeScope>();
+            if (scope != null && scope.Container != null)
             {
-                var scope = LifetimeScope.Find<GameLifetimeScope>();
-                if (scope != null && scope.Container != null)
-                {
-                    scope.Container.Inject(this);
-                }
+                scope.Container.Inject(this);
             }
         }
 
@@ -176,6 +180,7 @@ namespace CozyLifeSim.UI
         public void FinalizePlacement(Transform pageParent, Vector2 pageAnchoredPosition, int pageIndex, bool saveToDisk = true)
         {
             EnsureInitialized();
+            EnsurePresenterInjected();
             _pageIndex = pageIndex;
             if (_canvasGroup != null)
             {

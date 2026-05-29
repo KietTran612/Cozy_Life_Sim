@@ -25,10 +25,10 @@ namespace CozyLifeSim.Editor
         private static StickerRefs _stickers;
         private static ISaveService _saveService;
         private static IInventoryService _inventoryService;
+        private static IShopService _shopService;
         private static IMemoryService _memoryService;
         private static IQuestService _questService;
         private static InventoryHudWidget _inventoryHud;
-        private static QuestHudWidget _questHud;
         private static SaveData _saveBackup;
         private static int _stepIndex;
         private static int _waterCount;
@@ -42,10 +42,14 @@ namespace CozyLifeSim.Editor
         private static Transform _originalStickerParent;
         private static Vector2 _originalStickerAnchoredPosition;
         private static int _waterQuestReward;
+        private static int _seedBuyPrice;
+        private static int _cropSellPrice;
+        private static int _premiumStickerBuyPrice;
 
         private static readonly Step[] Steps =
         {
             new Step("Initialize runtime references", InitializeRuntimeReferences),
+            new Step("Buy seed from shop", BuySeedFromShop),
             new Step("Plant seed", PlantSeed),
             new Step("Water crop stage 0", WaterCrop),
             new Step("Wait for crop stage 1", WaitForCropStage1),
@@ -54,6 +58,9 @@ namespace CozyLifeSim.Editor
             new Step("Water crop stage 2", WaterCrop),
             new Step("Wait for harvest-ready crop", WaitForCropStage3),
             new Step("Harvest crop", HarvestCrop),
+            new Step("Sell harvested crop", SellHarvestedCrop),
+            new Step("Buy premium sticker", BuyPremiumSticker),
+            new Step("Verify unlocked sticker tray", VerifyUnlockedStickerTray),
             new Step("Pet chicken", PetChicken),
             new Step("Place sticker", PlaceSticker),
             new Step("Verify PlayerPrefs persistence with fresh services", VerifyFreshServicePersistence),
@@ -155,17 +162,23 @@ namespace CozyLifeSim.Editor
 
             _saveService = scope.Container.Resolve<ISaveService>();
             _inventoryService = scope.Container.Resolve<IInventoryService>();
+            _shopService = scope.Container.Resolve<IShopService>();
             _memoryService = scope.Container.Resolve<IMemoryService>();
             _questService = scope.Container.Resolve<IQuestService>();
 
-            if (_saveService == null || _inventoryService == null || _memoryService == null || _questService == null)
+            if (_saveService == null || _inventoryService == null || _shopService == null || _memoryService == null || _questService == null)
             {
                 Fail("Required services could not be resolved from VContainer.");
                 return true;
             }
 
+            var cropDatabase = scope.Container.Resolve<CozyLifeSim.UI.Settings.CropDatabase>();
+            var stickerDatabase = scope.Container.Resolve<CozyLifeSim.UI.Settings.StickerDatabase>();
+            _seedBuyPrice = GetCropBuyPrice(cropDatabase, 1);
+            _cropSellPrice = GetCropSellPrice(cropDatabase, 1);
+            _premiumStickerBuyPrice = GetStickerBuyPrice(stickerDatabase, 3);
+
             _inventoryHud = FindSceneComponent<InventoryHudWidget>("Header_Panel");
-            _questHud = FindSceneComponent<QuestHudWidget>("Quest_Content");
 
             _saveBackup = CloneSave(_saveService.ActiveSave);
             _restoreSaveOnFinish = true;
@@ -177,6 +190,7 @@ namespace CozyLifeSim.Editor
             activeSave.PlacedStickers.Clear();
             activeSave.CompletedQuestIds.Clear();
             activeSave.ActiveQuestProgress.Clear();
+            activeSave.UnlockedStickerIds = new List<int> { 1, 2 };
             _saveService.Save();
 
             // Re-initialize the in-memory services to reflect the cleared save data and rehydrate events/UI
@@ -189,8 +203,6 @@ namespace CozyLifeSim.Editor
                 _inventoryService.ReloadFromSave();
             }
 
-
-
             _waterQuestReward = GetWaterQuestReward(_questService);
 
             _initialCoins = _inventoryService.Coins;
@@ -201,6 +213,7 @@ namespace CozyLifeSim.Editor
             CropWidget crop = FindSceneComponent<CropWidget>("Farm_Plot");
             AnimalWidget animal = FindSceneComponent<AnimalWidget>("Animal_Pen");
             StickerBook stickerBook = FindSceneComponent<StickerBook>("StickerBook_Panel");
+            RefreshStickerTray(stickerBook);
 
             if (animal != null)
             {
@@ -273,14 +286,38 @@ namespace CozyLifeSim.Editor
             return true;
         }
 
+        private static bool BuySeedFromShop()
+        {
+            if (HasErrors()) return true;
+
+            if (!_shopService.TryBuySeed(1))
+            {
+                Fail("Shop seed purchase failed unexpectedly.");
+                return true;
+            }
+
+            if (_inventoryService.Coins != _initialCoins - _seedBuyPrice)
+            {
+                Fail($"Seed purchase did not spend expected coins. Expected {_initialCoins - _seedBuyPrice}, got {_inventoryService.Coins}.");
+            }
+
+            if (_inventoryService.Seeds != _initialSeeds + 1)
+            {
+                Fail($"Seed purchase did not add one seed. Expected {_initialSeeds + 1}, got {_inventoryService.Seeds}.");
+            }
+
+            return true;
+        }
+
         private static bool PlantSeed()
         {
             if (HasErrors()) return true;
 
+            int seedsBeforePlant = _inventoryService.Seeds;
             _farm.PlantButton.onClick.Invoke();
-            if (_inventoryService.Seeds != _initialSeeds - 1)
+            if (_inventoryService.Seeds != seedsBeforePlant - 1)
             {
-                Fail($"Plant seed did not consume one seed. Expected {_initialSeeds - 1}, got {_inventoryService.Seeds}.");
+                Fail($"Plant seed did not consume one seed. Expected {seedsBeforePlant - 1}, got {_inventoryService.Seeds}.");
             }
 
             return true;
@@ -339,7 +376,7 @@ namespace CozyLifeSim.Editor
                 Fail($"Harvest did not add one crop. Expected {_initialCrops + 1}, got {_inventoryService.Crops}.");
             }
 
-            int expectedCoins = _initialCoins + 10 + _waterQuestReward;
+            int expectedCoins = _initialCoins - _seedBuyPrice + 10 + _waterQuestReward;
             if (_inventoryService.Coins != expectedCoins)
             {
                 Fail($"Harvest did not add expected coins. Expected {expectedCoins}, got {_inventoryService.Coins}.");
@@ -354,6 +391,79 @@ namespace CozyLifeSim.Editor
             return true;
         }
 
+        private static bool SellHarvestedCrop()
+        {
+            if (HasErrors()) return true;
+
+            if (!_shopService.TrySellCrop(1))
+            {
+                Fail("Shop crop sale failed unexpectedly.");
+                return true;
+            }
+
+            int expectedCoins = _initialCoins - _seedBuyPrice + 10 + _waterQuestReward + _cropSellPrice;
+            if (_inventoryService.Coins != expectedCoins)
+            {
+                Fail($"Crop sale did not add expected coins. Expected {expectedCoins}, got {_inventoryService.Coins}.");
+            }
+
+            if (_inventoryService.Crops != _initialCrops)
+            {
+                Fail($"Crop sale did not consume harvested crop. Expected {_initialCrops}, got {_inventoryService.Crops}.");
+            }
+
+            return true;
+        }
+
+        private static bool BuyPremiumSticker()
+        {
+            if (HasErrors()) return true;
+
+            if (!_shopService.TryBuySticker(3))
+            {
+                Fail("Premium sticker purchase failed unexpectedly.");
+                return true;
+            }
+
+            int expectedCoins = _initialCoins - _seedBuyPrice + 10 + _waterQuestReward + _cropSellPrice - _premiumStickerBuyPrice;
+            if (_inventoryService.Coins != expectedCoins)
+            {
+                Fail($"Premium sticker purchase did not spend expected coins. Expected {expectedCoins}, got {_inventoryService.Coins}.");
+            }
+
+            if (!_shopService.IsStickerUnlocked(3))
+            {
+                Fail("Premium sticker ID 3 should be unlocked after purchase.");
+            }
+
+            return true;
+        }
+
+        private static bool VerifyUnlockedStickerTray()
+        {
+            if (HasErrors()) return true;
+
+            RefreshStickerTray(_stickers.Book);
+            _stickers = new StickerRefs(_stickers.Book, _stickers.Page, FindInventorySticker());
+            if (_stickers.Sticker != null)
+            {
+                _originalStickerParent = _stickers.Sticker.transform.parent;
+                var rect = _stickers.Sticker.GetComponent<RectTransform>();
+                if (rect != null)
+                {
+                    _originalStickerAnchoredPosition = rect.anchoredPosition;
+                }
+            }
+
+            int spawnedCount = GetSpawnedStickerCount(_stickers.Book);
+            if (spawnedCount != 3)
+            {
+                Fail($"StickerBook tray should show exactly 3 unlocked stickers after premium purchase, got {spawnedCount}.");
+            }
+
+            return true;
+        }
+
         private static bool PetChicken()
         {
             if (HasErrors()) return true;
@@ -361,7 +471,7 @@ namespace CozyLifeSim.Editor
             int beforeHeartCount = _animal.SpawnRoot.childCount;
             _animal.Button.onClick.Invoke();
 
-            int expectedCoins = _initialCoins + 10 + 5 + _waterQuestReward;
+            int expectedCoins = _initialCoins - _seedBuyPrice + 10 + _waterQuestReward + _cropSellPrice - _premiumStickerBuyPrice + 5;
             if (_inventoryService.Coins != expectedCoins)
             {
                 Fail($"Pet chicken did not result in expected coins. Expected {expectedCoins}, got {_inventoryService.Coins}.");
@@ -390,6 +500,7 @@ namespace CozyLifeSim.Editor
             if (_memoryService.PlacedStickers.Count != _initialStickerCount + 1)
             {
                 Fail($"Sticker placement was not saved. Expected {_initialStickerCount + 1}, got {_memoryService.PlacedStickers.Count}.");
+                return true;
             }
 
             StickerPlacedData sticker = _memoryService.PlacedStickers[0];
@@ -417,20 +528,25 @@ namespace CozyLifeSim.Editor
             var questDatabase = GetQuestDatabase();
             var freshQuest = new CozyLifeSim.UI.Services.QuestService(freshSave, freshInventory, questDatabase, false);
 
-            if (freshInventory.Seeds != 4)
+            if (freshInventory.Seeds != 5)
             {
-                Fail($"Fresh save should restore 4 seeds, got {freshInventory.Seeds}.");
+                Fail($"Fresh save should restore 5 seeds after buying and planting one seed, got {freshInventory.Seeds}.");
             }
 
-            if (freshInventory.Crops != 1)
+            if (freshInventory.Crops != 0)
             {
-                Fail($"Fresh save should restore 1 crop, got {freshInventory.Crops}.");
+                Fail($"Fresh save should restore 0 crops after selling the harvest, got {freshInventory.Crops}.");
             }
 
-            int expectedFreshCoins = 100 + 10 + 5 + GetWaterQuestReward(freshQuest);
+            int expectedFreshCoins = 100 - _seedBuyPrice + 10 + GetWaterQuestReward(freshQuest) + _cropSellPrice - _premiumStickerBuyPrice + 5;
             if (freshInventory.Coins != expectedFreshCoins)
             {
                 Fail($"Fresh save should restore {expectedFreshCoins} coins, got {freshInventory.Coins}.");
+            }
+
+            if (freshSave.ActiveSave.UnlockedStickerIds == null || !freshSave.ActiveSave.UnlockedStickerIds.Contains(3))
+            {
+                Fail("Fresh save should restore premium sticker ID 3 unlock.");
             }
 
             if (freshMemory.PlacedStickers.Count != 1)
@@ -550,6 +666,12 @@ namespace CozyLifeSim.Editor
             CopySave(_saveBackup, _saveService.ActiveSave);
             _saveService.Save();
 
+            // Restore sticker visual layout before the tray refresh destroys and rebuilds spawned tray stickers.
+            if (_stickers.Sticker != null && _originalStickerParent != null)
+            {
+                _stickers.Sticker.ResetToTray(_originalStickerParent, _originalStickerAnchoredPosition);
+            }
+
             // Rehydrate quest and inventory services to trigger HUD widget updates
             if (_questService != null)
             {
@@ -559,12 +681,8 @@ namespace CozyLifeSim.Editor
             {
                 _inventoryService.ReloadFromSave();
             }
-
-            // Restore sticker visual layout to inventory tray
-            if (_stickers.Sticker != null && _originalStickerParent != null)
-            {
-                _stickers.Sticker.ResetToTray(_originalStickerParent, _originalStickerAnchoredPosition);
-            }
+            RefreshStickerTray(_stickers.Book);
+            _stickers = new StickerRefs(_stickers.Book, _stickers.Page, FindInventorySticker());
 
             _restoreSaveOnFinish = false;
         }
@@ -617,6 +735,79 @@ namespace CozyLifeSim.Editor
             {
                 destination.ActiveQuestProgress.Add(quest);
             }
+
+            if (destination.UnlockedStickerIds == null)
+            {
+                destination.UnlockedStickerIds = new List<int>();
+            }
+
+            destination.UnlockedStickerIds.Clear();
+            if (source.UnlockedStickerIds == null)
+            {
+                return;
+            }
+
+            foreach (int stickerId in source.UnlockedStickerIds)
+            {
+                destination.UnlockedStickerIds.Add(stickerId);
+            }
+        }
+
+        private static int GetCropBuyPrice(CozyLifeSim.UI.Settings.CropDatabase database, int cropId)
+        {
+            if (database == null || database.Crops == null) return 5;
+            foreach (var crop in database.Crops)
+            {
+                if (crop != null && crop.CropId == cropId)
+                {
+                    return crop.BuyPrice;
+                }
+            }
+
+            return 5;
+        }
+
+        private static int GetCropSellPrice(CozyLifeSim.UI.Settings.CropDatabase database, int cropId)
+        {
+            if (database == null || database.Crops == null) return 15;
+            foreach (var crop in database.Crops)
+            {
+                if (crop != null && crop.CropId == cropId)
+                {
+                    return crop.SellPrice;
+                }
+            }
+
+            return 15;
+        }
+
+        private static int GetStickerBuyPrice(CozyLifeSim.UI.Settings.StickerDatabase database, int stickerId)
+        {
+            if (database == null || database.Stickers == null) return 50;
+            foreach (var sticker in database.Stickers)
+            {
+                if (sticker != null && sticker.StickerId == stickerId)
+                {
+                    return sticker.BuyPrice;
+                }
+            }
+
+            return 50;
+        }
+
+        private static void RefreshStickerTray(StickerBook stickerBook)
+        {
+            if (stickerBook == null) return;
+            MethodInfo method = typeof(StickerBook).GetMethod("SpawnDynamicStickers", BindingFlags.Instance | BindingFlags.NonPublic);
+            method?.Invoke(stickerBook, null);
+        }
+
+        private static int GetSpawnedStickerCount(StickerBook stickerBook)
+        {
+            if (stickerBook == null) return 0;
+            FieldInfo field = typeof(StickerBook).GetField("_spawnedInventoryStickers", BindingFlags.Instance | BindingFlags.NonPublic);
+            var list = field?.GetValue(stickerBook) as System.Collections.IList;
+            return list == null ? 0 : list.Count;
         }
 
         private static CozySticker FindInventorySticker()

@@ -49,7 +49,14 @@ namespace CozyLifeSim.UI.Services
             {
                 ActiveSave.ActiveQuestProgress = new List<QuestProgressData>();
             }
+            if (ActiveSave.UnlockedStickerIds == null)
+            {
+                ActiveSave.UnlockedStickerIds = new List<int>();
+            }
+            if (!ActiveSave.UnlockedStickerIds.Contains(1)) ActiveSave.UnlockedStickerIds.Add(1);
+            if (!ActiveSave.UnlockedStickerIds.Contains(2)) ActiveSave.UnlockedStickerIds.Add(2);
         }
+
 
         public void Save()
         {

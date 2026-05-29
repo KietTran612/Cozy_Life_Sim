@@ -47,6 +47,7 @@ namespace CozyLifeSim.Editor
             ValidateFarmLoop(errors, warnings, passes);
             ValidateAnimalLoop(errors, passes);
             ValidateStickerLoop(errors, warnings, passes);
+            ValidatePopupAndNavigationDocks(errors, passes);
 
             PrintResults(passes, warnings, errors);
         }
@@ -118,6 +119,15 @@ namespace CozyLifeSim.Editor
             else
             {
                 passes.Add("Canvas exists.");
+                Canvas canvas = FindSceneComponent<Canvas>("Canvas");
+                if (canvas.GetComponent<GraphicRaycaster>() == null)
+                {
+                    errors.Add("Canvas is missing GraphicRaycaster for UI raycast blocking.");
+                }
+                else
+                {
+                    passes.Add("Canvas has GraphicRaycaster.");
+                }
             }
 
             if (FindSceneComponent<UnityEngine.EventSystems.EventSystem>("EventSystem") == null)
@@ -279,6 +289,173 @@ namespace CozyLifeSim.Editor
                 ValidateObjectReference(soTemplate, "_shadowOffset", "Sticker template shadow offset", errors, passes);
                 ValidateObjectReference(soTemplate, "_canvasGroup", "Sticker template CanvasGroup", errors, passes);
                 ValidateObjectReference(soTemplate, "_visualImage", "Sticker template visual image", errors, passes);
+            }
+        }
+
+        private static void ValidatePopupAndNavigationDocks(List<string> errors, List<string> passes)
+        {
+            RectTransform sidebar = FindSceneComponent<RectTransform>("Sidebar_Panel");
+            if (sidebar == null)
+            {
+                errors.Add("Sidebar_Panel navigation dock is missing.");
+            }
+            else
+            {
+                passes.Add("Sidebar_Panel navigation dock exists.");
+                if (sidebar.GetComponent<CozySidebar>() == null)
+                {
+                    errors.Add("Sidebar_Panel is missing CozySidebar.");
+                }
+                else
+                {
+                    passes.Add("Sidebar_Panel has CozySidebar.");
+                }
+
+                ValidateChildButton(sidebar.transform, "Quest_Button", errors, passes);
+                ValidateChildButton(sidebar.transform, "Shop_Button", errors, passes);
+                ValidateSidebarChildren(sidebar.transform, errors, passes);
+            }
+
+            QuestPopup questPopup = FindSceneComponent<QuestPopup>("Quest_Popup");
+            ShopPopup shopPopup = FindSceneComponent<ShopPopup>("Shop_Popup");
+            ValidatePopup("Quest_Popup", questPopup, errors, passes);
+            ValidatePopup("Shop_Popup", shopPopup, errors, passes);
+            ValidateInteractiveObject("Quest_Board", questPopup, errors, passes);
+            ValidateInteractiveObject("Shop_Stall", shopPopup, errors, passes);
+        }
+
+        private static void ValidatePopup(string label, CozyPopup popup, List<string> errors, List<string> passes)
+        {
+            if (popup == null)
+            {
+                errors.Add($"{label} popup component is missing.");
+                return;
+            }
+
+            passes.Add($"{label} popup component exists.");
+            SerializedObject so = new SerializedObject(popup);
+            ValidateObjectReference(so, "_contentPanel", $"{label} content panel", errors, passes);
+            ValidateObjectReference(so, "_backgroundDim", $"{label} background dim CanvasGroup", errors, passes);
+            ValidateObjectReference(so, "_closeButton", $"{label} close button", errors, passes);
+
+            CanvasGroup dimGroup = GetReference<CanvasGroup>(so, "_backgroundDim");
+            if (dimGroup != null)
+            {
+                Image dimImage = dimGroup.GetComponent<Image>();
+                if (dimImage == null)
+                {
+                    errors.Add($"{label} background dim is missing Image.");
+                }
+                else if (!dimImage.raycastTarget)
+                {
+                    errors.Add($"{label} background dim Image must block raycasts.");
+                }
+                else
+                {
+                    passes.Add($"{label} background dim Image blocks raycasts.");
+                }
+
+                if (!dimGroup.blocksRaycasts)
+                {
+                    errors.Add($"{label} background dim CanvasGroup.blocksRaycasts should be enabled in the serialized setup.");
+                }
+                else
+                {
+                    passes.Add($"{label} background dim CanvasGroup blocks raycasts.");
+                }
+            }
+        }
+
+        private static void ValidateInteractiveObject(string objectName, CozyPopup expectedPopup, List<string> errors, List<string> passes)
+        {
+            CozyInteractiveObject interactive = FindSceneComponent<CozyInteractiveObject>(objectName);
+            if (interactive == null)
+            {
+                errors.Add($"{objectName} is missing CozyInteractiveObject.");
+                return;
+            }
+
+            passes.Add($"{objectName} has CozyInteractiveObject.");
+
+            if (interactive.GetComponent<BoxCollider2D>() == null)
+            {
+                errors.Add($"{objectName} is missing BoxCollider2D.");
+            }
+            else
+            {
+                passes.Add($"{objectName} has BoxCollider2D.");
+            }
+
+            SpriteRenderer renderer = interactive.GetComponent<SpriteRenderer>();
+            if (renderer == null)
+            {
+                errors.Add($"{objectName} is missing SpriteRenderer visual.");
+            }
+            else if (renderer.sprite == null)
+            {
+                errors.Add($"{objectName} SpriteRenderer has no sprite assigned.");
+            }
+            else
+            {
+                passes.Add($"{objectName} has a visible SpriteRenderer.");
+            }
+
+            SerializedObject so = new SerializedObject(interactive);
+            SerializedProperty targetPopup = so.FindProperty("_targetPopup");
+            if (targetPopup == null)
+            {
+                errors.Add($"{objectName} target popup serialized property was not found.");
+            }
+            else if (targetPopup.objectReferenceValue == null)
+            {
+                errors.Add($"{objectName} target popup is not assigned.");
+            }
+            else if (expectedPopup != null && targetPopup.objectReferenceValue != expectedPopup)
+            {
+                errors.Add($"{objectName} target popup points to the wrong popup.");
+            }
+            else
+            {
+                passes.Add($"{objectName} target popup is assigned correctly.");
+            }
+        }
+
+        private static void ValidateSidebarChildren(Transform sidebar, List<string> errors, List<string> passes)
+        {
+            HashSet<string> allowedChildren = new HashSet<string> { "Quest_Button", "Shop_Button" };
+            bool hasUnexpectedChild = false;
+            for (int i = 0; i < sidebar.childCount; i++)
+            {
+                Transform child = sidebar.GetChild(i);
+                if (!allowedChildren.Contains(child.name))
+                {
+                    hasUnexpectedChild = true;
+                    errors.Add($"Sidebar_Panel contains legacy or unexpected child '{child.name}'. Regenerate should leave only Quest_Button and Shop_Button.");
+                }
+            }
+
+            if (!hasUnexpectedChild && sidebar.childCount == allowedChildren.Count)
+            {
+                passes.Add("Sidebar_Panel contains only the expected navigation buttons.");
+            }
+        }
+
+        private static void ValidateChildButton(Transform root, string childName, List<string> errors, List<string> passes)
+        {
+            Transform child = root.Find(childName);
+            if (child == null)
+            {
+                errors.Add($"{childName} is missing from Sidebar_Panel.");
+                return;
+            }
+
+            if (child.GetComponent<Button>() == null)
+            {
+                errors.Add($"{childName} is missing Button.");
+            }
+            else
+            {
+                passes.Add($"{childName} Button exists.");
             }
         }
 

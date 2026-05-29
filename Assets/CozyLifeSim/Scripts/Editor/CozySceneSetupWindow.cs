@@ -475,12 +475,10 @@ namespace CozyLifeSim.Editor
             }
             soBook.ApplyModifiedProperties();
 
-            soBook.ApplyModifiedProperties();
-
-            // 8.5. Setup Sidebar Panel (Tabbed Sidebar Architecture)
+            // 8.5. Setup Sidebar Panel (Navigation Dock)
             RectTransform sidebarPanel = SetupPanel(uiRoot, "Sidebar_Panel");
-            sidebarPanel.anchorMin = new Vector2(0.75f, 0.45f);
-            sidebarPanel.anchorMax = new Vector2(0.97f, 0.90f);
+            sidebarPanel.anchorMin = new Vector2(0.92f, 0.45f);
+            sidebarPanel.anchorMax = new Vector2(0.98f, 0.90f);
             sidebarPanel.sizeDelta = Vector2.zero;
             sidebarPanel.anchoredPosition = Vector2.zero;
 
@@ -490,202 +488,299 @@ namespace CozyLifeSim.Editor
             {
                 sidebarImg = sidebarPanel.gameObject.AddComponent<Image>();
             }
-            sidebarImg.color = new Color(0f, 0f, 0f, 0.25f); // Transparent dark backing
-            sidebarImg.raycastTarget = false; // Allow clicks to pass through empty panel areas
+            sidebarImg.color = new Color(0f, 0f, 0f, 0.25f);
+            sidebarImg.raycastTarget = true;
 
-            // Explicitly destroy any existing HorizontalLayoutGroup on sidebarPanel from previous setup versions to allow manual anchoring
+            // Remove HorizontalLayoutGroup if exists
             HorizontalLayoutGroup oldLayout = sidebarPanel.gameObject.GetComponent<HorizontalLayoutGroup>();
             if (oldLayout != null)
             {
                 DestroyImmediate(oldLayout);
             }
 
-            // A. Create Tabs Container (Vertical Stack on the left side)
-            RectTransform tabsContainer = SetupPanel(sidebarPanel, "Tabs_Container");
-            tabsContainer.anchorMin = new Vector2(0f, 0f);
-            tabsContainer.anchorMax = new Vector2(0f, 1f);
-            tabsContainer.pivot = new Vector2(0f, 1f);
-            tabsContainer.sizeDelta = new Vector2(65f, 0f);
-            tabsContainer.anchoredPosition = Vector2.zero;
-
-            // Remove background image from tabs container to make it clean
-            Image tabsContImg = tabsContainer.gameObject.GetComponent<Image>();
-            if (tabsContImg != null)
+            VerticalLayoutGroup sidebarLayout = sidebarPanel.gameObject.GetComponent<VerticalLayoutGroup>();
+            if (sidebarLayout == null)
             {
-                DestroyImmediate(tabsContImg);
+                sidebarLayout = sidebarPanel.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+            sidebarLayout.childAlignment = TextAnchor.UpperCenter;
+            sidebarLayout.spacing = 20f;
+            sidebarLayout.padding = new RectOffset(5, 5, 20, 20);
+            sidebarLayout.childForceExpandHeight = false;
+            sidebarLayout.childControlHeight = false;
+            sidebarLayout.childControlWidth = true;
+
+            ClearChildren(sidebarPanel);
+
+            Button questBtn = SetupButton(sidebarPanel, "Quest_Button", "Q");
+            questBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(55f, 55f);
+
+            Button shopBtn = SetupButton(sidebarPanel, "Shop_Button", "S");
+            shopBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(55f, 55f);
+
+            // A. Setup Quest Popup
+            RectTransform questPopupPanel = SetupPanel(canvas.transform, "Quest_Popup");
+            StretchToFill(questPopupPanel);
+            questPopupPanel.gameObject.SetActive(false);
+
+            QuestPopup questPopup = questPopupPanel.gameObject.GetComponent<QuestPopup>();
+            if (questPopup == null)
+            {
+                questPopup = questPopupPanel.gameObject.AddComponent<QuestPopup>();
             }
 
-            VerticalLayoutGroup tabsLayout = tabsContainer.gameObject.GetComponent<VerticalLayoutGroup>();
-            if (tabsLayout == null)
+            // Dim Blocker for Quest Popup
+            RectTransform qDimPanel = SetupPanel(questPopupPanel, "Background_Dim");
+            StretchToFill(qDimPanel);
+            Image qDimImg = qDimPanel.gameObject.GetComponent<Image>();
+            if (qDimImg == null) qDimImg = qDimPanel.gameObject.AddComponent<Image>();
+            qDimImg.color = new Color(0f, 0f, 0f, 0.4f);
+            qDimImg.raycastTarget = true;
+            CanvasGroup qDimGroup = qDimPanel.gameObject.GetComponent<CanvasGroup>();
+            if (qDimGroup == null) qDimGroup = qDimPanel.gameObject.AddComponent<CanvasGroup>();
+            qDimGroup.blocksRaycasts = true;
+
+            // Content Panel for Quest Popup
+            RectTransform qContentPanel = SetupPanel(questPopupPanel, "Content_Panel");
+            qContentPanel.anchorMin = new Vector2(0.5f, 0.5f);
+            qContentPanel.anchorMax = new Vector2(0.5f, 0.5f);
+            qContentPanel.pivot = new Vector2(0.5f, 0.5f);
+            qContentPanel.sizeDelta = new Vector2(500f, 500f);
+            qContentPanel.anchoredPosition = Vector2.zero;
+            Image qContentImg = qContentPanel.gameObject.GetComponent<Image>();
+            if (qContentImg == null) qContentImg = qContentPanel.gameObject.AddComponent<Image>();
+            qContentImg.color = new Color(0.15f, 0.15f, 0.15f, 0.95f);
+
+            Button qCloseBtn = SetupButton(qContentPanel, "Close_Button", "X");
+            RectTransform qCloseRect = qCloseBtn.GetComponent<RectTransform>();
+            qCloseRect.anchorMin = new Vector2(1f, 1f);
+            qCloseRect.anchorMax = new Vector2(1f, 1f);
+            qCloseRect.pivot = new Vector2(1f, 1f);
+            qCloseRect.sizeDelta = new Vector2(40f, 40f);
+            qCloseRect.anchoredPosition = new Vector2(-10f, -10f);
+
+            TextMeshProUGUI qTitle = SetupText(qContentPanel, "Quest_Title", "ACTIVE QUESTS", "Header_Text");
+            qTitle.fontSize = 24f;
+            qTitle.fontStyle = FontStyles.Bold;
+            qTitle.raycastTarget = false;
+            qTitle.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 200f);
+
+            RectTransform qItemsList = SetupPanel(qContentPanel, "Quest_Items_List");
+            qItemsList.anchorMin = new Vector2(0.1f, 0.1f);
+            qItemsList.anchorMax = new Vector2(0.9f, 0.8f);
+            qItemsList.sizeDelta = Vector2.zero;
+            qItemsList.anchoredPosition = Vector2.zero;
+            Image qListImg = qItemsList.gameObject.GetComponent<Image>();
+            if (qListImg != null) DestroyImmediate(qListImg);
+            VerticalLayoutGroup qItemsLayout = qItemsList.gameObject.GetComponent<VerticalLayoutGroup>();
+            if (qItemsLayout == null) qItemsLayout = qItemsList.gameObject.AddComponent<VerticalLayoutGroup>();
+            qItemsLayout.childAlignment = TextAnchor.UpperLeft;
+            qItemsLayout.spacing = 15f;
+            qItemsLayout.childForceExpandHeight = false;
+
+            TextMeshProUGUI qTemplate = SetupText(qItemsList, "Quest_Item_Template", "- Loading Quest...", "");
+            qTemplate.fontSize = 20f;
+            qTemplate.alignment = TextAlignmentOptions.Left;
+            qTemplate.raycastTarget = false;
+
+            // Wire QuestPopup
+            SerializedObject soQPopup = new SerializedObject(questPopup);
+            soQPopup.FindProperty("_contentPanel").objectReferenceValue = qContentPanel;
+            soQPopup.FindProperty("_backgroundDim").objectReferenceValue = qDimGroup;
+            soQPopup.FindProperty("_closeButton").objectReferenceValue = qCloseBtn;
+            soQPopup.FindProperty("_questItemTemplate").objectReferenceValue = qTemplate;
+            soQPopup.ApplyModifiedProperties();
+
+            // B. Setup Shop Popup
+            RectTransform shopPopupPanel = SetupPanel(canvas.transform, "Shop_Popup");
+            StretchToFill(shopPopupPanel);
+            shopPopupPanel.gameObject.SetActive(false);
+
+            ShopPopup shopPopup = shopPopupPanel.gameObject.GetComponent<ShopPopup>();
+            if (shopPopup == null)
             {
-                tabsLayout = tabsContainer.gameObject.AddComponent<VerticalLayoutGroup>();
-            }
-            tabsLayout.childAlignment = TextAnchor.UpperCenter;
-            tabsLayout.spacing = 15f;
-            tabsLayout.padding = new RectOffset(5, 5, 10, 10);
-            tabsLayout.childForceExpandHeight = false;
-            tabsLayout.childControlHeight = false;
-            tabsLayout.childControlWidth = true;
-
-            // Create buttons inside Tabs Container
-            Button toggleBtn = SetupButton(tabsContainer, "Toggle_Button", ">");
-            RectTransform toggleBtnRect = toggleBtn.GetComponent<RectTransform>();
-            toggleBtnRect.sizeDelta = new Vector2(55f, 55f);
-            TextMeshProUGUI toggleBtnText = toggleBtn.GetComponentInChildren<TextMeshProUGUI>();
-
-            Button tabBtn0 = SetupButton(tabsContainer, "Tab_Btn_0", "Q");
-            RectTransform tabBtn0Rect = tabBtn0.GetComponent<RectTransform>();
-            tabBtn0Rect.sizeDelta = new Vector2(55f, 55f);
-
-            Button tabBtn1 = SetupButton(tabsContainer, "Tab_Btn_1", "S");
-            RectTransform tabBtn1Rect = tabBtn1.GetComponent<RectTransform>();
-            tabBtn1Rect.sizeDelta = new Vector2(55f, 55f);
-
-            // B. Create Content Container (Stretches to occupy the remaining space on the right, with a 65px left offset)
-            RectTransform contentContainer = SetupPanel(sidebarPanel, "Content_Container");
-            contentContainer.anchorMin = new Vector2(0f, 0f);
-            contentContainer.anchorMax = new Vector2(1f, 1f);
-            contentContainer.offsetMin = new Vector2(65f, 0f); // Left offset is 65px (width of Tabs_Container)
-            contentContainer.offsetMax = new Vector2(0f, 0f);  // Top, Right, Bottom offsets are 0
-
-            // Remove Image to allow clicks to pass through empty spots
-            Image contentContImg = contentContainer.gameObject.GetComponent<Image>();
-            if (contentContImg != null)
-            {
-                DestroyImmediate(contentContImg);
-            }
-
-            // C. Setup Quest Content under Content Container
-            RectTransform questContent = SetupPanel(contentContainer, "Quest_Content");
-            StretchToFill(questContent);
-
-            Image questContentImg = questContent.gameObject.GetComponent<Image>();
-            if (questContentImg != null)
-            {
-                DestroyImmediate(questContentImg);
-            }
-
-            VerticalLayoutGroup questLayout = questContent.gameObject.GetComponent<VerticalLayoutGroup>();
-            if (questLayout == null)
-            {
-                questLayout = questContent.gameObject.AddComponent<VerticalLayoutGroup>();
-            }
-            questLayout.childAlignment = TextAnchor.UpperLeft;
-            questLayout.spacing = 15f;
-            questLayout.padding = new RectOffset(15, 15, 15, 15);
-            questLayout.childControlHeight = true;
-            questLayout.childControlWidth = true;
-
-            // Title inside Quest Content
-            TextMeshProUGUI questTitleText = SetupText(questContent, "Quest_Title", "ACTIVE QUESTS", "Header_Text");
-            questTitleText.fontSize = 24f;
-            questTitleText.fontStyle = FontStyles.Bold;
-            questTitleText.raycastTarget = false;
-
-            // Explicitly destroy obsolete static Quest_Item_0, Quest_Item_1, Quest_Item_2 to avoid cluttered hierarchy
-            for (int i = 0; i < 3; i++)
-            {
-                Transform obsoleteChild = questContent.Find($"Quest_Item_{i}");
-                if (obsoleteChild != null)
-                {
-                    DestroyImmediate(obsoleteChild.gameObject);
-                }
+                shopPopup = shopPopupPanel.gameObject.AddComponent<ShopPopup>();
             }
 
-            // Create a single clean dynamic Quest_Item_Template
-            TextMeshProUGUI questTemplateText = SetupText(questContent, "Quest_Item_Template", "• Loading Quest...", "");
-            questTemplateText.fontSize = 20f;
-            questTemplateText.alignment = TextAlignmentOptions.Left;
-            questTemplateText.raycastTarget = false;
+            // Dim Blocker for Shop Popup
+            RectTransform sDimPanel = SetupPanel(shopPopupPanel, "Background_Dim");
+            StretchToFill(sDimPanel);
+            Image sDimImg = sDimPanel.gameObject.GetComponent<Image>();
+            if (sDimImg == null) sDimImg = sDimPanel.gameObject.AddComponent<Image>();
+            sDimImg.color = new Color(0f, 0f, 0f, 0.4f);
+            sDimImg.raycastTarget = true;
+            CanvasGroup sDimGroup = sDimPanel.gameObject.GetComponent<CanvasGroup>();
+            if (sDimGroup == null) sDimGroup = sDimPanel.gameObject.AddComponent<CanvasGroup>();
+            sDimGroup.blocksRaycasts = true;
 
-            // Attach QuestHudWidget and wire it up
-            QuestHudWidget questHud = questContent.gameObject.GetComponent<QuestHudWidget>();
-            if (questHud == null)
+            // Content Panel for Shop Popup
+            RectTransform sContentPanel = SetupPanel(shopPopupPanel, "Content_Panel");
+            sContentPanel.anchorMin = new Vector2(0.5f, 0.5f);
+            sContentPanel.anchorMax = new Vector2(0.5f, 0.5f);
+            sContentPanel.pivot = new Vector2(0.5f, 0.5f);
+            sContentPanel.sizeDelta = new Vector2(850f, 600f);
+            sContentPanel.anchoredPosition = Vector2.zero;
+            Image sContentImg = sContentPanel.gameObject.GetComponent<Image>();
+            if (sContentImg == null) sContentImg = sContentPanel.gameObject.AddComponent<Image>();
+            sContentImg.color = new Color(0.15f, 0.15f, 0.15f, 0.95f);
+
+            Button sCloseBtn = SetupButton(sContentPanel, "Close_Button", "X");
+            RectTransform sCloseRect = sCloseBtn.GetComponent<RectTransform>();
+            sCloseRect.anchorMin = new Vector2(1f, 1f);
+            sCloseRect.anchorMax = new Vector2(1f, 1f);
+            sCloseRect.pivot = new Vector2(1f, 1f);
+            sCloseRect.sizeDelta = new Vector2(40f, 40f);
+            sCloseRect.anchoredPosition = new Vector2(-10f, -10f);
+
+            TextMeshProUGUI sTitle = SetupText(sContentPanel, "Shop_Title", "TIEM TAP HOA (SHOP)", "Header_Text");
+            sTitle.fontSize = 24f;
+            sTitle.fontStyle = FontStyles.Bold;
+            sTitle.raycastTarget = false;
+            sTitle.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 250f);
+
+            TextMeshProUGUI sCoinsText = SetupText(sContentPanel, "Player_Coins_Text", "Coins: 100", "");
+            sCoinsText.fontSize = 20f;
+            sCoinsText.fontStyle = FontStyles.Bold;
+            sCoinsText.raycastTarget = false;
+            sCoinsText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 210f);
+
+            // Three categories containers side-by-side
+            RectTransform sGridsContainer = SetupPanel(sContentPanel, "Grids_Container");
+            sGridsContainer.anchorMin = new Vector2(0.05f, 0.05f);
+            sGridsContainer.anchorMax = new Vector2(0.95f, 0.65f);
+            sGridsContainer.sizeDelta = Vector2.zero;
+            sGridsContainer.anchoredPosition = Vector2.zero;
+            Image sGridContImg = sGridsContainer.gameObject.GetComponent<Image>();
+            if (sGridContImg != null) DestroyImmediate(sGridContImg);
+            HorizontalLayoutGroup sGridsLayout = sGridsContainer.gameObject.GetComponent<HorizontalLayoutGroup>();
+            if (sGridsLayout == null) sGridsLayout = sGridsContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
+            sGridsLayout.spacing = 20f;
+            sGridsLayout.childForceExpandHeight = true;
+            sGridsLayout.childForceExpandWidth = true;
+
+            // Group 1: Seeds
+            RectTransform seedsGroup = SetupPanel(sGridsContainer, "Seeds_Group");
+            VerticalLayoutGroup seedsLayout = seedsGroup.gameObject.GetComponent<VerticalLayoutGroup>();
+            if (seedsLayout == null) seedsLayout = seedsGroup.gameObject.AddComponent<VerticalLayoutGroup>();
+            seedsLayout.spacing = 10f;
+            TextMeshProUGUI seedsTitleText = SetupText(seedsGroup, "Seeds_Title", "Seeds (Buy)", "");
+            seedsTitleText.fontSize = 18f;
+            seedsTitleText.fontStyle = FontStyles.Bold;
+            RectTransform seedsGrid = SetupPanel(seedsGroup, "Seeds_Grid");
+            GridLayoutGroup seedsGridGroup = seedsGrid.gameObject.GetComponent<GridLayoutGroup>();
+            if (seedsGridGroup == null) seedsGridGroup = seedsGrid.gameObject.AddComponent<GridLayoutGroup>();
+            seedsGridGroup.cellSize = new Vector2(200f, 80f);
+            seedsGridGroup.spacing = new Vector2(5f, 5f);
+
+            // Group 2: Stickers
+            RectTransform stickersGroup = SetupPanel(sGridsContainer, "Stickers_Group");
+            VerticalLayoutGroup stickersLayout = stickersGroup.gameObject.GetComponent<VerticalLayoutGroup>();
+            if (stickersLayout == null) stickersLayout = stickersGroup.gameObject.AddComponent<VerticalLayoutGroup>();
+            stickersLayout.spacing = 10f;
+            TextMeshProUGUI stickersTitleText = SetupText(stickersGroup, "Stickers_Title", "Stickers (Buy)", "");
+            stickersTitleText.fontSize = 18f;
+            stickersTitleText.fontStyle = FontStyles.Bold;
+            RectTransform stickersGrid = SetupPanel(stickersGroup, "Stickers_Grid");
+            GridLayoutGroup stickersGridGroup = stickersGrid.gameObject.GetComponent<GridLayoutGroup>();
+            if (stickersGridGroup == null) stickersGridGroup = stickersGrid.gameObject.AddComponent<GridLayoutGroup>();
+            stickersGridGroup.cellSize = new Vector2(200f, 80f);
+            stickersGridGroup.spacing = new Vector2(5f, 5f);
+
+            // Group 3: Crops
+            RectTransform cropsGroup = SetupPanel(sGridsContainer, "Crops_Group");
+            VerticalLayoutGroup cropsLayout = cropsGroup.gameObject.GetComponent<VerticalLayoutGroup>();
+            if (cropsLayout == null) cropsLayout = cropsGroup.gameObject.AddComponent<VerticalLayoutGroup>();
+            cropsLayout.spacing = 10f;
+            TextMeshProUGUI cropsTitleText = SetupText(cropsGroup, "Crops_Title", "Crops (Sell)", "");
+            cropsTitleText.fontSize = 18f;
+            cropsTitleText.fontStyle = FontStyles.Bold;
+            RectTransform cropsGrid = SetupPanel(cropsGroup, "Crops_Grid");
+            GridLayoutGroup cropsGridGroup = cropsGrid.gameObject.GetComponent<GridLayoutGroup>();
+            if (cropsGridGroup == null) cropsGridGroup = cropsGrid.gameObject.AddComponent<GridLayoutGroup>();
+            cropsGridGroup.cellSize = new Vector2(200f, 80f);
+            cropsGridGroup.spacing = new Vector2(5f, 5f);
+
+            // Shop Item Template under Prefabs_Holder
+            RectTransform shopItemTemplate = SetupPanel(prefabsHolder, "Shop_Item_Template");
+            shopItemTemplate.sizeDelta = new Vector2(200f, 80f);
+            shopItemTemplate.gameObject.SetActive(false);
+            ShopItemWidget widgetComponent = shopItemTemplate.gameObject.GetComponent<ShopItemWidget>();
+            if (widgetComponent == null)
             {
-                questHud = questContent.gameObject.AddComponent<QuestHudWidget>();
+                widgetComponent = shopItemTemplate.gameObject.AddComponent<ShopItemWidget>();
             }
 
-            SerializedObject soQuestHud = new SerializedObject(questHud);
-            soQuestHud.FindProperty("_titleText").objectReferenceValue = questTitleText;
-            
-            SerializedProperty templateProp = soQuestHud.FindProperty("_questItemTemplate");
-            if (templateProp != null)
-            {
-                templateProp.objectReferenceValue = questTemplateText;
-            }
-            soQuestHud.ApplyModifiedProperties();
+            Image itemIcon = SetupImage(shopItemTemplate, "Item_Icon");
+            itemIcon.GetComponent<RectTransform>().sizeDelta = new Vector2(50f, 50f);
+            TextMeshProUGUI itemName = SetupText(shopItemTemplate, "Item_Name", "Product Name", "");
+            itemName.fontSize = 14f;
+            TextMeshProUGUI itemPrice = SetupText(shopItemTemplate, "Item_Price", "50 Coins", "");
+            itemPrice.fontSize = 12f;
+            Button itemActionBtn = SetupButton(shopItemTemplate, "Action_Button", "Buy");
+            itemActionBtn.GetComponent<RectTransform>().sizeDelta = new Vector2(60f, 30f);
+            TextMeshProUGUI itemActionTxt = itemActionBtn.GetComponentInChildren<TextMeshProUGUI>();
+            itemActionTxt.fontSize = 12f;
 
-            // D. Setup Stats Content (Placeholder Demo Tab) under Content Container
-            RectTransform statsContent = SetupPanel(contentContainer, "Stats_Content");
-            StretchToFill(statsContent);
+            // Wire ShopItemWidget
+            SerializedObject soItem = new SerializedObject(widgetComponent);
+            soItem.FindProperty("_itemIcon").objectReferenceValue = itemIcon;
+            soItem.FindProperty("_itemNameText").objectReferenceValue = itemName;
+            soItem.FindProperty("_priceText").objectReferenceValue = itemPrice;
+            soItem.FindProperty("_actionButton").objectReferenceValue = itemActionBtn;
+            soItem.FindProperty("_actionButtonText").objectReferenceValue = itemActionTxt;
+            soItem.ApplyModifiedProperties();
 
-            Image statsContentImg = statsContent.gameObject.GetComponent<Image>();
-            if (statsContentImg != null)
-            {
-                DestroyImmediate(statsContentImg);
-            }
+            // Wire ShopPopup
+            SerializedObject soSPopup = new SerializedObject(shopPopup);
+            soSPopup.FindProperty("_contentPanel").objectReferenceValue = sContentPanel;
+            soSPopup.FindProperty("_backgroundDim").objectReferenceValue = sDimGroup;
+            soSPopup.FindProperty("_closeButton").objectReferenceValue = sCloseBtn;
+            soSPopup.FindProperty("_playerCoinsText").objectReferenceValue = sCoinsText;
+            soSPopup.FindProperty("_itemPrefabTemplate").objectReferenceValue = widgetComponent;
+            soSPopup.FindProperty("_seedsContainer").objectReferenceValue = seedsGrid;
+            soSPopup.FindProperty("_stickersContainer").objectReferenceValue = stickersGrid;
+            soSPopup.FindProperty("_cropsContainer").objectReferenceValue = cropsGrid;
+            soSPopup.ApplyModifiedProperties();
 
-            VerticalLayoutGroup statsLayout = statsContent.gameObject.GetComponent<VerticalLayoutGroup>();
-            if (statsLayout == null)
-            {
-                statsLayout = statsContent.gameObject.AddComponent<VerticalLayoutGroup>();
-            }
-            statsLayout.childAlignment = TextAnchor.UpperLeft;
-            statsLayout.spacing = 15f;
-            statsLayout.padding = new RectOffset(15, 15, 15, 15);
-            statsLayout.childControlHeight = true;
-            statsLayout.childControlWidth = true;
-
-            // Title inside Stats Content
-            TextMeshProUGUI statsTitleText = SetupText(statsContent, "Stats_Title", "GAME STATS", "Header_Text");
-            statsTitleText.fontSize = 24f;
-            statsTitleText.fontStyle = FontStyles.Bold;
-            statsTitleText.raycastTarget = false;
-
-            TextMeshProUGUI statsItem0 = SetupText(statsContent, "Stats_Item_0", "• Time Played: 00:05:12", "");
-            statsItem0.fontSize = 20f;
-            statsItem0.alignment = TextAlignmentOptions.Left;
-            statsItem0.raycastTarget = false;
-
-            TextMeshProUGUI statsItem1 = SetupText(statsContent, "Stats_Item_1", "• Animals Pet: 12", "");
-            statsItem1.fontSize = 20f;
-            statsItem1.alignment = TextAlignmentOptions.Left;
-            statsItem1.raycastTarget = false;
-
-            // E. Attach CozySidebar component and wire it up
+            // Wire CozySidebar
             CozySidebar sidebar = sidebarPanel.gameObject.GetComponent<CozySidebar>();
             if (sidebar == null)
             {
                 sidebar = sidebarPanel.gameObject.AddComponent<CozySidebar>();
             }
-
             SerializedObject soSidebar = new SerializedObject(sidebar);
-            soSidebar.FindProperty("_slidingPanel").objectReferenceValue = sidebarPanel;
-            soSidebar.FindProperty("_toggleButton").objectReferenceValue = toggleBtn;
-            soSidebar.FindProperty("_toggleButtonText").objectReferenceValue = toggleBtnText;
-
-            // Wire Tab Buttons
-            SerializedProperty tabButtonsProp = soSidebar.FindProperty("_tabButtons");
-            if (tabButtonsProp != null)
-            {
-                tabButtonsProp.ClearArray();
-                tabButtonsProp.InsertArrayElementAtIndex(0);
-                tabButtonsProp.GetArrayElementAtIndex(0).objectReferenceValue = tabBtn0;
-                tabButtonsProp.InsertArrayElementAtIndex(1);
-                tabButtonsProp.GetArrayElementAtIndex(1).objectReferenceValue = tabBtn1;
-            }
-
-            // Wire Tab Contents
-            SerializedProperty tabContentsProp = soSidebar.FindProperty("_tabContents");
-            if (tabContentsProp != null)
-            {
-                tabContentsProp.ClearArray();
-                tabContentsProp.InsertArrayElementAtIndex(0);
-                tabContentsProp.GetArrayElementAtIndex(0).objectReferenceValue = questContent;
-                tabContentsProp.InsertArrayElementAtIndex(1);
-                tabContentsProp.GetArrayElementAtIndex(1).objectReferenceValue = statsContent;
-            }
+            soSidebar.FindProperty("_questPopup").objectReferenceValue = questPopup;
+            soSidebar.FindProperty("_shopPopup").objectReferenceValue = shopPopup;
+            soSidebar.FindProperty("_questButton").objectReferenceValue = questBtn;
+            soSidebar.FindProperty("_shopButton").objectReferenceValue = shopBtn;
             soSidebar.ApplyModifiedProperties();
+
+            // Setup in-world Interactive Objects (Quest Board & Shop Stall)
+            GameObject questBoardGo = GameObject.Find("Quest_Board");
+            if (questBoardGo == null) questBoardGo = new GameObject("Quest_Board");
+            questBoardGo.transform.position = new Vector3(-6f, 0f, 0f);
+            ConfigureWorldClickVisual(questBoardGo, heartSprite != null ? heartSprite : defaultSprite, new Color(1f, 0.82f, 0.2f, 1f), new Vector3(1.2f, 1.2f, 1f), 1);
+            BoxCollider2D qCollider = questBoardGo.GetComponent<BoxCollider2D>();
+            if (qCollider == null) qCollider = questBoardGo.AddComponent<BoxCollider2D>();
+            qCollider.size = new Vector2(2f, 2.5f);
+            CozyInteractiveObject qInteractive = questBoardGo.GetComponent<CozyInteractiveObject>();
+            if (qInteractive == null) qInteractive = questBoardGo.AddComponent<CozyInteractiveObject>();
+            SerializedObject soQInteractive = new SerializedObject(qInteractive);
+            soQInteractive.FindProperty("_targetPopup").objectReferenceValue = questPopup;
+            soQInteractive.ApplyModifiedProperties();
+
+            GameObject shopStallGo = GameObject.Find("Shop_Stall");
+            if (shopStallGo == null) shopStallGo = new GameObject("Shop_Stall");
+            shopStallGo.transform.position = new Vector3(6f, 0f, 0f);
+            ConfigureWorldClickVisual(shopStallGo, seedSprite != null ? seedSprite : defaultSprite, new Color(0.45f, 1f, 0.58f, 1f), new Vector3(1.3f, 1.3f, 1f), 1);
+            BoxCollider2D sCollider = shopStallGo.GetComponent<BoxCollider2D>();
+            if (sCollider == null) sCollider = shopStallGo.AddComponent<BoxCollider2D>();
+            sCollider.size = new Vector2(2.5f, 2.5f);
+            CozyInteractiveObject sInteractive = shopStallGo.GetComponent<CozyInteractiveObject>();
+            if (sInteractive == null) sInteractive = shopStallGo.AddComponent<CozyInteractiveObject>();
+            SerializedObject soSInteractive = new SerializedObject(sInteractive);
+            soSInteractive.FindProperty("_targetPopup").objectReferenceValue = shopPopup;
+            soSInteractive.ApplyModifiedProperties();
 
             // 9. Setup Inventory Tray
             RectTransform inventoryTray = SetupPanel(uiRoot, "Inventory_Tray");
@@ -825,6 +920,32 @@ namespace CozyLifeSim.Editor
             }
 
             return rect;
+        }
+
+        private void ClearChildren(RectTransform parent)
+        {
+            if (parent == null) return;
+
+            for (int i = parent.childCount - 1; i >= 0; i--)
+            {
+                DestroyImmediate(parent.GetChild(i).gameObject);
+            }
+        }
+
+        private void ConfigureWorldClickVisual(GameObject target, Sprite sprite, Color fallbackColor, Vector3 scale, int sortingOrder)
+        {
+            if (target == null) return;
+
+            SpriteRenderer renderer = target.GetComponent<SpriteRenderer>();
+            if (renderer == null)
+            {
+                renderer = target.AddComponent<SpriteRenderer>();
+            }
+
+            renderer.sprite = sprite;
+            renderer.color = sprite == null ? fallbackColor : Color.white;
+            renderer.sortingOrder = sortingOrder;
+            target.transform.localScale = scale;
         }
 
         private TextMeshProUGUI SetupText(Transform parent, string name, string defaultText, string styleKey)

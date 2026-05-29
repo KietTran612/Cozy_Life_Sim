@@ -60,33 +60,50 @@ namespace CozyLifeSim.Editor
                 database.Stickers = new List<StickerTemplate>();
             }
 
-            if (database.Stickers.Count == 0)
+            bool addedAny = false;
+            var bunnySprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Bunny-Pink-256.png");
+            var bearSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Bear-256.png");
+            var chickenSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Chicken-White-256.png");
+
+            // Fallback: If designated package sprites are null, auto-discover any available Sprite in the project
+            if (bunnySprite == null || bearSprite == null || chickenSprite == null)
             {
-                var bunnySprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Bunny-Pink-256.png");
-                var bearSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Bear-256.png");
-
-                // Fallback: If designated package sprites are null, auto-discover any available Sprite in the project
-                if (bunnySprite == null || bearSprite == null)
+                string[] spriteGuids = AssetDatabase.FindAssets("t:Sprite");
+                if (spriteGuids != null && spriteGuids.Length > 0)
                 {
-                    string[] spriteGuids = AssetDatabase.FindAssets("t:Sprite");
-                    if (spriteGuids != null && spriteGuids.Length > 0)
-                    {
-                        var fallbackSprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GUIDToAssetPath(spriteGuids[0]));
-                        if (bunnySprite == null) bunnySprite = fallbackSprite;
-                        if (bearSprite == null) bearSprite = fallbackSprite;
-                    }
+                    var fallbackSprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GUIDToAssetPath(spriteGuids[0]));
+                    if (bunnySprite == null) bunnySprite = fallbackSprite;
+                    if (bearSprite == null) bearSprite = fallbackSprite;
+                    if (chickenSprite == null) chickenSprite = fallbackSprite;
                 }
+            }
 
-                database.Stickers.Add(new StickerTemplate(1, "Bunny Pink", bunnySprite, bunnySprite));
-                database.Stickers.Add(new StickerTemplate(2, "Bear", bearSprite, bearSprite));
-                
+            if (!database.Stickers.Exists(x => x != null && x.StickerId == 1))
+            {
+                database.Stickers.Add(new StickerTemplate(1, "Bunny Pink", bunnySprite, bunnySprite) { BuyPrice = 50 });
+                addedAny = true;
+            }
+            if (!database.Stickers.Exists(x => x != null && x.StickerId == 2))
+            {
+                database.Stickers.Add(new StickerTemplate(2, "Bear", bearSprite, bearSprite) { BuyPrice = 50 });
+                addedAny = true;
+            }
+            if (!database.Stickers.Exists(x => x != null && x.StickerId == 3))
+            {
+                database.Stickers.Add(new StickerTemplate(3, "Chicken White", chickenSprite, chickenSprite) { BuyPrice = 50 });
+                addedAny = true;
+            }
+
+            if (addedAny)
+            {
                 if (AssetDatabase.Contains(database))
                 {
                     EditorUtility.SetDirty(database);
                     AssetDatabase.SaveAssets();
                 }
-                Debug.Log("<color=green>[CozySim]</color> Bootstrapped default 'Bunny Pink' and 'Bear' stickers inside database (with safety fallbacks).");
+                Debug.Log("<color=green>[CozySim]</color> Bootstrapped missing stickers inside database (with safety fallbacks).");
             }
         }
+
     }
 }

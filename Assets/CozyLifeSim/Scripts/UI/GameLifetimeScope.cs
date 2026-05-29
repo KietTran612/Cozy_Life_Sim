@@ -36,7 +36,10 @@ namespace CozyLifeSim.UI
 
             // Register Memory and Quest singletons
             builder.Register<IMemoryService, MemoryService>(Lifetime.Singleton);
-            
+
+            // Register Shop Service
+            builder.Register<IShopService, ShopService>(Lifetime.Singleton);
+
             // Register Quest Service via 100% VContainer-safe nullable Lambda Factory
             builder.Register<IQuestService>(resolver => new CozyLifeSim.UI.Services.QuestService(
                 resolver.Resolve<ISaveService>(),
@@ -47,6 +50,7 @@ namespace CozyLifeSim.UI
             builder.Register<FarmPresenter>(Lifetime.Singleton);
             builder.Register<AnimalPresenter>(Lifetime.Singleton);
             builder.Register<StickerBookPresenter>(Lifetime.Singleton);
+            builder.Register<ShopPresenter>(Lifetime.Singleton);
         }
     }
 }

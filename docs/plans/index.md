@@ -20,6 +20,9 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Quest UI panel: `2026-05-28-quest-ui-panel.md`
 - Runtime loop polish and validation: `2026-05-29-runtime-loop-polish-validation.md`
 - Address review feedback for Task 22: `2026-05-29-address-review-feedback.md`
+- Task 23 Shop & Progression Design: `2026-05-29-inventory-reward-loop-design.md`
+- Task 23 Shop & Progression Implementation: `2026-05-29-inventory-reward-loop.md`
+
 
 ## Database Editors
 
@@ -31,9 +34,5 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 
 ## Suggested Next Plan
 
-Task 22 implementation plan exists at `2026-05-29-runtime-loop-polish-validation.md`.
-
-After Task 22 is complete, choose the next plan based on validation results. Likely candidates:
-
-- `YYYY-MM-DD-inventory-reward-loop.md`
-- `YYYY-MM-DD-content-expansion-pass.md`
+Task 23 technical design plan exists at `2026-05-29-inventory-reward-loop-design.md`.
+Work checklist and implementation tasks track live at `docs/plans/task.md`.

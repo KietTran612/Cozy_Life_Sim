@@ -57,7 +57,13 @@ namespace CozyLifeSim.UI.Settings
                 {
                     errors.Add($"Sticker with ID {s.StickerId} ('{s.Name}') is missing its main Sprite.");
                 }
+
+                if (s.BuyPrice <= 0)
+                {
+                    errors.Add($"Sticker with ID {s.StickerId} ('{s.Name}') has invalid buy price ({s.BuyPrice}). Price must be positive.");
+                }
             }
+
 
             return errors.Count == 0;
         }

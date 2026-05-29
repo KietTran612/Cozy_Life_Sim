@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using VContainer; // Required DI import
 using VContainer.Unity; // Required LifetimeScope import
+using CozyLifeSim.Core;
 using CozyLifeSim.UI.Presenters; // Required Presenter import
 using CozyLifeSim.UI.Settings; // Import Settings
 
@@ -25,12 +26,20 @@ namespace CozyLifeSim.UI
         private Sequence _flipSequence;
         private StickerBookPresenter _presenter;
         private StickerDatabase _stickerDatabase;
+        private IShopService _shopService;
+        private IInventoryService _inventoryService;
         private readonly List<CozySticker> _spawnedInventoryStickers = new List<CozySticker>();
 
         [Inject]
-        public void Construct(StickerBookPresenter presenter, StickerDatabase stickerDatabase = null)
+        public void Construct(
+            StickerBookPresenter presenter,
+            IShopService shopService,
+            IInventoryService inventoryService,
+            StickerDatabase stickerDatabase = null)
         {
             _presenter = presenter;
+            _shopService = shopService;
+            _inventoryService = inventoryService;
             _stickerDatabase = stickerDatabase;
         }
 
@@ -66,6 +75,16 @@ namespace CozyLifeSim.UI
             
             UpdateNavigationButtons();
 
+            // Subscribe to shop and inventory reload events
+            if (_shopService != null)
+            {
+                _shopService.OnShopTransactionSuccess += SpawnDynamicStickers;
+            }
+            if (_inventoryService != null)
+            {
+                _inventoryService.OnInventoryReloaded += SpawnDynamicStickers;
+            }
+
             // Spawn inventory tray dynamically
             SpawnDynamicStickers();
 
@@ -93,6 +112,12 @@ namespace CozyLifeSim.UI
             foreach (var template in _stickerDatabase.Stickers)
             {
                 if (template == null || template.Sprite == null) continue;
+
+                // Only spawn if sticker is unlocked
+                if (_shopService != null && !_shopService.IsStickerUnlocked(template.StickerId))
+                {
+                    continue;
+                }
 
                 var sticker = Instantiate(_stickerPrefabTemplate, _inventoryTrayRoot);
                 sticker.gameObject.SetActive(true);
@@ -227,6 +252,14 @@ namespace CozyLifeSim.UI
             _flipSequence?.Kill();
             if (_nextButton != null) _nextButton.onClick.RemoveListener(NextPage);
             if (_prevButton != null) _prevButton.onClick.RemoveListener(PrevPage);
+            if (_shopService != null)
+            {
+                _shopService.OnShopTransactionSuccess -= SpawnDynamicStickers;
+            }
+            if (_inventoryService != null)
+            {
+                _inventoryService.OnInventoryReloaded -= SpawnDynamicStickers;
+            }
         }
     }
 }

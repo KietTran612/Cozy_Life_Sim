@@ -57,7 +57,13 @@ namespace CozyLifeSim.UI.Settings
                 {
                     errors.Add($"Crop with ID {c.CropId} ('{c.Name}') is missing one or more Stage Sprites.");
                 }
+
+                if (c.BuyPrice <= 0 || c.SellPrice <= 0)
+                {
+                    errors.Add($"Crop with ID {c.CropId} ('{c.Name}') has invalid buy/sell price (Buy: {c.BuyPrice}, Sell: {c.SellPrice}). Prices must be positive.");
+                }
             }
+
 
             return errors.Count == 0;
         }

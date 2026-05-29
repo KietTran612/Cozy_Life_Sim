@@ -45,6 +45,7 @@ namespace CozyLifeSim.UI
             builder.Register<IQuestService>(resolver => new CozyLifeSim.UI.Services.QuestService(
                 resolver.Resolve<ISaveService>(),
                 resolver.Resolve<IInventoryService>(),
+                resolver.Resolve<IProgressionService>(),
                 _questDatabase), Lifetime.Singleton);
 
             // Register Presenters

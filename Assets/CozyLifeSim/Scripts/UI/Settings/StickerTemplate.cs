@@ -11,6 +11,7 @@ namespace CozyLifeSim.UI.Settings
         public Sprite Sprite;
         public Sprite ShadowSprite;
         public int BuyPrice = 50;
+        public int RequiredLevel = 1;
 
 
         public StickerTemplate() { }

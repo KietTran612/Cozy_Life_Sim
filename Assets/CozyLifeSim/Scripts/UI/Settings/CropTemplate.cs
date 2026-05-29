@@ -15,6 +15,7 @@ namespace CozyLifeSim.UI.Settings
         public Sprite HarvestSprite;
         public int BuyPrice = 5;
         public int SellPrice = 15;
+        public int RequiredLevel = 1;
 
 
         public CropTemplate() { }

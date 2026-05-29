@@ -532,6 +532,43 @@ namespace CozyLifeSim.Editor
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "Sticker placement atomic transactions and memory rollback verified");
 
+                // Test 11.13: Quest Completion XP Reward & Active Clean-Up
+                SaveService testQuestSave = new SaveService();
+                testQuestSave.ActiveSave.PlayerLevel = 1;
+                testQuestSave.ActiveSave.PlayerXP = 0;
+                testQuestSave.ActiveSave.CompletedQuestIds.Clear();
+                testQuestSave.ActiveSave.ActiveQuestProgress.Clear();
+                testQuestSave.Save();
+
+                InventoryService testQuestInv = new InventoryService(testQuestSave);
+                ProgressionService testQuestProg = new ProgressionService(testQuestSave);
+                
+                var testQuestDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.QuestDatabase>();
+                var questTemplate = new QuestTemplate(4, "Test XP Quest", 3, 50, QuestType.WaterCrops);
+                questTemplate.RewardXP = 150; // XP reward that will trigger level up!
+                testQuestDb.Quests.Add(questTemplate);
+
+                QuestService testQuestService = new QuestService(testQuestSave, testQuestInv, testQuestProg, testQuestDb, false);
+                
+                // Progress to completion
+                testQuestService.ProgressQuest(QuestType.WaterCrops, 3);
+
+                if (testQuestSave.ActiveSave.PlayerLevel != 2)
+                    throw new System.Exception($"PlayerLevel should level up to 2 via Quest XP reward, got {testQuestSave.ActiveSave.PlayerLevel}");
+                
+                if (testQuestSave.ActiveSave.PlayerXP != 50)
+                    throw new System.Exception($"PlayerXP should carry over leftover 50 XP (150 reward - 100 threshold), got {testQuestSave.ActiveSave.PlayerXP}");
+
+                if (!testQuestSave.ActiveSave.CompletedQuestIds.Contains(4))
+                    throw new System.Exception("CompletedQuestIds should contain Quest ID 4");
+
+                if (testQuestSave.ActiveSave.ActiveQuestProgress.Exists(x => x.QuestId == 4))
+                    throw new System.Exception("ActiveQuestProgress should be cleaned up and not contain Quest ID 4 upon completion");
+
+                Object.DestroyImmediate(testQuestDb);
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Quest completion XP reward and active progress cleanup verified");
+
                 if (questDb != null)
                 {
                     Object.DestroyImmediate(questDb);

@@ -14,6 +14,7 @@ namespace CozyLifeSim.UI.Settings
         public float PetJumpHeight = 25f;
         public float PetJumpDuration = 0.4f;
         public Sprite HeartFeedbackSprite;
+        public int RequiredLevel = 1;
 
         public AnimalTemplate() { }
 

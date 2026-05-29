@@ -8,6 +8,7 @@ namespace CozyLifeSim.UI.Services
     {
         private readonly ISaveService _saveService;
         private readonly IInventoryService _inventoryService;
+        private readonly IProgressionService _progressionService;
         private readonly CozyLifeSim.UI.Settings.QuestDatabase _questDatabase;
         private SaveData ActiveSave => _saveService.ActiveSave;
 
@@ -18,13 +19,29 @@ namespace CozyLifeSim.UI.Services
         public event Action<QuestData> OnQuestCompleted;
         public event Action OnQuestsReloaded;
 
-        public QuestService(ISaveService saveService, IInventoryService inventoryService, CozyLifeSim.UI.Settings.QuestDatabase questDatabase, bool logFallbackWarning = true)
+        public QuestService(
+            ISaveService saveService, 
+            IInventoryService inventoryService, 
+            IProgressionService progressionService,
+            CozyLifeSim.UI.Settings.QuestDatabase questDatabase, 
+            bool logFallbackWarning = true)
         {
             _saveService = saveService;
             _inventoryService = inventoryService;
+            _progressionService = progressionService;
             _questDatabase = questDatabase;
 
             InitializeQuests(logFallbackWarning);
+        }
+
+        // Backward compatibility constructor
+        public QuestService(
+            ISaveService saveService, 
+            IInventoryService inventoryService, 
+            CozyLifeSim.UI.Settings.QuestDatabase questDatabase, 
+            bool logFallbackWarning = true)
+            : this(saveService, inventoryService, null, questDatabase, logFallbackWarning)
+        {
         }
 
         private void InitializeQuests(bool logFallbackWarning)
@@ -35,7 +52,7 @@ namespace CozyLifeSim.UI.Services
                 {
                     if (template != null)
                     {
-                        _quests.Add(new QuestData(template.QuestId, template.Title, template.TargetCount, template.RewardCoins, template.Type));
+                        _quests.Add(new QuestData(template.QuestId, template.Title, template.TargetCount, template.RewardCoins, template.Type, template.RewardXP));
                     }
                 }
             }
@@ -45,9 +62,9 @@ namespace CozyLifeSim.UI.Services
                 {
                     UnityEngine.Debug.LogWarning("[CozySim] QuestDatabase is null or empty. Falling back to default hardcoded quests.");
                 }
-                _quests.Add(new QuestData(1, "Water 3 Crops", 3, 50, QuestType.WaterCrops));
-                _quests.Add(new QuestData(2, "Harvest 2 Mature Crops", 2, 80, QuestType.HarvestCrops));
-                _quests.Add(new QuestData(3, "Pet the Breathing Chicken 5 times", 5, 40, QuestType.PetAnimal));
+                _quests.Add(new QuestData(1, "Water 3 Crops", 3, 50, QuestType.WaterCrops, 50));
+                _quests.Add(new QuestData(2, "Harvest 2 Mature Crops", 2, 80, QuestType.HarvestCrops, 100));
+                _quests.Add(new QuestData(3, "Pet the Breathing Chicken 5 times", 5, 40, QuestType.PetAnimal, 40));
             }
 
             // Normalize/Sanitize Save Data: remove active/completed progress records for obsolete/deleted quest IDs
@@ -107,6 +124,13 @@ namespace CozyLifeSim.UI.Services
                 quest.IsCompleted = true;
                 ActiveSave.CompletedQuestIds.Add(questId);
                 ActiveSave.ActiveQuestProgress.RemoveAll(x => x.QuestId == questId);
+                
+                // Reward XP via progression service
+                if (_progressionService != null)
+                {
+                    _progressionService.AddXP(quest.RewardXP);
+                }
+
                 _saveService.Save();
                 
                 // Reward coins

@@ -36,8 +36,9 @@ graph TD
     `public bool HasMigratedStickerOwned = false;`
 *   **Quy tac di dan (Migration & Refill Guard)**:
     *   Ham `NormalizeSaveData()` kiem tra neu `!HasMigratedStickerOwned`:
-        1. **Khoi tao neu moi hoan toan**: Neu `ActiveSave.StickerOwned` null hoac rong, khoi tao list moi va gan default stickers ID 1, 2 co `Count = 99`.
-        2. **Partial-upgrade check & Merge**: Neu `ActiveSave.StickerOwned` da co san du lieu (save tu build trung gian/dev), he thong **tuyet doi khong** thuc hien refill default ve 99 de tranh overwrite. Tuy nhien, he thong **van thuc hien merge** (dam bao Null-Safe an toan):
+        1. **Khoi tao list**: Dam bao `ActiveSave.StickerOwned` khong bi null (neu null thi `ActiveSave.StickerOwned = new List<StickerInventory>();`).
+        2. **Gan default stickers**: Neu `ActiveSave.StickerOwned.Count == 0` (save moi hoan toan hoac save cu chua tung khoi tao countable sticker), tien hanh them default stickers ID 1 va 2 voi `Count = 99`. Chi thuc hien viec gan default nay 1 lan duy nhat luc migrate/new save. Neu save da co san du lieu, **tuyet doi khong** refill ve 99 khi Normalize chay sau do de bao toan so luong thuc te.
+        3. **Merge legacy an toan (Null-Safe)**: Luon luon thuc hien viec merge `UnlockedStickerIds` cu sang `StickerOwned` moi neu `UnlockedStickerIds` khong bi null:
            ```csharp
            if (ActiveSave.UnlockedStickerIds != null)
            {
@@ -51,7 +52,7 @@ graph TD
                ActiveSave.UnlockedStickerIds.Clear(); // Don dep vung nho cu
            }
            ```
-        3. **Danh dau hoan thanh**: Gan `HasMigratedStickerOwned = true` va goi `Save()`.
+        4. **Danh dau hoan thanh**: Gan `HasMigratedStickerOwned = true` va goi `Save()`.
     *   Neu `HasMigratedStickerOwned == true`, he thong **tuyet doi bo qua** moi buoc khoi tao hoac refill de tranh viec tu dong nap lai sticker khi so luong da ve 0 do tieu thu.
 
 ### 2.2. Dinh Danh PlacedStickerId Serializable & StructLayout - [P1] & [P2]
@@ -151,6 +152,7 @@ Toan bo kho sticker duoc quan ly tap trung boi **`IInventoryService` va `Invento
 
 1.  **Save Migration Test (Kiem tra di dan save cu)**:
     *   Ghi de file save cu chua `UnlockedStickerIds`. Verify list `StickerOwned` moi tu dong sinh, default sticker 1 va 2 co `Count = 99`, sticker 3 co `Count = 1`.
+    *   Kiem tra Normalize sau do: Verify **khong** refill lai ve 99 neu so luong hien tai khac 99 vi co `HasMigratedStickerOwned` da duoc set.
     *   *Partial-upgrade case*: Ghi de save da co StickerOwned nhung `HasMigratedStickerOwned = false` va co UnlockedStickerIds cu. Verify he thong tu dong set marker true, **bo qua** gan lai count default, nhung **van merge thanh cong** cac ID chua co (ID 3) vao StickerOwned voi `Count = 1`.
 2.  **Sticker Consumable & Atomicity Test (Kiem tra tinh nguyen tu)**:
     *   Mua sticker ID 3 -> Tray tang count.

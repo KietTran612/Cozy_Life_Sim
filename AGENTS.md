@@ -35,10 +35,25 @@ After completing any task that changes or adds scripts, wait for Unity to finish
 
 ## Active Context & Handover Guidelines
 
-To minimize token usage, prevent context dilution, and maintain strict structural consistency across new sessions, any AI Agent starting a new chat thread MUST prioritize reading these three files before executing any tasks or modifying files:
+To minimize token usage, prevent context dilution, and maintain strict structural consistency across new sessions, any AI Agent starting a new chat thread MUST prioritize reading these lightweight files before executing any tasks or modifying files:
 
-1. **Live Task Tracker**: [task.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/task.md) - Tells the agent exactly which tasks are completed `[x]` and which ones are remaining `[ ]`.
-2. **Core Architectural Guidelines**: [2026-05-25-cozy-life-sim-core-architecture.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-25-cozy-life-sim-core-architecture.md) - Defines the VContainer (DI) rules, styling configurations, layout boundaries, and assembly definition setup.
-3. **Gameplay Functional Specs**: [2026-05-25-cozy-life-sim-gameplay-prototype.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-25-cozy-life-sim-gameplay-prototype.md) - Contains precise specifications for stickers, notebook page flips, crop growth loops, and breathing chicken feedbacks.
+1. **Live Task Tracker**: [task.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/task.md) - Concise completed/pending task state.
+2. **Current Handoff**: [current-handoff.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/current-handoff.md) - Latest completed work, verification status, known warnings, and recommended next task.
+3. **Plan Index**: [index.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/index.md) - Map of detailed plans to read only when relevant.
+
+Only read larger historical plans when the current task specifically requires them:
+
+- [2026-05-25-cozy-life-sim-core-architecture.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-25-cozy-life-sim-core-architecture.md) for DI, assembly, style, or architecture questions.
+- [2026-05-25-cozy-life-sim-gameplay-prototype.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-25-cozy-life-sim-gameplay-prototype.md) for sticker drag/drop, notebook page flip, crop loop, or animal feedback behavior.
 
 Agents must NOT read unrelated large historical files or perform broad workspace scans unless explicitly instructed. This guarantees a lightweight, cost-effective, and highly focused coding workspace.
+
+## Handoff Update Protocol
+
+After completing any new task, update:
+
+1. [task.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/task.md) with concise task status only.
+2. [current-handoff.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/current-handoff.md) with the latest completed work, verification results, known expected warnings or blockers, current uncommitted scope, and recommended next task.
+3. [index.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/index.md) only when adding a new detailed plan file.
+
+Do not paste long logs or implementation details into the handoff files. Link to the detailed plan instead.

@@ -96,17 +96,32 @@ namespace CozyLifeSim.UI.Services
         public void AddCrops(int amount)
         {
             if (amount <= 0) return;
-            ActiveSave.Crops += amount;
-            OnCropsChanged?.Invoke(ActiveSave.Crops);
+            AddCropsNonSaving(amount);
             _saveService.Save();
         }
 
         public bool ConsumeCrops(int amount)
         {
+            if (ConsumeCropsNonSaving(amount))
+            {
+                _saveService.Save();
+                return true;
+            }
+            return false;
+        }
+
+        public void AddCropsNonSaving(int amount)
+        {
+            if (amount <= 0) return;
+            ActiveSave.Crops += amount;
+            OnCropsChanged?.Invoke(ActiveSave.Crops);
+        }
+
+        public bool ConsumeCropsNonSaving(int amount)
+        {
             if (amount <= 0 || ActiveSave.Crops < amount) return false;
             ActiveSave.Crops -= amount;
             OnCropsChanged?.Invoke(ActiveSave.Crops);
-            _saveService.Save();
             return true;
         }
 

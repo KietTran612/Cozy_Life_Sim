@@ -34,5 +34,7 @@ namespace CozyLifeSim.Core
         bool ConsumeCoinsNonSaving(int amount);
         void AddSeedsNonSaving(int amount);
         bool ConsumeSeedsNonSaving(int amount);
+        void AddCropsNonSaving(int amount);
+        bool ConsumeCropsNonSaving(int amount);
     }
 }

@@ -118,13 +118,22 @@ namespace CozyLifeSim.UI.Services
                 return false;
             }
 
-            // Perform transaction: deduct aggregate crops, add coins
-            if (_inventoryService.ConsumeCrops(1))
+            if (_inventoryService.ConsumeCropsNonSaving(1))
             {
-                _inventoryService.AddCoins(crop.SellPrice);
-                _saveService.Save();
-                OnShopTransactionSuccess?.Invoke();
-                return true;
+                _inventoryService.AddCoinsNonSaving(crop.SellPrice);
+                try
+                {
+                    _saveService.Save();
+                    OnShopTransactionSuccess?.Invoke();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    _inventoryService.AddCropsNonSaving(1);
+                    _inventoryService.ConsumeCoinsNonSaving(crop.SellPrice);
+                    Debug.LogWarning($"[CozySim Shop] TrySellCrop failed to save. Rolled back RAM. Exception: {ex.Message}");
+                    return false;
+                }
             }
 
             return false;

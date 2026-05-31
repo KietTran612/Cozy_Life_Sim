@@ -11,6 +11,7 @@ namespace CozyLifeSim.Core
         event Action OnQuestsReloaded;
 
         void ProgressQuest(QuestType type, int amount);
+        bool TryProgressQuest(QuestType type, int amount);
         void ReloadFromSave(bool logFallbackWarning = true);
     }
 }

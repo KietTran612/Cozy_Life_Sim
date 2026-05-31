@@ -102,41 +102,127 @@ namespace CozyLifeSim.UI.Services
 
         public void ProgressQuest(QuestType type, int amount)
         {
+            TryProgressQuest(type, amount);
+        }
+
+        public bool TryProgressQuest(QuestType type, int amount)
+        {
             // Linear Progression: Find the FIRST uncompleted active quest of this type
             QuestData quest = _quests.Find(x => x.Type == type && !x.IsCompleted);
-            if (quest == null) return;
+            if (quest == null || amount <= 0) return false;
 
             int questId = quest.QuestId;
-            quest.CurrentCount = Math.Min(quest.CurrentCount + amount, quest.TargetCount);
-            
-            // Persist partial progress
-            ActiveSave.ActiveQuestProgress.RemoveAll(x => x.QuestId == questId);
-            if (quest.CurrentCount < quest.TargetCount)
-            {
-                ActiveSave.ActiveQuestProgress.Add(new QuestProgressData(questId, quest.CurrentCount));
-            }
-            
-            _saveService.Save();
-            OnQuestProgressed?.Invoke(quest);
+            int oldQuestCount = quest.CurrentCount;
+            bool oldQuestCompleted = quest.IsCompleted;
+            int oldCoins = _inventoryService.Coins;
+            int oldLevel = _progressionService != null ? _progressionService.PlayerLevel : ActiveSave.PlayerLevel;
+            int oldXP = _progressionService != null ? _progressionService.PlayerXP : ActiveSave.PlayerXP;
+            List<QuestProgressData> oldActiveProgress = new List<QuestProgressData>(ActiveSave.ActiveQuestProgress);
+            List<int> oldCompletedQuestIds = new List<int>(ActiveSave.CompletedQuestIds);
 
-            if (quest.CurrentCount >= quest.TargetCount)
+            try
             {
-                quest.IsCompleted = true;
-                ActiveSave.CompletedQuestIds.Add(questId);
+                quest.CurrentCount = Math.Min(quest.CurrentCount + amount, quest.TargetCount);
+
+                // Persist partial progress.
                 ActiveSave.ActiveQuestProgress.RemoveAll(x => x.QuestId == questId);
-                
-                // Reward XP via progression service
-                if (_progressionService != null)
+                if (quest.CurrentCount < quest.TargetCount)
                 {
-                    _progressionService.AddXP(quest.RewardXP);
+                    ActiveSave.ActiveQuestProgress.Add(new QuestProgressData(questId, quest.CurrentCount));
+                }
+
+                bool completedNow = quest.CurrentCount >= quest.TargetCount;
+                if (completedNow)
+                {
+                    quest.IsCompleted = true;
+                    if (!ActiveSave.CompletedQuestIds.Contains(questId))
+                    {
+                        ActiveSave.CompletedQuestIds.Add(questId);
+                    }
+                    ActiveSave.ActiveQuestProgress.RemoveAll(x => x.QuestId == questId);
+
+                    if (_progressionService != null)
+                    {
+                        _progressionService.AddXPNonSaving(quest.RewardXP);
+                    }
+                    else
+                    {
+                        AddXPToSaveNonSaving(quest.RewardXP);
+                    }
+
+                    _inventoryService.AddCoinsNonSaving(quest.RewardCoins);
                 }
 
                 _saveService.Save();
-                
-                // Reward coins
-                _inventoryService.AddCoins(quest.RewardCoins);
-                OnQuestCompleted?.Invoke(quest);
+
+                OnQuestProgressed?.Invoke(quest);
+                if (completedNow)
+                {
+                    OnQuestCompleted?.Invoke(quest);
+                }
+
+                return true;
             }
+            catch (Exception ex)
+            {
+                quest.CurrentCount = oldQuestCount;
+                quest.IsCompleted = oldQuestCompleted;
+
+                ActiveSave.ActiveQuestProgress.Clear();
+                ActiveSave.ActiveQuestProgress.AddRange(oldActiveProgress);
+                ActiveSave.CompletedQuestIds.Clear();
+                ActiveSave.CompletedQuestIds.AddRange(oldCompletedQuestIds);
+
+                RestoreInventoryCoinsNonSaving(oldCoins);
+                RestoreProgressionNonSaving(oldLevel, oldXP);
+
+                UnityEngine.Debug.LogWarning($"[CozySim Quest] TryProgressQuest failed to save. Rolled back RAM. Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+        private void RestoreInventoryCoinsNonSaving(int targetCoins)
+        {
+            int delta = _inventoryService.Coins - targetCoins;
+            if (delta > 0)
+            {
+                _inventoryService.ConsumeCoinsNonSaving(delta);
+            }
+            else if (delta < 0)
+            {
+                _inventoryService.AddCoinsNonSaving(-delta);
+            }
+        }
+
+        private void RestoreProgressionNonSaving(int level, int xp)
+        {
+            if (_progressionService != null)
+            {
+                _progressionService.SetProgressionNonSaving(level, xp);
+                return;
+            }
+
+            ActiveSave.PlayerLevel = Math.Max(1, level);
+            ActiveSave.PlayerXP = Math.Max(0, xp);
+        }
+
+        private void AddXPToSaveNonSaving(int amount)
+        {
+            if (amount <= 0) return;
+
+            ActiveSave.PlayerXP += amount;
+            int xpRequired = GetXPThreshold(ActiveSave.PlayerLevel);
+            while (ActiveSave.PlayerXP >= xpRequired)
+            {
+                ActiveSave.PlayerXP -= xpRequired;
+                ActiveSave.PlayerLevel++;
+                xpRequired = GetXPThreshold(ActiveSave.PlayerLevel);
+            }
+        }
+
+        private int GetXPThreshold(int level)
+        {
+            return level * 100;
         }
     }
 }

@@ -23,6 +23,13 @@ namespace CozyLifeSim.UI.Services
         public void AddXP(int amount)
         {
             if (amount <= 0) return;
+            AddXPNonSaving(amount);
+            _saveService.Save();
+        }
+
+        public void AddXPNonSaving(int amount)
+        {
+            if (amount <= 0) return;
 
             var save = _saveService.ActiveSave;
             save.PlayerXP += amount;
@@ -44,8 +51,26 @@ namespace CozyLifeSim.UI.Services
                 OnLevelUp?.Invoke(save.PlayerLevel);
                 OnXPChanged?.Invoke(save.PlayerXP);
             }
-            
-            _saveService.Save();
+        }
+
+        public void SetProgressionNonSaving(int level, int xp)
+        {
+            var save = _saveService.ActiveSave;
+            bool levelChanged = save.PlayerLevel != level;
+            bool xpChanged = save.PlayerXP != xp;
+
+            save.PlayerLevel = Math.Max(1, level);
+            save.PlayerXP = Math.Max(0, xp);
+
+            if (levelChanged)
+            {
+                OnLevelUp?.Invoke(save.PlayerLevel);
+            }
+
+            if (xpChanged)
+            {
+                OnXPChanged?.Invoke(save.PlayerXP);
+            }
         }
 
         private int GetXPThreshold(int level)

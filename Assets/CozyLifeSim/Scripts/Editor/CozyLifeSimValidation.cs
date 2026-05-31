@@ -664,12 +664,72 @@ namespace CozyLifeSim.Editor
                 // Disable simulated save failure
                 testShopAtomicSave.ForceSaveFailure = false;
 
-                Object.DestroyImmediate(testShopAtomicCropDb);
-                Object.DestroyImmediate(testShopAtomicStickerDb);
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "ShopService Atomic Seed & Sticker Save Failure Rollback verified successfully");
 
-                // Test 11.16: StickerBookPresenter Atomic Placement & Refund
+                // Test 11.16: ShopService Atomic Crop Sale Save Failure Rollback
+                testShopAtomicSave.ActiveSave.Coins = 100;
+                testShopAtomicSave.ActiveSave.Crops = 2;
+                testShopAtomicSave.Save();
+                testShopAtomicCropDb.Crops.Add(new CozyLifeSim.UI.Settings.CropTemplate(2, "Atomic Crop", 1f, null, null, null, null) { SellPrice = 15, RequiredLevel = 1 });
+
+                try
+                {
+                    testShopAtomicSave.ForceSaveFailure = true;
+                    bool cropSellResult = shopAtomicService.TrySellCrop(2);
+                    if (cropSellResult) throw new System.Exception("TrySellCrop(2) should fail under simulated IO save failure");
+                    if (testShopAtomicInv.Coins != 100) throw new System.Exception($"Coins should remain 100 after crop sale rollback, got {testShopAtomicInv.Coins}");
+                    if (testShopAtomicInv.Crops != 2) throw new System.Exception($"Crops should remain 2 after crop sale rollback, got {testShopAtomicInv.Crops}");
+                }
+                finally
+                {
+                    testShopAtomicSave.ForceSaveFailure = false;
+                }
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "ShopService Atomic Crop Sale Save Failure Rollback verified successfully");
+
+                Object.DestroyImmediate(testShopAtomicCropDb);
+                Object.DestroyImmediate(testShopAtomicStickerDb);
+
+                // Test 11.17: Quest Completion Atomic Save Failure Rollback
+                SaveService testQuestAtomicSave = new SaveService();
+                testQuestAtomicSave.ActiveSave.Coins = 10;
+                testQuestAtomicSave.ActiveSave.PlayerLevel = 1;
+                testQuestAtomicSave.ActiveSave.PlayerXP = 0;
+                testQuestAtomicSave.ActiveSave.CompletedQuestIds.Clear();
+                testQuestAtomicSave.ActiveSave.ActiveQuestProgress.Clear();
+                testQuestAtomicSave.Save();
+
+                InventoryService testQuestAtomicInv = new InventoryService(testQuestAtomicSave);
+                ProgressionService testQuestAtomicProg = new ProgressionService(testQuestAtomicSave);
+                var testQuestAtomicDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.QuestDatabase>();
+                testQuestAtomicDb.Quests.Add(new QuestTemplate(10, "Atomic Quest", 1, 50, QuestType.WaterCrops, 150));
+                QuestService testQuestAtomicService = new QuestService(testQuestAtomicSave, testQuestAtomicInv, testQuestAtomicProg, testQuestAtomicDb, false);
+
+                try
+                {
+                    testQuestAtomicSave.ForceSaveFailure = true;
+                    bool questProgressResult = testQuestAtomicService.TryProgressQuest(QuestType.WaterCrops, 1);
+                    if (questProgressResult) throw new System.Exception("TryProgressQuest should fail under simulated IO save failure");
+                    if (testQuestAtomicInv.Coins != 10) throw new System.Exception($"Coins should remain 10 after quest rollback, got {testQuestAtomicInv.Coins}");
+                    if (testQuestAtomicProg.PlayerLevel != 1) throw new System.Exception($"PlayerLevel should remain 1 after quest rollback, got {testQuestAtomicProg.PlayerLevel}");
+                    if (testQuestAtomicProg.PlayerXP != 0) throw new System.Exception($"PlayerXP should remain 0 after quest rollback, got {testQuestAtomicProg.PlayerXP}");
+                    if (testQuestAtomicSave.ActiveSave.CompletedQuestIds.Contains(10)) throw new System.Exception("CompletedQuestIds should not contain Quest ID 10 after rollback");
+                    if (testQuestAtomicSave.ActiveSave.ActiveQuestProgress.Exists(x => x.QuestId == 10)) throw new System.Exception("ActiveQuestProgress should not contain Quest ID 10 after rollback");
+                    if (testQuestAtomicService.ActiveQuests[0].CurrentCount != 0) throw new System.Exception($"Quest CurrentCount should rollback to 0, got {testQuestAtomicService.ActiveQuests[0].CurrentCount}");
+                    if (testQuestAtomicService.ActiveQuests[0].IsCompleted) throw new System.Exception("Quest should not be completed after rollback");
+                }
+                finally
+                {
+                    testQuestAtomicSave.ForceSaveFailure = false;
+                    Object.DestroyImmediate(testQuestAtomicDb);
+                }
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Quest completion atomic save failure rollback verified successfully");
+
+                // Test 11.18: StickerBookPresenter Atomic Placement & Refund
                 SaveService testPresSave = new SaveService();
                 testPresSave.ActiveSave.Coins = 100;
                 testPresSave.ActiveSave.StickerOwned.Clear();

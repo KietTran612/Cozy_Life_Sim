@@ -24,6 +24,9 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Task 23 Shop & Progression Implementation: `2026-05-29-inventory-reward-loop.md`
 - Phase 2 Polish & Progression Design: [2026-05-29-polish-and-content-expansion-design.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-29-polish-and-content-expansion-design.md)
 - Phase 2.1 Progression & Countable Backend: [2026-05-30-progression-countable-backend.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-30-progression-countable-backend.md)
+- Phase 2.2 UI, Shop Tabs & Juice Polish: [2026-05-31-ui-juice-polish.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-31-ui-juice-polish.md)
+- Shop Transaction Atomicity & Interface Safety [COMPLETED]: [2026-05-31-shop-atomicity-fixes.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-31-shop-atomicity-fixes.md)
+
 
 
 ## Database Editors

@@ -547,9 +547,11 @@ namespace CozyLifeSim.Editor
                 Fail($"Fresh save should restore {expectedFreshCoins} coins, got {freshInventory.Coins}.");
             }
 
-            if (freshInventory.GetStickerCount(3) <= 0)
+            // Under Phase 2.2 Countable Sticker specifications, placing a sticker consumes it from inventory.
+            // Since we bought exactly 1 copy (count = 1) and placed it on the page, the remaining inventory count is 0.
+            if (freshInventory.GetStickerCount(3) != 0)
             {
-                Fail("Fresh save should restore premium sticker ID 3 count.");
+                Fail($"Fresh save should restore premium sticker ID 3 count as 0 in inventory after placement, got {freshInventory.GetStickerCount(3)}.");
             }
 
             if (freshMemory.PlacedStickers.Count != 1)

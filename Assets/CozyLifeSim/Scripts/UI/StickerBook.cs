@@ -85,6 +85,10 @@ namespace CozyLifeSim.UI
                 _inventoryService.OnInventoryReloaded += SpawnDynamicStickers;
             }
 
+            // Lắng nghe sự kiện từ CozySticker để quản lý vòng đời sticker an toàn và cập nhật tray count
+            CozySticker.OnStickerPlacedOnPage += HandleStickerPlacedOnPage;
+            CozySticker.OnStickerReturnedToInventory += SpawnDynamicStickers;
+
             // Spawn inventory tray dynamically
             SpawnDynamicStickers();
 
@@ -113,19 +117,30 @@ namespace CozyLifeSim.UI
             {
                 if (template == null || template.Sprite == null) continue;
 
-                // Only spawn if sticker is unlocked
-                if (_shopService != null && !_shopService.IsStickerUnlocked(template.StickerId))
+                int ownedCount = _inventoryService != null ? _inventoryService.GetStickerCount(template.StickerId) : 0;
+                if (ownedCount <= 0)
                 {
-                    continue;
+                    continue; // An sticker khoi khay neu so luong = 0
                 }
 
                 var sticker = Instantiate(_stickerPrefabTemplate, _inventoryTrayRoot);
                 sticker.gameObject.SetActive(true);
 
                 // Setup sticker values dynamically
-                sticker.Setup(template.StickerId, template.Sprite, template.ShadowSprite);
+                sticker.Setup(template.StickerId, template.Sprite, template.ShadowSprite, ownedCount, true);
                 _spawnedInventoryStickers.Add(sticker);
             }
+        }
+
+        private void HandleStickerPlacedOnPage(CozySticker sticker)
+        {
+            if (sticker != null && _spawnedInventoryStickers.Contains(sticker))
+            {
+                // Gỡ sticker khỏi list spawned của khay trước khi thực hiện refresh tray
+                _spawnedInventoryStickers.Remove(sticker);
+            }
+            // Refresh lại khay để cập nhật count badge còn lại của loại sticker đó
+            SpawnDynamicStickers();
         }
 
         private void RestoreStickers()
@@ -149,7 +164,8 @@ namespace CozyLifeSim.UI
                 spawned.gameObject.SetActive(true);
                 
                 // Configure graphics dynamically from database
-                spawned.Setup(template.StickerId, template.Sprite, template.ShadowSprite);
+                spawned.Setup(template.StickerId, template.Sprite, template.ShadowSprite, 1, false);
+                spawned.PlacementId = item.PlacementId; // Giữ lại PlacementId duy nhất
 
                 RectTransform rect = spawned.GetComponent<RectTransform>();
                 if (rect != null)
@@ -260,6 +276,9 @@ namespace CozyLifeSim.UI
             {
                 _inventoryService.OnInventoryReloaded -= SpawnDynamicStickers;
             }
+
+            CozySticker.OnStickerPlacedOnPage -= HandleStickerPlacedOnPage;
+            CozySticker.OnStickerReturnedToInventory -= SpawnDynamicStickers;
         }
     }
 }

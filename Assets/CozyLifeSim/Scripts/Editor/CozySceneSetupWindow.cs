@@ -644,7 +644,23 @@ namespace CozyLifeSim.Editor
             sCoinsText.raycastTarget = false;
             sCoinsText.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 210f);
 
-            // Three categories containers side-by-side
+            // Setup Tab Buttons
+            Button seedsTabBtn = SetupButton(sContentPanel, "Tab_Seeds", "Seeds");
+            RectTransform seedsTabBtnRect = seedsTabBtn.GetComponent<RectTransform>();
+            seedsTabBtnRect.anchoredPosition = new Vector2(-150f, 160f);
+            seedsTabBtnRect.sizeDelta = new Vector2(120f, 35f);
+
+            Button stickersTabBtn = SetupButton(sContentPanel, "Tab_Stickers", "Stickers");
+            RectTransform stickersTabBtnRect = stickersTabBtn.GetComponent<RectTransform>();
+            stickersTabBtnRect.anchoredPosition = new Vector2(0f, 160f);
+            stickersTabBtnRect.sizeDelta = new Vector2(120f, 35f);
+
+            Button cropsTabBtn = SetupButton(sContentPanel, "Tab_Crops", "Crops");
+            RectTransform cropsTabBtnRect = cropsTabBtn.GetComponent<RectTransform>();
+            cropsTabBtnRect.anchoredPosition = new Vector2(150f, 160f);
+            cropsTabBtnRect.sizeDelta = new Vector2(120f, 35f);
+
+            // Three categories containers side-by-side -> Changed to stacked tabs
             RectTransform sGridsContainer = SetupPanel(sContentPanel, "Grids_Container");
             sGridsContainer.anchorMin = new Vector2(0.05f, 0.05f);
             sGridsContainer.anchorMax = new Vector2(0.95f, 0.65f);
@@ -653,13 +669,14 @@ namespace CozyLifeSim.Editor
             Image sGridContImg = sGridsContainer.gameObject.GetComponent<Image>();
             if (sGridContImg != null) DestroyImmediate(sGridContImg);
             HorizontalLayoutGroup sGridsLayout = sGridsContainer.gameObject.GetComponent<HorizontalLayoutGroup>();
-            if (sGridsLayout == null) sGridsLayout = sGridsContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
-            sGridsLayout.spacing = 20f;
-            sGridsLayout.childForceExpandHeight = true;
-            sGridsLayout.childForceExpandWidth = true;
+            if (sGridsLayout != null) DestroyImmediate(sGridsLayout); // Remove horizontal layout to stack them!
 
             // Group 1: Seeds
             RectTransform seedsGroup = SetupPanel(sGridsContainer, "Seeds_Group");
+            StretchToFill(seedsGroup);
+            CanvasGroup seedsCg = seedsGroup.gameObject.GetComponent<CanvasGroup>();
+            if (seedsCg == null) seedsCg = seedsGroup.gameObject.AddComponent<CanvasGroup>();
+
             VerticalLayoutGroup seedsLayout = seedsGroup.gameObject.GetComponent<VerticalLayoutGroup>();
             if (seedsLayout == null) seedsLayout = seedsGroup.gameObject.AddComponent<VerticalLayoutGroup>();
             seedsLayout.spacing = 10f;
@@ -674,6 +691,10 @@ namespace CozyLifeSim.Editor
 
             // Group 2: Stickers
             RectTransform stickersGroup = SetupPanel(sGridsContainer, "Stickers_Group");
+            StretchToFill(stickersGroup);
+            CanvasGroup stickersCg = stickersGroup.gameObject.GetComponent<CanvasGroup>();
+            if (stickersCg == null) stickersCg = stickersGroup.gameObject.AddComponent<CanvasGroup>();
+
             VerticalLayoutGroup stickersLayout = stickersGroup.gameObject.GetComponent<VerticalLayoutGroup>();
             if (stickersLayout == null) stickersLayout = stickersGroup.gameObject.AddComponent<VerticalLayoutGroup>();
             stickersLayout.spacing = 10f;
@@ -688,6 +709,10 @@ namespace CozyLifeSim.Editor
 
             // Group 3: Crops
             RectTransform cropsGroup = SetupPanel(sGridsContainer, "Crops_Group");
+            StretchToFill(cropsGroup);
+            CanvasGroup cropsCg = cropsGroup.gameObject.GetComponent<CanvasGroup>();
+            if (cropsCg == null) cropsCg = cropsGroup.gameObject.AddComponent<CanvasGroup>();
+
             VerticalLayoutGroup cropsLayout = cropsGroup.gameObject.GetComponent<VerticalLayoutGroup>();
             if (cropsLayout == null) cropsLayout = cropsGroup.gameObject.AddComponent<VerticalLayoutGroup>();
             cropsLayout.spacing = 10f;
@@ -740,6 +765,12 @@ namespace CozyLifeSim.Editor
             soSPopup.FindProperty("_seedsContainer").objectReferenceValue = seedsGrid;
             soSPopup.FindProperty("_stickersContainer").objectReferenceValue = stickersGrid;
             soSPopup.FindProperty("_cropsContainer").objectReferenceValue = cropsGrid;
+            soSPopup.FindProperty("_seedsTabButton").objectReferenceValue = seedsTabBtn;
+            soSPopup.FindProperty("_stickersTabButton").objectReferenceValue = stickersTabBtn;
+            soSPopup.FindProperty("_cropsTabButton").objectReferenceValue = cropsTabBtn;
+            soSPopup.FindProperty("_seedsGroup").objectReferenceValue = seedsGroup;
+            soSPopup.FindProperty("_stickersGroup").objectReferenceValue = stickersGroup;
+            soSPopup.FindProperty("_cropsGroup").objectReferenceValue = cropsGroup;
             soSPopup.ApplyModifiedProperties();
 
             // Wire CozySidebar
@@ -842,6 +873,18 @@ namespace CozyLifeSim.Editor
             soSticker.FindProperty("_shadowOffset").objectReferenceValue = shadowOffset;
             soSticker.FindProperty("_canvasGroup").objectReferenceValue = group;
             soSticker.FindProperty("_visualImage").objectReferenceValue = visualImg;
+
+            TextMeshProUGUI countTextText = SetupText(stickerTemplate, "Count_Text", "x1", "");
+            countTextText.fontSize = 14f;
+            countTextText.alignment = TextAlignmentOptions.BottomRight;
+            RectTransform countTextRect = countTextText.GetComponent<RectTransform>();
+            countTextRect.anchorMin = new Vector2(1f, 0f);
+            countTextRect.anchorMax = new Vector2(1f, 0f);
+            countTextRect.pivot = new Vector2(1f, 0f);
+            countTextRect.anchoredPosition = new Vector2(-5f, 5f);
+            countTextRect.sizeDelta = new Vector2(40f, 20f);
+
+            soSticker.FindProperty("_countText").objectReferenceValue = countTextText;
             soSticker.ApplyModifiedProperties();
 
             // Wire templates/tray to StickerBook
@@ -1057,6 +1100,13 @@ namespace CozyLifeSim.Editor
             label.color = Color.black;
 
             return btn;
+        }
+
+        [MenuItem("Tools/CozySim/Refresh Asset Database")]
+        public static void RefreshAssetDatabase()
+        {
+            UnityEditor.AssetDatabase.Refresh();
+            Debug.Log("<color=green>[CozySim]</color> AssetDatabase.Refresh() completed on the main thread!");
         }
 
         private void StretchToFill(RectTransform rect)

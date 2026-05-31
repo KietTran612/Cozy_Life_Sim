@@ -68,12 +68,24 @@ namespace CozyLifeSim.UI.Services
                 return false;
             }
 
-            // Perform transaction: deduct coins non-saving, then add seeds (which saves)
+            // Perform transaction: deduct coins non-saving, then add seeds non-saving
             if (_inventoryService.ConsumeCoinsNonSaving(price))
             {
-                _inventoryService.AddSeeds(1);
-                OnShopTransactionSuccess?.Invoke();
-                return true;
+                _inventoryService.AddSeedsNonSaving(1);
+                try
+                {
+                    _saveService.Save();
+                    OnShopTransactionSuccess?.Invoke();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    // Rollback RAM
+                    _inventoryService.AddCoinsNonSaving(price);
+                    _inventoryService.ConsumeSeedsNonSaving(1);
+                    Debug.LogWarning($"[CozySim Shop] TryBuySeed failed to save. Rolled back RAM. Exception: {ex.Message}");
+                    return false;
+                }
             }
 
             return false;
@@ -165,11 +177,12 @@ namespace CozyLifeSim.UI.Services
                 OnShopTransactionSuccess?.Invoke();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
                 _inventoryService.AddCoinsNonSaving(price);
                 _inventoryService.ConsumeStickerNonSaving(stickerId);
-                throw;
+                Debug.LogWarning($"[CozySim Shop] TryBuySticker failed to save. Rolled back RAM. Exception: {ex.Message}");
+                return false;
             }
         }
 

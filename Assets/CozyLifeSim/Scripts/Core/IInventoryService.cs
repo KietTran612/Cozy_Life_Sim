@@ -32,5 +32,7 @@ namespace CozyLifeSim.Core
         bool ConsumeStickerNonSaving(int stickerId);
         void AddCoinsNonSaving(int amount);
         bool ConsumeCoinsNonSaving(int amount);
+        void AddSeedsNonSaving(int amount);
+        bool ConsumeSeedsNonSaving(int amount);
     }
 }

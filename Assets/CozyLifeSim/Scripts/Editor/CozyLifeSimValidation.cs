@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using CozyLifeSim.Core;
 using CozyLifeSim.UI.Services;
+using CozyLifeSim.UI.Presenters;
 using System.Collections.Generic;
 
 namespace CozyLifeSim.Editor
@@ -542,20 +543,20 @@ namespace CozyLifeSim.Editor
 
                 InventoryService testQuestInv = new InventoryService(testQuestSave);
                 ProgressionService testQuestProg = new ProgressionService(testQuestSave);
-                
+
                 var testQuestDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.QuestDatabase>();
                 var questTemplate = new QuestTemplate(4, "Test XP Quest", 3, 50, QuestType.WaterCrops);
                 questTemplate.RewardXP = 150; // XP reward that will trigger level up!
                 testQuestDb.Quests.Add(questTemplate);
 
                 QuestService testQuestService = new QuestService(testQuestSave, testQuestInv, testQuestProg, testQuestDb, false);
-                
+
                 // Progress to completion
                 testQuestService.ProgressQuest(QuestType.WaterCrops, 3);
 
                 if (testQuestSave.ActiveSave.PlayerLevel != 2)
                     throw new System.Exception($"PlayerLevel should level up to 2 via Quest XP reward, got {testQuestSave.ActiveSave.PlayerLevel}");
-                
+
                 if (testQuestSave.ActiveSave.PlayerXP != 50)
                     throw new System.Exception($"PlayerXP should carry over leftover 50 XP (150 reward - 100 threshold), got {testQuestSave.ActiveSave.PlayerXP}");
 
@@ -626,6 +627,108 @@ namespace CozyLifeSim.Editor
                 Object.DestroyImmediate(testShopLockStickerDb);
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "ShopService purchase level locks verified successfully");
+
+                // Test 11.15: ShopService Atomic Seed & Sticker Save Failure Rollback
+                var testShopAtomicSave = new SaveService();
+                testShopAtomicSave.ActiveSave.Coins = 100;
+                testShopAtomicSave.ActiveSave.Seeds = 5;
+                testShopAtomicSave.ActiveSave.PlayerLevel = 2;
+                testShopAtomicSave.ActiveSave.StickerOwned.Clear();
+                testShopAtomicSave.ActiveSave.StickerOwned.Add(new StickerInventory(3, 0));
+                testShopAtomicSave.Save();
+
+                var testShopAtomicInv = new InventoryService(testShopAtomicSave);
+                var testShopAtomicCropDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.CropDatabase>();
+                testShopAtomicCropDb.Crops.Add(new CozyLifeSim.UI.Settings.CropTemplate(1, "Atomic Seed", 1f, null, null, null, null) { BuyPrice = 5, RequiredLevel = 1 });
+
+                var testShopAtomicStickerDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.StickerDatabase>();
+                testShopAtomicStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(3, "Atomic Sticker", null, null) { BuyPrice = 50, RequiredLevel = 1 });
+
+                IShopService shopAtomicService = new ShopService(testShopAtomicSave, testShopAtomicInv, testShopAtomicCropDb, testShopAtomicStickerDb);
+
+                // Enable simulated save failure
+                testShopAtomicSave.ForceSaveFailure = true;
+
+                // 1. TryBuySeed(1) -> Expect False & RAM rollback (Coins should remain 100, Seeds should remain 5)
+                bool seedResult = shopAtomicService.TryBuySeed(1);
+                if (seedResult) throw new System.Exception("TryBuySeed(1) should fail under simulated IO save failure");
+                if (testShopAtomicInv.Coins != 100) throw new System.Exception($"Coins should remain 100 after seed rollback, got {testShopAtomicInv.Coins}");
+                if (testShopAtomicInv.Seeds != 5) throw new System.Exception($"Seeds should remain 5 after seed rollback, got {testShopAtomicInv.Seeds}");
+
+                // 2. TryBuySticker(3) -> Expect False & RAM rollback (Coins should remain 100, Sticker count should remain 0)
+                bool stickerResult = shopAtomicService.TryBuySticker(3);
+                if (stickerResult) throw new System.Exception("TryBuySticker(3) should fail under simulated IO save failure");
+                if (testShopAtomicInv.Coins != 100) throw new System.Exception($"Coins should remain 100 after sticker rollback, got {testShopAtomicInv.Coins}");
+                if (testShopAtomicInv.GetStickerCount(3) != 0) throw new System.Exception($"Sticker count should remain 0 after sticker rollback, got {testShopAtomicInv.GetStickerCount(3)}");
+
+                // Disable simulated save failure
+                testShopAtomicSave.ForceSaveFailure = false;
+
+                Object.DestroyImmediate(testShopAtomicCropDb);
+                Object.DestroyImmediate(testShopAtomicStickerDb);
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "ShopService Atomic Seed & Sticker Save Failure Rollback verified successfully");
+
+                // Test 11.16: StickerBookPresenter Atomic Placement & Refund
+                SaveService testPresSave = new SaveService();
+                testPresSave.ActiveSave.Coins = 100;
+                testPresSave.ActiveSave.StickerOwned.Clear();
+                testPresSave.ActiveSave.StickerOwned.Add(new StickerInventory(3, 2)); // 2 copies of ID 3
+                testPresSave.Save();
+
+                InventoryService testPresInv = new InventoryService(testPresSave);
+                MemoryService testPresMem = new MemoryService(testPresSave);
+                StickerBookPresenter testPresenter = new StickerBookPresenter(testPresMem, testPresInv, testPresSave);
+
+                // 1. Success Path placement
+                string pId = testPresenter.TryPlaceSticker(3, 1, 10f, 10f, 1f, 0f);
+                if (string.IsNullOrEmpty(pId)) throw new System.Exception("Placement should succeed");
+                if (testPresInv.GetStickerCount(3) != 1) throw new System.Exception("Count should decrement to 1");
+
+                // 2. Simulated Save Failure during Placement (try-finally guarded)
+                try
+                {
+                    testPresSave.ForceSaveFailure = true;
+                    string failedPId = testPresenter.TryPlaceSticker(3, 1, 10f, 10f, 1f, 0f);
+                    if (!string.IsNullOrEmpty(failedPId)) throw new System.Exception("Placement should fail under simulated IO save failure");
+                    if (testPresInv.GetStickerCount(3) != 1) throw new System.Exception("Sticker count should remain 1 on failed placement rollback");
+                }
+                finally
+                {
+                    testPresSave.ForceSaveFailure = false; // Always restore
+                }
+
+                // 3. Success Refund path
+                if (!testPresenter.TryReturnSticker(pId)) throw new System.Exception("Return sticker should succeed");
+                if (testPresInv.GetStickerCount(3) != 2) throw new System.Exception("Count should refund to 2");
+
+                // 4. Simulated Save Failure during Refund (try-finally guarded)
+                // Place it successfully again first
+                pId = testPresenter.TryPlaceSticker(3, 1, 10f, 10f, 1f, 0f);
+                if (string.IsNullOrEmpty(pId)) throw new System.Exception("Repeated placement should succeed");
+
+                try
+                {
+                    testPresSave.ForceSaveFailure = true;
+                    bool failedReturn = testPresenter.TryReturnSticker(pId);
+                    if (failedReturn) throw new System.Exception("Return sticker should fail under simulated IO save failure");
+                    if (testPresInv.GetStickerCount(3) != 1) throw new System.Exception("Count should remain 1 on failed return rollback");
+
+                    // Manual loop verification since PlacedStickers is IReadOnlyList and doesn't support .Exists
+                    bool exists = false;
+                    foreach (var s in testPresMem.PlacedStickers)
+                    {
+                        if (s.PlacementId == pId) exists = true;
+                    }
+                    if (!exists) throw new System.Exception("Placed sticker must still exist on failed return rollback");
+                }
+                finally
+                {
+                    testPresSave.ForceSaveFailure = false; // Always restore
+                }
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "StickerBookPresenter atomic placement and return with simulated failure rollback verified");
 
                 if (questDb != null)
                 {

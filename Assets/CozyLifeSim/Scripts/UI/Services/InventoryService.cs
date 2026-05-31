@@ -63,20 +63,35 @@ namespace CozyLifeSim.UI.Services
 
         public void AddSeeds(int amount)
         {
-            if (amount <= 0) return;
-            ActiveSave.Seeds += amount;
-            OnSeedsChanged?.Invoke(ActiveSave.Seeds);
+            AddSeedsNonSaving(amount);
             _saveService.Save();
         }
 
         public bool ConsumeSeeds(int amount)
         {
+            if (ConsumeSeedsNonSaving(amount))
+            {
+                _saveService.Save();
+                return true;
+            }
+            return false;
+        }
+
+        public void AddSeedsNonSaving(int amount)
+        {
+            if (amount <= 0) return;
+            ActiveSave.Seeds += amount;
+            OnSeedsChanged?.Invoke(ActiveSave.Seeds);
+        }
+
+        public bool ConsumeSeedsNonSaving(int amount)
+        {
             if (amount <= 0 || ActiveSave.Seeds < amount) return false;
             ActiveSave.Seeds -= amount;
             OnSeedsChanged?.Invoke(ActiveSave.Seeds);
-            _saveService.Save();
             return true;
         }
+
 
         public void AddCrops(int amount)
         {

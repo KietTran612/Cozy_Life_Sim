@@ -8,12 +8,16 @@ using CozyLifeSim.UI.Presenters; // Required Presenter import
 
 namespace CozyLifeSim.UI
 {
-    public class CozySticker : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class CozySticker : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
+        public static event System.Action<CozySticker> OnStickerPlacedOnPage;
+        public static event System.Action OnStickerReturnedToInventory;
+
         [SerializeField] private int _stickerId;
         [SerializeField] private RectTransform _shadowOffset;
         [SerializeField] private CanvasGroup _canvasGroup;
         [SerializeField] private Image _visualImage;
+        [SerializeField] private TMPro.TextMeshProUGUI _countText;
 
         private Vector3 _startPosition;
         private Transform _originalParent;
@@ -26,13 +30,24 @@ namespace CozyLifeSim.UI
         private Quaternion _startRotation;
         private StickerBookPresenter _presenter;
         private int _pageIndex;
+        private string _placementId;
+
+        private int _ownedCount = 1;
+        private bool _showCountBadge = false;
 
         public int StickerId => _stickerId;
+        public string PlacementId
+        {
+            get => _placementId;
+            set => _placementId = value;
+        }
 
-        public void Setup(int stickerId, Sprite mainSprite, Sprite shadowSprite)
+        public void Setup(int stickerId, Sprite mainSprite, Sprite shadowSprite, int count = 1, bool showCount = false)
         {
             EnsureInitialized();
             _stickerId = stickerId;
+            _ownedCount = count;
+            _showCountBadge = showCount;
 
             Image targetImg = _visualImage;
             if (targetImg == null)
@@ -54,6 +69,17 @@ namespace CozyLifeSim.UI
                     shadowImg.sprite = shadowSprite != null ? shadowSprite : mainSprite;
                     shadowImg.color = new Color(0f, 0f, 0f, 0.3f);
                 }
+            }
+
+            UpdateCountText();
+        }
+
+        private void UpdateCountText()
+        {
+            if (_countText != null)
+            {
+                _countText.gameObject.SetActive(_showCountBadge && _ownedCount > 1);
+                _countText.text = $"x{_ownedCount}";
             }
         }
 
@@ -95,6 +121,33 @@ namespace CozyLifeSim.UI
             if (scope != null && scope.Container != null)
             {
                 scope.Container.Inject(this);
+            }
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            EnsureInitialized();
+            if (eventData.button != PointerEventData.InputButton.Left) return;
+
+            if (eventData.clickCount == 2)
+            {
+                TryReturnToInventory();
+            }
+        }
+
+        public void TryReturnToInventory()
+        {
+            if (_presenter == null || string.IsNullOrEmpty(_placementId)) return;
+
+            if (_presenter.TryReturnSticker(_placementId))
+            {
+                // Bắn event thông báo thu hồi thành công trước khi đối tượng bị tiêu hủy
+                OnStickerReturnedToInventory?.Invoke();
+
+                // Juice thu hoi: xuyen bien mat bang DOTween roi destroy object
+                transform.DOScale(0f, 0.25f).SetEase(Ease.InBack).OnComplete(() => {
+                    Destroy(gameObject);
+                });
             }
         }
 
@@ -188,24 +241,42 @@ namespace CozyLifeSim.UI
                 _canvasGroup.alpha = 1.0f;
             }
 
+            // Capture the original tray parent and position before moving the object
+            Transform oldTrayParent = _originalParent;
+            Vector3 oldTrayPos = _startPosition;
+
             transform.SetParent(pageParent, true);
             _rectTransform.anchoredPosition = pageAnchoredPosition;
-            
-            // Update fallback targets to prevent snapping back to original inventory tray on future invalid drops
-            _originalParent = pageParent;
-            _startPosition = pageAnchoredPosition;
 
-            // Return to physical state
             _scaleTween = transform.DOScale(1.0f, 0.2f).SetEase(Ease.OutQuad);
             if (_shadowOffset != null)
             {
                 _shadowTween = TweenAnchorPos(_shadowOffset, new Vector2(-3f, -4f), 0.2f).SetEase(Ease.OutQuad);
             }
 
-            if (saveToDisk)
+            if (_countText != null)
             {
-                _presenter?.SaveStickerPosition(_stickerId, _pageIndex, pageAnchoredPosition.x, pageAnchoredPosition.y, 1.0f, transform.localRotation.eulerAngles.z);
+                _countText.gameObject.SetActive(false); // An count badge khi da dan len sach
             }
+
+            if (saveToDisk && _presenter != null)
+            {
+                string pId = _presenter.TryPlaceSticker(_stickerId, _pageIndex, pageAnchoredPosition.x, pageAnchoredPosition.y, 1.0f, transform.localRotation.eulerAngles.z);
+                if (string.IsNullOrEmpty(pId))
+                {
+                    // Dán lỗi (hết count hoặc save crash) -> snap back về khay (dùng các biến local cũ trước khi di chuyển)
+                    ResetToTray(oldTrayParent, oldTrayPos);
+                    return;
+                }
+                _placementId = pId;
+
+                // Bắn event thông báo đã dán thành công lên trang sách
+                OnStickerPlacedOnPage?.Invoke(this);
+            }
+
+            // Cập nhật các thuộc tính fallback chỉ KHI dán/lưu thành công hoặc dán tự do
+            _originalParent = pageParent;
+            _startPosition = pageAnchoredPosition;
         }
 
         public void ResetToTray(Transform trayParent, Vector2 trayPosition)
@@ -231,6 +302,9 @@ namespace CozyLifeSim.UI
             {
                 _shadowOffset.anchoredPosition = Vector2.zero;
             }
+
+            // Khôi phục chính xác trạng thái hiển thị số lượng badge ban đầu khi snap back về tray
+            UpdateCountText();
         }
 
         private static Tween TweenAnchorPos(RectTransform rect, Vector2 endValue, float duration)

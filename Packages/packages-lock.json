@@ -34,7 +34,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.nuget.newtonsoft-json": "3.2.1"
+        "com.unity.nuget.newtonsoft-json": "3.2.1",
+        "com.unity.modules.physics": "1.0.0"
       }
     },
     "jp.hadashikick.vcontainer": {

@@ -40,13 +40,15 @@ namespace CozyLifeSim.UI
         private FarmPresenter _presenter;
         private CropDatabase _cropDatabase;
         private CropTemplate _cropTemplate;
+        private CozyLifeSim.UI.Style.IStyleService _styleService;
 
         [Inject]
-        public void Construct(FarmPresenter presenter, CropDatabase cropDatabase = null)
+        public void Construct(FarmPresenter presenter, CropDatabase cropDatabase = null, CozyLifeSim.UI.Style.IStyleService styleService = null)
         {
             _presenter = presenter;
             _cropDatabase = cropDatabase;
             _cropTemplate = _cropDatabase != null ? _cropDatabase.GetCrop(_cropId) : null;
+            _styleService = styleService;
         }
 
         private float GetStageDuration()
@@ -215,9 +217,10 @@ namespace CozyLifeSim.UI
                 _cropVisual.gameObject.SetActive(_state.GrowthStage >= 0);
                 if (_state.GrowthStage >= 0)
                 {
+                    Sprite spriteToUse = null;
                     if (_cropTemplate != null)
                     {
-                        _cropVisual.sprite = _state.GrowthStage switch
+                        spriteToUse = _state.GrowthStage switch
                         {
                             0 => _cropTemplate.SeedSprite,
                             1 => _cropTemplate.SproutSprite,
@@ -228,7 +231,7 @@ namespace CozyLifeSim.UI
                     }
                     else
                     {
-                        _cropVisual.sprite = _state.GrowthStage switch
+                        spriteToUse = _state.GrowthStage switch
                         {
                             0 => _seedSprite,
                             1 => _sproutSprite,
@@ -236,6 +239,27 @@ namespace CozyLifeSim.UI
                             3 => _harvestSprite,
                             _ => _seedSprite
                         };
+                    }
+
+                    Style.UIStyleConfig config = null;
+                    if (_styleService != null) config = _styleService.CurrentConfig;
+
+                    if (Style.CozyProceduralUI.ShouldUseFlatFallback(spriteToUse, config))
+                    {
+                        Color tint = Style.CozyProceduralUI.GetColorForCrop(_cropId);
+                        if (_state.GrowthStage == 0) tint = new Color(0.72f, 0.53f, 0.39f); // Seed brown
+                        else if (_state.GrowthStage == 1) tint = new Color(0.6f, 0.85f, 0.4f); // Sprout green
+
+                        Style.CozyProceduralUI.ApplyFlatFallback(_cropVisual, tint);
+                    }
+                    else
+                    {
+                        _cropVisual.sprite = spriteToUse;
+                        _cropVisual.color = Color.white;
+                        var outline = _cropVisual.GetComponent<Outline>();
+                        if (outline != null) Destroy(outline);
+                        var shadow = _cropVisual.GetComponent<Shadow>();
+                        if (shadow != null) Destroy(shadow);
                     }
                 }
             }

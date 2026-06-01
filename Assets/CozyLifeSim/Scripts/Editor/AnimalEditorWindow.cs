@@ -40,7 +40,7 @@ namespace CozyLifeSim.Editor
                     {
                         if (animal != null)
                         {
-                            _stagingAnimals.Add(new AnimalTemplate(
+                            var copy = new AnimalTemplate(
                                 animal.AnimalId,
                                 animal.Name,
                                 animal.Sprite,
@@ -49,7 +49,9 @@ namespace CozyLifeSim.Editor
                                 animal.PetJumpHeight,
                                 animal.PetJumpDuration,
                                 animal.HeartFeedbackSprite
-                            ));
+                            );
+                            copy.RequiredLevel = animal.RequiredLevel; // Preserve RequiredLevel khi load
+                            _stagingAnimals.Add(copy);
                         }
                     }
                 }
@@ -185,6 +187,11 @@ namespace CozyLifeSim.Editor
                 selected.HeartFeedbackSprite = (Sprite)EditorGUILayout.ObjectField("Heart Pop Sprite", selected.HeartFeedbackSprite, typeof(Sprite), false);
                 if (selected.HeartFeedbackSprite != oldHeart) { _isDirty = true; ValidateStaging(); }
 
+                // Cap nhat RequiredLevel cho Animal
+                int oldReqLevel = selected.RequiredLevel;
+                selected.RequiredLevel = EditorGUILayout.IntField("Required Level", selected.RequiredLevel);
+                if (selected.RequiredLevel != oldReqLevel) { _isDirty = true; ValidateStaging(); }
+
                 EditorGUILayout.EndScrollView();
 
                 EditorGUILayout.Space();
@@ -223,7 +230,7 @@ namespace CozyLifeSim.Editor
                 _database.Animals.Clear();
                 foreach (var s in _stagingAnimals)
                 {
-                    _database.Animals.Add(new AnimalTemplate(s.AnimalId, s.Name, s.Sprite, s.BreathScaleY, s.BreathDuration, s.PetJumpHeight, s.PetJumpDuration, s.HeartFeedbackSprite));
+                    _database.Animals.Add(new AnimalTemplate(s.AnimalId, s.Name, s.Sprite, s.BreathScaleY, s.BreathDuration, s.PetJumpHeight, s.PetJumpDuration, s.HeartFeedbackSprite) { RequiredLevel = s.RequiredLevel });
                 }
                 EditorUtility.SetDirty(_database);
                 AssetDatabase.SaveAssets();

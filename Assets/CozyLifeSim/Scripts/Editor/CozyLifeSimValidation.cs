@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using CozyLifeSim.Core;
+using CozyLifeSim.UI;
 using CozyLifeSim.UI.Services;
 using CozyLifeSim.UI.Presenters;
 using System.Collections.Generic;
@@ -790,6 +791,113 @@ namespace CozyLifeSim.Editor
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "StickerBookPresenter atomic placement and return with simulated failure rollback verified");
 
+                // Test 12: Economic Balance & Level Invariants (Crops, Animals, Stickers & Quests)
+                var activeCrops = LoadDatabase<CozyLifeSim.UI.Settings.CropDatabase>();
+                var activeAnimals = LoadDatabase<CozyLifeSim.UI.Settings.AnimalDatabase>();
+                var activeStickers = LoadDatabase<CozyLifeSim.UI.Settings.StickerDatabase>();
+                var activeQuests = LoadDatabase<CozyLifeSim.UI.Settings.QuestDatabase>();
+
+                if (activeCrops == null) throw new System.Exception("CropDatabase asset not found in project!");
+                if (activeAnimals == null) throw new System.Exception("AnimalDatabase asset not found in project!");
+                if (activeStickers == null) throw new System.Exception("StickerDatabase asset not found in project!");
+                if (activeQuests == null) throw new System.Exception("QuestDatabase asset not found in project!");
+
+                // 12.1. Economic Balance Check
+                foreach (var crop in activeCrops.Crops)
+                {
+                    if (crop == null) continue;
+                    if (crop.BuyPrice > 0 && crop.SellPrice <= crop.BuyPrice)
+                    {
+                        throw new System.Exception($"Economic Invariant Violation: Crop '{crop.Name}' (ID {crop.CropId}) has SellPrice ({crop.SellPrice}) <= BuyPrice ({crop.BuyPrice}).");
+                    }
+                }
+
+                // 12.2. Quest Level Invariant Check
+                var sortedQuests = new List<QuestTemplate>(activeQuests.Quests);
+                sortedQuests.Sort((a, b) => a.QuestId.CompareTo(b.QuestId));
+
+                int simulatedLevel = 1;
+                int simulatedXP = 0;
+
+                foreach (var quest in sortedQuests)
+                {
+                    if (quest == null) continue;
+                    int targetReqLvl = GetTargetRequiredLevel(quest, activeCrops.Crops, activeAnimals.Animals, activeStickers.Stickers);
+
+                    if (targetReqLvl > simulatedLevel)
+                    {
+                        int availableXP = 0;
+                        foreach (var prevQuest in sortedQuests)
+                        {
+                            if (prevQuest == null) continue;
+                            int prevTargetLvl = GetTargetRequiredLevel(prevQuest, activeCrops.Crops, activeAnimals.Animals, activeStickers.Stickers);
+                            if (prevTargetLvl <= simulatedLevel)
+                            {
+                                availableXP += prevQuest.RewardXP;
+                            }
+                        }
+
+                        int tempXP = simulatedXP + availableXP;
+                        int tempLvl = simulatedLevel;
+                        while (tempXP >= tempLvl * 100)
+                        {
+                            tempXP -= tempLvl * 100;
+                            tempLvl++;
+                        }
+
+                        if (targetReqLvl > tempLvl)
+                        {
+                            throw new System.Exception($"Level Invariant Violation: Quest '{quest.Title}' (ID {quest.QuestId}) requires target with Level {targetReqLvl}, but players can only reach maximum Level {tempLvl} from all prior executable quests.");
+                        }
+
+                        simulatedLevel = tempLvl;
+                        simulatedXP = tempXP;
+                    }
+                }
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Economic Balance & Level Invariants verified");
+
+                // Test 13: Scene Component & DI Wiring Validation
+                ValidateSceneWiring(ref passCount);
+
+                // Test 14: Procedural Flat Fallback C# Integration
+                var go = new GameObject("TempFlatFallbackTest");
+                var image = go.AddComponent<UnityEngine.UI.Image>();
+
+                try
+                {
+                    CozyLifeSim.UI.Style.CozyProceduralUI.ApplyFlatFallback(image, Color.green);
+
+                    var outline = go.GetComponent<UnityEngine.UI.Outline>();
+
+                    UnityEngine.UI.Shadow shadow = null;
+                    var shadows = go.GetComponents<UnityEngine.UI.Shadow>();
+                    foreach (var s in shadows)
+                    {
+                        if (s.GetType() == typeof(UnityEngine.UI.Shadow))
+                        {
+                            shadow = s;
+                            break;
+                        }
+                    }
+
+                    if (outline == null) throw new System.Exception("CozyProceduralUI failed to add Outline component!");
+                    if (shadow == null) throw new System.Exception("CozyProceduralUI failed to add Shadow component!");
+
+                    if (outline.effectColor != new Color(0.12f, 0.12f, 0.12f, 1f))
+                        throw new System.Exception($"Outline color incorrect: {outline.effectColor}");
+                    if (shadow.effectDistance != new Vector2(4f, -4f))
+                        throw new System.Exception($"Shadow distance incorrect: {shadow.effectDistance}");
+                }
+                finally
+                {
+                    Object.DestroyImmediate(go);
+                }
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Procedural Flat Fallback C# Integration verified successfully");
+
                 if (questDb != null)
                 {
                     Object.DestroyImmediate(questDb);
@@ -814,6 +922,124 @@ namespace CozyLifeSim.Editor
                     throw;
                 }
             }
+        }
+
+        private static T LoadDatabase<T>() where T : ScriptableObject
+        {
+            string[] guids = AssetDatabase.FindAssets("t:" + typeof(T).Name);
+            if (guids != null && guids.Length > 0)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                return AssetDatabase.LoadAssetAtPath<T>(path);
+            }
+            return null;
+        }
+
+        private static int GetTargetRequiredLevel(
+            QuestTemplate quest,
+            List<CozyLifeSim.UI.Settings.CropTemplate> crops,
+            List<CozyLifeSim.UI.Settings.AnimalTemplate> animals,
+            List<CozyLifeSim.UI.Settings.StickerTemplate> stickers)
+        {
+            string title = quest.Title.ToLower();
+            if (quest.Type == QuestType.HarvestCrops || title.Contains("harvest") || title.Contains("crop") || title.Contains("mia") || title.Contains("lua") || title.Contains("sen"))
+            {
+                foreach (var c in crops)
+                {
+                    if (c == null) continue;
+                    if (title.Contains(c.Name.ToLower()) || c.Name.ToLower().Contains(title) || (c.CropId == 2 && title.Contains("mia")) || (c.CropId == 3 && title.Contains("lua")) || (c.CropId == 4 && title.Contains("sen")))
+                    {
+                        return c.RequiredLevel;
+                    }
+                }
+            }
+            else if (quest.Type == QuestType.PetAnimal || title.Contains("pet") || title.Contains("chicken") || title.Contains("meo") || title.Contains("trau"))
+            {
+                foreach (var a in animals)
+                {
+                    if (a == null) continue;
+                    if (title.Contains(a.Name.ToLower()) || a.Name.ToLower().Contains(title) || (a.AnimalId == 2 && title.Contains("meo")) || (a.AnimalId == 3 && title.Contains("trau")))
+                    {
+                        return a.RequiredLevel;
+                    }
+                }
+            }
+            else if (title.Contains("buy") || title.Contains("sticker") || title.Contains("non la") || title.Contains("xich lo") || title.Contains("long den") || title.Contains("banh mi") || title.Contains("nuoc mia"))
+            {
+                foreach (var s in stickers)
+                {
+                    if (s == null) continue;
+                    if (title.Contains(s.Name.ToLower()) || s.Name.ToLower().Contains(title) || (s.StickerId == 6 && title.Contains("non la")) || (s.StickerId == 7 && title.Contains("xich lo")) || (s.StickerId == 8 && title.Contains("long den")))
+                    {
+                        return s.RequiredLevel;
+                    }
+                }
+            }
+            return 1; // Default
+        }
+
+        private static void ValidateSceneWiring(ref int passCount)
+        {
+            MonoBehaviour[] allBehaviors = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            int checkedFields = 0;
+            int missingWires = 0;
+
+            foreach (var mb in allBehaviors)
+            {
+                if (mb == null) continue;
+                System.Type type = mb.GetType();
+                if (type.Namespace == null || !type.Namespace.StartsWith("CozyLifeSim"))
+                    continue;
+
+                System.Reflection.FieldInfo[] fields = type.GetFields(
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.Instance
+                );
+
+                foreach (var field in fields)
+                {
+                    bool isSerialized = field.IsPublic || field.GetCustomAttributes(typeof(SerializeField), true).Length > 0;
+                    if (!isSerialized) continue;
+
+                    if (!typeof(Object).IsAssignableFrom(field.FieldType)) continue;
+
+                    checkedFields++;
+                    Object val = field.GetValue(mb) as Object;
+
+                    if (val == null)
+                    {
+                        missingWires++;
+                        Debug.LogWarning($"<color=yellow>[CozySim Wiring Warning]</color> Component <b>{type.Name}</b> on GameObject <b>{mb.gameObject.name}</b> has an unassigned/null field: <b>{field.Name}</b> ({field.FieldType.Name})");
+                    }
+                }
+            }
+
+            var scope = Object.FindFirstObjectByType<GameLifetimeScope>();
+            if (scope == null)
+            {
+                throw new System.Exception("GameLifetimeScope not found in the active scene!");
+            }
+
+            var scopeType = typeof(GameLifetimeScope);
+            var cropDbField = scopeType.GetField("_cropDatabase", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var animalDbField = scopeType.GetField("_animalDatabase", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var stickerDbField = scopeType.GetField("_stickerDatabase", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var questDbField = scopeType.GetField("_questDatabase", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            if (cropDbField == null || cropDbField.GetValue(scope) == null) throw new System.Exception("GameLifetimeScope is missing CropDatabase reference!");
+            if (animalDbField == null || animalDbField.GetValue(scope) == null) throw new System.Exception("GameLifetimeScope is missing AnimalDatabase reference!");
+            if (stickerDbField == null || stickerDbField.GetValue(scope) == null) throw new System.Exception("GameLifetimeScope is missing StickerDatabase reference!");
+            if (questDbField == null || questDbField.GetValue(scope) == null) throw new System.Exception("GameLifetimeScope is missing QuestDatabase reference!");
+
+            if (missingWires > 0)
+            {
+                int errorCount = missingWires; // So luong loi thieu wiring phat hien duoc
+                throw new System.Exception($"Scene component wiring validation failed: found {errorCount} unassigned/null serialized fields!");
+            }
+
+            passCount++;
+            CozyValidationLog.Pass("CozySim Logic", $"Scene component wiring and DI Database references validated. (Checked {checkedFields} fields, {missingWires} unassigned)");
         }
     }
 }

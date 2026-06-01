@@ -22,10 +22,11 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Address review feedback for Task 22: `2026-05-29-address-review-feedback.md`
 - Task 23 Shop & Progression Design: `2026-05-29-inventory-reward-loop-design.md`
 - Task 23 Shop & Progression Implementation: `2026-05-29-inventory-reward-loop.md`
-- Phase 2 Polish & Progression Design: [2026-05-29-polish-and-content-expansion-design.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-29-polish-and-content-expansion-design.md)
+- Phase 2 Polish & Content Expansion Design: [2026-05-29-polish-and-content-expansion-design.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-29-polish-and-content-expansion-design.md)
 - Phase 2.1 Progression & Countable Backend: [2026-05-30-progression-countable-backend.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-30-progression-countable-backend.md)
 - Phase 2.2 UI, Shop Tabs & Juice Polish: [2026-05-31-ui-juice-polish.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-31-ui-juice-polish.md)
 - Shop Transaction Atomicity & Interface Safety [COMPLETED]: [2026-05-31-shop-atomicity-fixes.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-31-shop-atomicity-fixes.md)
+- Phase 2.3 & 2.4 Cozy Heritage, Idempotency & Polish [PROPOSED]: [2026-06-01-cozy-heritage-and-polish-plan.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-cozy-heritage-and-polish-plan.md)
 
 
 

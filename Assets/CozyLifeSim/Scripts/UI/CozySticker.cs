@@ -42,32 +42,67 @@ namespace CozyLifeSim.UI
             set => _placementId = value;
         }
 
+        private CozyLifeSim.UI.Style.IStyleService _styleService;
+
         public void Setup(int stickerId, Sprite mainSprite, Sprite shadowSprite, int count = 1, bool showCount = false)
         {
             EnsureInitialized();
+            EnsurePresenterInjected(); // Chu dong thuc hien inject tu lifetime scope ngay lap tuc de co style service
+
             _stickerId = stickerId;
             _ownedCount = count;
             _showCountBadge = showCount;
 
-            Image targetImg = _visualImage;
+            Image targetImg = _visualImage; // Lay anh visual thuc te
             if (targetImg == null)
             {
                 Transform visualChild = transform.Find("Visual_Image");
                 targetImg = visualChild != null ? visualChild.GetComponent<Image>() : GetComponent<Image>();
             }
 
-            if (targetImg != null)
-            {
-                targetImg.sprite = mainSprite;
-            }
+            Style.UIStyleConfig config = null;
+            if (_styleService != null) config = _styleService.CurrentConfig;
 
-            if (_shadowOffset != null)
+            if (Style.CozyProceduralUI.ShouldUseFlatFallback(mainSprite, config))
             {
-                var shadowImg = _shadowOffset.GetComponent<Image>();
-                if (shadowImg != null)
+                Color tint = Style.CozyProceduralUI.GetColorForSticker(_stickerId);
+                if (targetImg != null)
                 {
-                    shadowImg.sprite = shadowSprite != null ? shadowSprite : mainSprite;
-                    shadowImg.color = new Color(0f, 0f, 0f, 0.3f);
+                    Style.CozyProceduralUI.ApplyFlatFallback(targetImg, tint);
+                }
+                if (_shadowOffset != null)
+                {
+                    var shadowImg = _shadowOffset.GetComponent<Image>();
+                    if (shadowImg != null)
+                    {
+                        Style.CozyProceduralUI.ApplyFlatFallback(shadowImg, new Color(0f, 0f, 0f, 0.25f));
+                    }
+                }
+            }
+            else
+            {
+                if (targetImg != null)
+                {
+                    targetImg.sprite = mainSprite;
+                    targetImg.color = Color.white;
+                    var outline = targetImg.GetComponent<Outline>();
+                    if (outline != null) Destroy(outline);
+                    var shadow = targetImg.GetComponent<Shadow>();
+                    if (shadow != null) Destroy(shadow);
+                }
+
+                if (_shadowOffset != null)
+                {
+                    var shadowImg = _shadowOffset.GetComponent<Image>();
+                    if (shadowImg != null)
+                    {
+                        shadowImg.sprite = shadowSprite != null ? shadowSprite : mainSprite;
+                        shadowImg.color = new Color(0f, 0f, 0f, 0.3f);
+                        var shadowComp = shadowImg.GetComponent<Shadow>();
+                        if (shadowComp != null) Destroy(shadowComp);
+                        var outlineComp = shadowImg.GetComponent<Outline>();
+                        if (outlineComp != null) Destroy(outlineComp);
+                    }
                 }
             }
 
@@ -84,9 +119,10 @@ namespace CozyLifeSim.UI
         }
 
         [Inject]
-        public void Construct(StickerBookPresenter presenter)
+        public void Construct(StickerBookPresenter presenter, CozyLifeSim.UI.Style.IStyleService styleService)
         {
             _presenter = presenter;
+            _styleService = styleService;
         }
 
         private bool _isInitialized;
@@ -115,7 +151,7 @@ namespace CozyLifeSim.UI
 
         private void EnsurePresenterInjected()
         {
-            if (_presenter != null || !Application.isPlaying) return;
+            if ((_presenter != null && _styleService != null) || !Application.isPlaying) return;
 
             var scope = LifetimeScope.Find<GameLifetimeScope>();
             if (scope != null && scope.Container != null)

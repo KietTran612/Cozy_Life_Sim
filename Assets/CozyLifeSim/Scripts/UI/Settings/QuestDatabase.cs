@@ -7,6 +7,7 @@ namespace CozyLifeSim.UI.Settings
     [CreateAssetMenu(fileName = "QuestDatabase", menuName = "CozySim/Quest Database")]
     public class QuestDatabase : ScriptableObject
     {
+        public int BootstrapVersion = 0;
         public List<QuestTemplate> Quests = new List<QuestTemplate>();
 
         /// <summary>

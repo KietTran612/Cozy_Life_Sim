@@ -22,3 +22,34 @@ MonoBehaviour:
     HarvestSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
     BuyPrice: 5
     SellPrice: 15
+    RequiredLevel: 1
+  - CropId: 2
+    Name: Cay Mia Ngot
+    StageDurationSeconds: 8
+    SeedSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    SproutSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    MatureSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    HarvestSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    BuyPrice: 15
+    SellPrice: 35
+    RequiredLevel: 1
+  - CropId: 3
+    Name: Lua Nuoc
+    StageDurationSeconds: 15
+    SeedSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    SproutSprite: {fileID: 21300000, guid: 8e04a240ca0044750922657a46cf77f9, type: 3}
+    MatureSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    HarvestSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    BuyPrice: 25
+    SellPrice: 60
+    RequiredLevel: 2
+  - CropId: 4
+    Name: Hoa Sen
+    StageDurationSeconds: 25
+    SeedSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    SproutSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    MatureSprite: {fileID: 21300000, guid: 5218fee069501473eb253177e082a598, type: 3}
+    HarvestSprite: {fileID: 21300000, guid: 5218fee069501473eb253177e082a598, type: 3}
+    BuyPrice: 50
+    SellPrice: 120
+    RequiredLevel: 3

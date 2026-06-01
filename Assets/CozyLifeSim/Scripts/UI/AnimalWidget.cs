@@ -25,13 +25,15 @@ namespace CozyLifeSim.UI
         private AnimalPresenter _presenter;
         private AnimalDatabase _animalDatabase;
         private AnimalTemplate _animalTemplate;
+        private CozyLifeSim.UI.Style.IStyleService _styleService;
 
         [Inject]
-        public void Construct(AnimalPresenter presenter, AnimalDatabase animalDatabase = null)
+        public void Construct(AnimalPresenter presenter, AnimalDatabase animalDatabase = null, CozyLifeSim.UI.Style.IStyleService styleService = null)
         {
             _presenter = presenter;
             _animalDatabase = animalDatabase;
             _animalTemplate = _animalDatabase != null ? _animalDatabase.GetAnimal(_animalId) : null;
+            _styleService = styleService;
         }
 
         private void Start()
@@ -48,10 +50,26 @@ namespace CozyLifeSim.UI
             Transform animTarget = _animalVisual != null ? _animalVisual.transform : transform;
             _baseScale = animTarget.localScale;
 
-            // Apply dynamic sprite from database
-            if (_animalVisual != null && _animalTemplate != null && _animalTemplate.Sprite != null)
+            // Apply dynamic sprite or flat fallback from database
+            if (_animalVisual != null && _animalTemplate != null)
             {
-                _animalVisual.sprite = _animalTemplate.Sprite;
+                Style.UIStyleConfig config = null;
+                if (_styleService != null) config = _styleService.CurrentConfig;
+
+                if (Style.CozyProceduralUI.ShouldUseFlatFallback(_animalTemplate.Sprite, config))
+                {
+                    Color tint = Style.CozyProceduralUI.GetColorForAnimal(_animalId);
+                    Style.CozyProceduralUI.ApplyFlatFallback(_animalVisual, tint);
+                }
+                else if (_animalTemplate.Sprite != null)
+                {
+                    _animalVisual.sprite = _animalTemplate.Sprite;
+                    _animalVisual.color = Color.white;
+                    var outline = _animalVisual.GetComponent<Outline>();
+                    if (outline != null) Destroy(outline);
+                    var shadow = _animalVisual.GetComponent<Shadow>();
+                    if (shadow != null) Destroy(shadow);
+                }
             }
 
             // Clamped breathing configuration

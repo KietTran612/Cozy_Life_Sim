@@ -64,17 +64,12 @@ namespace CozyLifeSim.Editor
                 };
             }
 
-            if (_database != null && _database.Quests.Count == 0)
+            if (_database != null)
             {
-                _database.Quests.Add(new QuestTemplate(1, "Water 3 Crops", 3, 50, QuestType.WaterCrops));
-                _database.Quests.Add(new QuestTemplate(2, "Harvest 2 Mature Crops", 2, 80, QuestType.HarvestCrops));
-                _database.Quests.Add(new QuestTemplate(3, "Pet the Breathing Chicken 5 times", 5, 40, QuestType.PetAnimal));
-                EditorUtility.SetDirty(_database);
-                AssetDatabase.SaveAssets();
-                Debug.Log("<color=green>[CozySim]</color> Automatically populated empty QuestDatabase with 3 default quests.");
+                QuestDatabaseUtility.BootstrapDefaultQuests(_database);
             }
 
-            // Sync from Database to Staging copy-on-write nháp
+            // Sync from Database to Staging copy-on-write nhap
             SyncToStaging();
         }
 
@@ -91,7 +86,7 @@ namespace CozyLifeSim.Editor
                     if (q != null)
                     {
                         // Clone DTO object to keep it entirely in-memory staged copy
-                        _stagingQuests.Add(new QuestTemplate(q.QuestId, q.Title, q.TargetCount, q.RewardCoins, q.Type));
+                        _stagingQuests.Add(new QuestTemplate(q.QuestId, q.Title, q.TargetCount, q.RewardCoins, q.Type, q.RewardXP));
                     }
                 }
             }
@@ -186,7 +181,7 @@ namespace CozyLifeSim.Editor
             _database.Quests.Clear();
             foreach (var q in _stagingQuests)
             {
-                _database.Quests.Add(new QuestTemplate(q.QuestId, q.Title, q.TargetCount, q.RewardCoins, q.Type));
+                _database.Quests.Add(new QuestTemplate(q.QuestId, q.Title, q.TargetCount, q.RewardCoins, q.Type, q.RewardXP));
             }
 
             EditorUtility.SetDirty(_database);

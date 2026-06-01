@@ -18,13 +18,46 @@ MonoBehaviour:
     Sprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
     ShadowSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
     BuyPrice: 50
+    RequiredLevel: 1
   - StickerId: 2
     Name: Bear
     Sprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
     ShadowSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
     BuyPrice: 50
+    RequiredLevel: 1
   - StickerId: 3
     Name: Chicken White
     Sprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
     ShadowSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
     BuyPrice: 50
+    RequiredLevel: 1
+  - StickerId: 4
+    Name: Xe Banh Mi
+    Sprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    ShadowSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    BuyPrice: 60
+    RequiredLevel: 1
+  - StickerId: 5
+    Name: Ly Nuoc Mia
+    Sprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    ShadowSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    BuyPrice: 40
+    RequiredLevel: 1
+  - StickerId: 6
+    Name: Chiec Non La
+    Sprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    ShadowSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    BuyPrice: 50
+    RequiredLevel: 2
+  - StickerId: 7
+    Name: Chiec Xich Lo
+    Sprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    ShadowSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    BuyPrice: 120
+    RequiredLevel: 3
+  - StickerId: 8
+    Name: Long Den Trung Thu
+    Sprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    ShadowSprite: {fileID: 21300000, guid: 861c0d23a06494bef84b96b9f5ca92b2, type: 3}
+    BuyPrice: 80
+    RequiredLevel: 2

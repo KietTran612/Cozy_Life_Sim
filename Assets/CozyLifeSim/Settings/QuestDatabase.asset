@@ -12,29 +12,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a9746ad99b81d64aae4f825c3ba8449, type: 3}
   m_Name: QuestDatabase
   m_EditorClassIdentifier: CozyLifeSim.UI::CozyLifeSim.UI.Settings.QuestDatabase
+  BootstrapVersion: 1
   Quests:
   - QuestId: 1
     Title: Water 3 Crops
     TargetCount: 3
     RewardCoins: 50
+    RewardXP: 20
     Type: 0
   - QuestId: 2
-    Title: Harvest 2 Mature Crops
-    TargetCount: 2
-    RewardCoins: 80
+    Title: Huong Vi Ngay He (Harvest 3 Cay Mia Ngot)
+    TargetCount: 3
+    RewardCoins: 100
+    RewardXP: 40
     Type: 1
   - QuestId: 3
-    Title: Pet the Breathing Chicken 5 times
-    TargetCount: 5
-    RewardCoins: 40
-    Type: 2
+    Title: Vui Hoi Trang Ram (Harvest 1 Lua Nuoc)
+    TargetCount: 1
+    RewardCoins: 150
+    RewardXP: 60
+    Type: 1
   - QuestId: 4
-    Title: test screate quest
-    TargetCount: 5
-    RewardCoins: 50
-    Type: 0
+    Title: Net Dep Que Huong (Pet Meo Tam The 3 times)
+    TargetCount: 3
+    RewardCoins: 200
+    RewardXP: 100
+    Type: 2
   - QuestId: 5
     Title: Test Create Quest 5
     TargetCount: 5
     RewardCoins: 50
+    RewardXP: 0
     Type: 0

@@ -60,62 +60,64 @@ namespace CozyLifeSim.Editor
                 database.Animals = new List<AnimalTemplate>();
             }
 
-            if (database.Animals.Count == 0)
+            var chickenSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Chicken-White-256.png");
+            var heartSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Hearts/Heart-Red-256.png");
+            var catSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Cat-Orange-256.png");
+            var bearSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Bear-256.png");
+
+            // Fallback: If designated package sprites are null, auto-discover any available Sprite in the project
+            if (chickenSprite == null || heartSprite == null || catSprite == null || bearSprite == null)
             {
-                var chickenSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Chicken-White-256.png");
-                var heartSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Hearts/Heart-Red-256.png");
-
-                // Fallback: If designated package sprites are null, auto-discover any available Sprite in the project
-                if (chickenSprite == null || heartSprite == null)
+                string[] spriteGuids = AssetDatabase.FindAssets("t:Sprite");
+                if (spriteGuids != null && spriteGuids.Length > 0)
                 {
-                    string[] spriteGuids = AssetDatabase.FindAssets("t:Sprite");
-                    if (spriteGuids != null && spriteGuids.Length > 0)
-                    {
-                        var fallbackSprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GUIDToAssetPath(spriteGuids[0]));
-                        if (chickenSprite == null) chickenSprite = fallbackSprite;
-                        if (heartSprite == null) heartSprite = fallbackSprite;
-                    }
+                    var fallbackSprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GUIDToAssetPath(spriteGuids[0]));
+                    if (chickenSprite == null) chickenSprite = fallbackSprite;
+                    if (heartSprite == null) heartSprite = fallbackSprite;
+                    if (catSprite == null) catSprite = fallbackSprite;
+                    if (bearSprite == null) bearSprite = fallbackSprite;
                 }
+            }
 
-                database.Animals.Add(new AnimalTemplate(1, "Breathing Chicken", chickenSprite, 1.03f, 1.5f, 25f, 0.4f, heartSprite));
-                
-                if (AssetDatabase.Contains(database))
-                {
-                    EditorUtility.SetDirty(database);
-                    AssetDatabase.SaveAssets();
-                }
-                Debug.Log("<color=green>[CozySim]</color> Bootstrapped default 'Breathing Chicken' inside database (with safety fallbacks).");
+            var builtInSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+            if (chickenSprite == null) chickenSprite = builtInSprite;
+            if (heartSprite == null) heartSprite = builtInSprite;
+            if (catSprite == null) catSprite = builtInSprite;
+            if (bearSprite == null) bearSprite = builtInSprite;
+
+            bool addedAny = false;
+
+            if (!database.Animals.Exists(x => x != null && x.AnimalId == 1))
+            {
+                database.Animals.Add(new AnimalTemplate(1, "Breathing Chicken", chickenSprite, 1.03f, 1.5f, 25f, 0.4f, heartSprite) { RequiredLevel = 1 });
+                addedAny = true;
+            }
+            if (!database.Animals.Exists(x => x != null && x.AnimalId == 2))
+            {
+                database.Animals.Add(new AnimalTemplate(2, "Meo Tam The", catSprite, 1.03f, 1.5f, 25f, 0.4f, heartSprite) { RequiredLevel = 1 });
+                addedAny = true;
+            }
+            if (!database.Animals.Exists(x => x != null && x.AnimalId == 3))
+            {
+                database.Animals.Add(new AnimalTemplate(3, "Trau Nuoc", bearSprite, 1.03f, 1.5f, 25f, 0.4f, heartSprite) { RequiredLevel = 3 });
+                addedAny = true;
             }
 
             // Safety guard: if templates exist but their Sprites are null (e.g. package assets missing on this machine),
             // auto-repair them using fallback sprites to ensure they can render and participate in validation.
-            bool addedAny = false;
             foreach (var animal in database.Animals)
             {
                 if (animal != null)
                 {
                     if (animal.Sprite == null || animal.HeartFeedbackSprite == null)
                     {
-                        var chickenSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Animals/Chicken-White-256.png");
-                        var heartSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Packages/CuteKawaiiGUIPack/Icons/Icons/Hearts/Heart-Red-256.png");
+                        Sprite sp = chickenSprite, ht = heartSprite;
+                        if (animal.AnimalId == 1) { sp = chickenSprite; }
+                        else if (animal.AnimalId == 2) { sp = catSprite; }
+                        else if (animal.AnimalId == 3) { sp = bearSprite; }
 
-                        if (chickenSprite == null || heartSprite == null)
-                        {
-                            string[] spriteGuids = AssetDatabase.FindAssets("t:Sprite");
-                            if (spriteGuids != null && spriteGuids.Length > 0)
-                            {
-                                var fallbackSprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GUIDToAssetPath(spriteGuids[0]));
-                                if (chickenSprite == null) chickenSprite = fallbackSprite;
-                                if (heartSprite == null) heartSprite = fallbackSprite;
-                            }
-                        }
-
-                        var builtInSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
-                        if (chickenSprite == null) chickenSprite = builtInSprite;
-                        if (heartSprite == null) heartSprite = builtInSprite;
-
-                        if (animal.Sprite == null) animal.Sprite = chickenSprite;
-                        if (animal.HeartFeedbackSprite == null) animal.HeartFeedbackSprite = heartSprite;
+                        if (animal.Sprite == null) animal.Sprite = sp;
+                        if (animal.HeartFeedbackSprite == null) animal.HeartFeedbackSprite = ht;
                         addedAny = true;
                     }
                 }
@@ -125,7 +127,7 @@ namespace CozyLifeSim.Editor
             {
                 EditorUtility.SetDirty(database);
                 AssetDatabase.SaveAssets();
-                Debug.Log("<color=green>[CozySim]</color> Auto-repaired missing animal sprites in database (with safety fallbacks).");
+                Debug.Log("<color=green>[CozySim]</color> Bootstrapped/Auto-repaired animals inside database (with safety fallbacks).");
             }
         }
     }

@@ -51,6 +51,7 @@ namespace CozyLifeSim.Editor
                             );
                             copy.BuyPrice = crop.BuyPrice;
                             copy.SellPrice = crop.SellPrice;
+                            copy.RequiredLevel = crop.RequiredLevel; // Preserve RequiredLevel khi load
                             _stagingCrops.Add(copy);
                         }
                     }
@@ -196,6 +197,11 @@ namespace CozyLifeSim.Editor
                 selected.SellPrice = EditorGUILayout.IntField("Sell Price (Coins)", selected.SellPrice);
                 if (selected.SellPrice != oldSell) { _isDirty = true; ValidateStaging(); }
 
+                // Cap nhat RequiredLevel cho Crop
+                int oldReqLevel = selected.RequiredLevel;
+                selected.RequiredLevel = EditorGUILayout.IntField("Required Level", selected.RequiredLevel);
+                if (selected.RequiredLevel != oldReqLevel) { _isDirty = true; ValidateStaging(); }
+
                 EditorGUILayout.EndScrollView();
 
                 EditorGUILayout.Space();
@@ -234,7 +240,7 @@ namespace CozyLifeSim.Editor
                  _database.Crops.Clear();
                  foreach (var s in _stagingCrops)
                  {
-                     _database.Crops.Add(new CropTemplate(s.CropId, s.Name, s.StageDurationSeconds, s.SeedSprite, s.SproutSprite, s.MatureSprite, s.HarvestSprite) { BuyPrice = s.BuyPrice, SellPrice = s.SellPrice });
+                     _database.Crops.Add(new CropTemplate(s.CropId, s.Name, s.StageDurationSeconds, s.SeedSprite, s.SproutSprite, s.MatureSprite, s.HarvestSprite) { BuyPrice = s.BuyPrice, SellPrice = s.SellPrice, RequiredLevel = s.RequiredLevel });
                  }
                  EditorUtility.SetDirty(_database);
                 AssetDatabase.SaveAssets();

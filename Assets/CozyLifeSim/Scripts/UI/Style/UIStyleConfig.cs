@@ -9,6 +9,9 @@ namespace CozyLifeSim.UI.Style
         [Header("Typography Palette")]
         public List<TextStyle> TextStyles = new List<TextStyle>();
 
+        [Header("Design Flags")]
+        public bool ForceFlatUI = false;
+
         [Header("Structural Theme Prefabs")]
         public GameObject PrimaryButtonPrefab;
         public GameObject PanelBackgroundPrefab;

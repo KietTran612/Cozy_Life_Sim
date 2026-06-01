@@ -46,6 +46,7 @@ namespace CozyLifeSim.Editor
                             sticker.ShadowSprite
                         );
                         copy.BuyPrice = sticker.BuyPrice;
+                        copy.RequiredLevel = sticker.RequiredLevel; // Preserve RequiredLevel khi load
                         _stagingStickers.Add(copy);
                     }
                 }
@@ -165,6 +166,11 @@ namespace CozyLifeSim.Editor
                 selected.BuyPrice = EditorGUILayout.IntField("Buy Price (Coins)", selected.BuyPrice);
                 if (selected.BuyPrice != oldBuyPrice) { _isDirty = true; ValidateStaging(); }
 
+                // Cap nhat RequiredLevel cho Sticker
+                int oldReqLevel = selected.RequiredLevel;
+                selected.RequiredLevel = EditorGUILayout.IntField("Required Level", selected.RequiredLevel);
+                if (selected.RequiredLevel != oldReqLevel) { _isDirty = true; ValidateStaging(); }
+
                 EditorGUILayout.EndScrollView();
 
                 EditorGUILayout.Space();
@@ -211,7 +217,7 @@ namespace CozyLifeSim.Editor
                     _database.Stickers.Clear();
                     foreach (var s in _stagingStickers)
                     {
-                        _database.Stickers.Add(new StickerTemplate(s.StickerId, s.Name, s.Sprite, s.ShadowSprite) { BuyPrice = s.BuyPrice });
+                        _database.Stickers.Add(new StickerTemplate(s.StickerId, s.Name, s.Sprite, s.ShadowSprite) { BuyPrice = s.BuyPrice, RequiredLevel = s.RequiredLevel });
                     }
                     EditorUtility.SetDirty(_database);
 

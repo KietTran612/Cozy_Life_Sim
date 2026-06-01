@@ -3,8 +3,8 @@
 ## Snapshot
 
 - **Current Phase**: Phase 2.3 / 2.4 heritage content, polish, idempotency, deep verification, and runtime heritage balance are complete locally.
-- **Previous Completed Commit**: `a47413b fix: harden content data validation`.
-- **Current Task**: Task 30 completed and prepared for commit.
+- **Last Completed Commit**: `b014443 test: validate heritage runtime balance`.
+- **Current Task**: Task 30.1 post-commit handoff cleanup complete locally.
 
 ## Latest Completed Work
 
@@ -26,16 +26,13 @@
 
 ## Current Uncommitted Scope
 
-- `Assets/CozyLifeSim/Settings/QuestDatabase.asset`
-- `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimValidation.cs`
-- `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimMcpGameplayLoopValidation.cs`
 - `docs/plans/task.md`
 - `docs/plans/current-handoff.md`
 - Existing untracked `.agent/scratch/*` files are under the Antigravity profile boundary and should not be modified or staged unless explicitly requested.
 
 ## Recommended Next Task
 
-- Move to the next planning slice for UI/UX polish that depends on actual playtest feedback, or start the next feature plan from `docs/plans/index.md` only when needed.
+- Bat dau thuc thi **Task 31: [Phase 3.1] UI/UX Juice & Animations** dua tren ke hoach refined da duoc duyet tai [2026-06-01-ui-ux-juice-animations.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-ui-ux-juice-animations.md) dung quy trinh single-flow mode.
 
 ## Next-Agent Read Order
 

@@ -75,6 +75,7 @@ namespace CozyLifeSim.Editor
                 if (string.IsNullOrWhiteSpace(s.Name)) _validationErrors.Add($"ID {s.StickerId}: Name cannot be empty.");
                 if (s.Sprite == null) _validationErrors.Add($"ID {s.StickerId}: Sprite must be assigned.");
                 if (s.BuyPrice <= 0) _validationErrors.Add($"ID {s.StickerId}: Buy price must be greater than zero.");
+                if (s.RequiredLevel <= 0) _validationErrors.Add($"ID {s.StickerId}: Required level must be greater than zero.");
             }
         }
 

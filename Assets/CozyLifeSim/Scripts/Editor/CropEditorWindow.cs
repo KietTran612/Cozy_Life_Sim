@@ -78,6 +78,7 @@ namespace CozyLifeSim.Editor
                     _validationErrors.Add($"ID {c.CropId}: Missing stage sprites.");
                 if (c.BuyPrice <= 0) _validationErrors.Add($"ID {c.CropId}: Buy price must be greater than zero.");
                 if (c.SellPrice <= 0) _validationErrors.Add($"ID {c.CropId}: Sell price must be greater than zero.");
+                if (c.RequiredLevel <= 0) _validationErrors.Add($"ID {c.CropId}: Required level must be greater than zero.");
             }
         }
 

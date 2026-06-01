@@ -62,6 +62,11 @@ namespace CozyLifeSim.UI.Settings
                 {
                     errors.Add($"Sticker with ID {s.StickerId} ('{s.Name}') has invalid buy price ({s.BuyPrice}). Price must be positive.");
                 }
+
+                if (s.RequiredLevel <= 0)
+                {
+                    errors.Add($"Sticker with ID {s.StickerId} ('{s.Name}') has invalid required level ({s.RequiredLevel}). Required level must be positive.");
+                }
             }
 
 

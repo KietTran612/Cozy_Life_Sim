@@ -145,7 +145,15 @@ namespace CozyLifeSim.Editor
                     throw new System.Exception("Database with negative reward coins should fail validation.");
                 }
 
-                // 5.5 Empty title should fail
+                // 5.5 Negative reward XP should fail
+                testDb.Quests.Clear();
+                testDb.Quests.Add(new QuestTemplate(1, "Negative XP", 3, 10, QuestType.WaterCrops, -1));
+                if (testDb.ValidateDatabase(out var rewardXpErrors))
+                {
+                    throw new System.Exception("Database with negative reward XP should fail validation.");
+                }
+
+                // 5.6 Empty title should fail
                 testDb.Quests.Clear();
                 testDb.Quests.Add(new QuestTemplate(1, "   ", 3, 50, QuestType.WaterCrops));
                 if (testDb.ValidateDatabase(out var titleErrors))
@@ -191,6 +199,14 @@ namespace CozyLifeSim.Editor
                     throw new System.Exception("Crop database with missing sprites should fail validation.");
                 }
 
+                // 6.5 Invalid required level should fail
+                testCropDb.Crops.Clear();
+                testCropDb.Crops.Add(new CozyLifeSim.UI.Settings.CropTemplate(1, "Invalid Level", 5f, testSprite, testSprite, testSprite, testSprite) { RequiredLevel = 0 });
+                if (testCropDb.ValidateDatabase(out var reqLevelCropErrors))
+                {
+                    throw new System.Exception("Crop database with invalid required level should fail validation.");
+                }
+
                 Object.DestroyImmediate(testCropDb);
                 if (testSprite != null) Object.DestroyImmediate(testSprite);
                 passCount++;
@@ -213,6 +229,13 @@ namespace CozyLifeSim.Editor
                 if (testLoadedAnimalDb.Animals == null || testLoadedAnimalDb.Animals.Count == 0) throw new System.Exception("AnimalDatabase should be bootstrapped with default Breathing Chicken");
                 if (testLoadedAnimalDb.Animals[0].AnimalId != 1 || testLoadedAnimalDb.Animals[0].Name != "Breathing Chicken") throw new System.Exception("Bootstrapped animal should be Breathing Chicken (ID 1)");
                 if (testLoadedAnimalDb.Animals[0].BreathScaleY <= 1.0f) throw new System.Exception("Bootstrapped animal breath scale should be greater than 1.0f");
+
+                testLoadedAnimalDb.Animals[0].RequiredLevel = 0;
+                if (testLoadedAnimalDb.ValidateDatabase(out var reqLevelAnimalErrors))
+                {
+                    throw new System.Exception("Animal database with invalid required level should fail validation.");
+                }
+
                 Object.DestroyImmediate(testLoadedAnimalDb);
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "AnimalDatabase In-Memory Bootstrapping verified");
@@ -249,6 +272,14 @@ namespace CozyLifeSim.Editor
                 if (testStickerDb.ValidateDatabase(out var spriteErrors))
                 {
                     throw new System.Exception("Sticker database with missing sprite should fail validation.");
+                }
+
+                // 9.5 Invalid required level should fail
+                testStickerDb.Stickers.Clear();
+                testStickerDb.Stickers.Add(new CozyLifeSim.UI.Settings.StickerTemplate(1, "Invalid Level", testStickerSprite, testStickerSprite) { RequiredLevel = 0 });
+                if (testStickerDb.ValidateDatabase(out var reqLevelStickerErrors))
+                {
+                    throw new System.Exception("Sticker database with invalid required level should fail validation.");
                 }
 
                 Object.DestroyImmediate(testStickerDb);

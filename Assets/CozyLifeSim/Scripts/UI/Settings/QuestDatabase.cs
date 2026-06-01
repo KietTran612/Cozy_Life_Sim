@@ -60,6 +60,11 @@ namespace CozyLifeSim.UI.Settings
                 {
                     errors.Add($"Quest with ID {q.QuestId} ('{q.Title}') has negative reward coins ({q.RewardCoins}).");
                 }
+
+                if (q.RewardXP < 0)
+                {
+                    errors.Add($"Quest with ID {q.QuestId} ('{q.Title}') has negative reward XP ({q.RewardXP}).");
+                }
             }
 
             return errors.Count == 0;

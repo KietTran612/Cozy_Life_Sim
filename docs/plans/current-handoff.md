@@ -3,7 +3,7 @@
 ## Snapshot
 
 - **Current Phase**: Hoan thanh Phase 2.3 & Phase 2.4 (Cozy Heritage, Idempotency Guard & Deep Verification).
-- **Last Completed Implementation Commit**: `a98aa70 feat: polish shop tabs and countable sticker UX`.
+- **Last Completed Implementation Commit**: `9685a35 feat: complete heritage content bootstrap, custom editors lock safety, idempotency guard & validation tests`.
 - **Phase 2.3 & 2.4 Status**: Da hoan thanh local tuyet doi, cho xac nhan hoac commit tu nguoi dung.
 
 ## Latest Verification
@@ -13,6 +13,7 @@
     - Test 12 (Economic & Level Invariants): PASS.
     - Test 13 (Scene Component & DI Wiring): PASS.
     - Test 14 (Procedural Flat Fallback C# Integration): PASS.
+    - Latest review-fix rerun after validation hardening: PASS, 24 passed, 0 failed, 1 expected warning.
   - `Tools/CozySim/Setup Test Scene Silent`: PASS. Idempotency Guard hoat dong tuyet doi: **git diff cua file Main.unity sau khi chay lan 2 bang dung 0 (Exactly 0 diffs)!**
 - **Expected rollback warnings during logic tests**:
   - Cac test atomicity (`TryBuySeed`, `TryBuySticker`, `TrySellCrop`, `TryProgressQuest`, `StickerBookPresenter`) thuc hien test luu that bai co tinh chu y va log rollback warning dung nhu thiet ke.
@@ -38,25 +39,26 @@
 
 - **Address Phase 2.3/2.4 Polish & Database Editor Feedback (Task 29.5)**:
   - Staged Packages/packages-lock.json update.
-  - Ignored serialized asset/scene files and markdown in .gitattributes to pass strict git whitespace validation perfectly.
+  - Ignored Unity serialized asset/scene files in `.gitattributes` while keeping Markdown whitespace checks active.
   - Preserved and displayed `RequiredLevel` across Crop, Sticker, and Animal custom editors.
   - Successfully bootstrapped all 4 Vietnamese Heritage quests directly into the QuestDatabase.asset file during silent scene generation.
   - Executed tests and verified all 24 automated logic validation tests pass 100%.
+- **Data Validation Hardening Review Fix (Task 29.6)**:
+  - Added `RewardXP >= 0` validation for `QuestDatabase`.
+  - Added `RequiredLevel > 0` validation for Crop, Sticker, and Animal databases and matching custom editor staging validators.
+  - Added regression checks to `CozyLifeSimValidation`.
+  - Git whitespace checks pass after the fix; Unity MCP logic validation rerun passed with 24 passed, 0 failed, 1 expected warning.
 
 ## Current Uncommitted Scope
 
-- Cac file thay doi staged chuan bi commit:
-  - `Assets/CozyLifeSim/Scenes/Main.unity` (Scene sach se, generated idempotently, Exactly 0 diffs on consecutive run!)
-  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimValidation.cs` (Extended tests 12, 13, 14)
-  - `Assets/CozyLifeSim/Scripts/UI/Style/CozyProceduralUI.cs` & `.meta` (Flat fallback engine)
-  - `Assets/CozyLifeSim/Scripts/Editor/AnimalDatabaseUtility.cs`, `CropDatabaseUtility.cs`, `QuestDatabaseUtility.cs` & `.meta`, `StickerDatabaseUtility.cs` (Vietnamese Heritage data bootstrap utilities)
-  - `Assets/CozyLifeSim/Scripts/Editor/AnimalEditorWindow.cs`, `CropEditorWindow.cs`, `QuestEditorWindow.cs`, `StickerEditorWindow.cs` (Data integrity editor adjustments including RequiredLevel and RewardXP preservation)
-  - `Assets/CozyLifeSim/Scripts/UI/AnimalWidget.cs`, `CozySticker.cs`, `CropWidget.cs`, `Style/UIStyleConfig.cs` (Flat Fallback integration)
-  - `Assets/CozyLifeSim/Settings/` (AnimalDatabase, CropDatabase, StickerDatabase, QuestDatabase updated assets)
-  - `Packages/packages-lock.json`
-  - `.gitattributes`
+- Last completed implementation commit is now `9685a35 feat: complete heritage content bootstrap, custom editors lock safety, idempotency guard & validation tests`.
+- Current local review-fix scope:
+  - `Assets/CozyLifeSim/Scripts/UI/Settings/AnimalDatabase.cs`, `CropDatabase.cs`, `QuestDatabase.cs`, `StickerDatabase.cs` (data validation hardening)
+  - `Assets/CozyLifeSim/Scripts/Editor/AnimalEditorWindow.cs`, `CropEditorWindow.cs`, `StickerEditorWindow.cs` (custom editor staging validation hardening)
+  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimValidation.cs` (regression checks for invalid RewardXP/RequiredLevel)
   - `docs/plans/task.md`
   - `docs/plans/current-handoff.md`
+- Existing untracked `.agent/scratch/*` files are under the Antigravity profile boundary and should not be modified or staged unless explicitly requested.
 
 ## Next-Agent Read Order
 

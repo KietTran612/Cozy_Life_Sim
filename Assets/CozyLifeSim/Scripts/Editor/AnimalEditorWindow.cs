@@ -76,6 +76,7 @@ namespace CozyLifeSim.Editor
                 if (a.BreathDuration <= 0f) _validationErrors.Add($"ID {a.AnimalId}: Breath duration must be > 0.");
                 if (a.PetJumpHeight < 0f) _validationErrors.Add($"ID {a.AnimalId}: Pet jump height must be >= 0.");
                 if (a.PetJumpDuration <= 0f) _validationErrors.Add($"ID {a.AnimalId}: Pet jump duration must be > 0.");
+                if (a.RequiredLevel <= 0) _validationErrors.Add($"ID {a.AnimalId}: Required level must be greater than zero.");
             }
         }
 

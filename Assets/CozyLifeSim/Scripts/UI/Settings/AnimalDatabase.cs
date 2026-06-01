@@ -77,6 +77,11 @@ namespace CozyLifeSim.UI.Settings
                 {
                     errors.Add($"Animal with ID {a.AnimalId} ('{a.Name}') has an invalid jump duration ({a.PetJumpDuration}s). Duration must be greater than zero.");
                 }
+
+                if (a.RequiredLevel <= 0)
+                {
+                    errors.Add($"Animal with ID {a.AnimalId} ('{a.Name}') has invalid required level ({a.RequiredLevel}). Required level must be positive.");
+                }
             }
 
             return errors.Count == 0;

@@ -62,6 +62,11 @@ namespace CozyLifeSim.UI.Settings
                 {
                     errors.Add($"Crop with ID {c.CropId} ('{c.Name}') has invalid buy/sell price (Buy: {c.BuyPrice}, Sell: {c.SellPrice}). Prices must be positive.");
                 }
+
+                if (c.RequiredLevel <= 0)
+                {
+                    errors.Add($"Crop with ID {c.CropId} ('{c.Name}') has invalid required level ({c.RequiredLevel}). Required level must be positive.");
+                }
             }
 
 

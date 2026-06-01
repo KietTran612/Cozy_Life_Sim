@@ -102,6 +102,164 @@ namespace CozyLifeSim.Editor
             Debug.Log($"[CozySim Status] isRunning={_isRunning}, stepIndex={_stepIndex}, passes={Passes.Count}, errors={Errors.Count}, deadline={_deadline - Time.realtimeSinceStartup}s remaining");
         }
 
+        [MenuItem("Tools/CozySim/Run Heritage Runtime Validation")]
+        public static void RunHeritageRuntimeValidation()
+        {
+            const string category = "CozySim HeritageRuntime";
+            int passCount = 0;
+            int failCount = 0;
+            SaveData backup = null;
+            ISaveService saveService = null;
+            IInventoryService inventoryService = null;
+            IProgressionService progressionService = null;
+            IQuestService questService = null;
+
+            if (!Application.isPlaying)
+            {
+                CozyValidationLog.Fail(category, "Enter Play Mode before running this validation. MCP flow: sim_play, then editor_invoke_method.");
+                CozyValidationLog.Summary(category, passCount, 1);
+                return;
+            }
+
+            try
+            {
+                var scope = LifetimeScope.Find<GameLifetimeScope>();
+                if (scope == null || scope.Container == null)
+                {
+                    throw new InvalidOperationException("GameLifetimeScope container is not available.");
+                }
+
+                saveService = scope.Container.Resolve<ISaveService>();
+                inventoryService = scope.Container.Resolve<IInventoryService>();
+                progressionService = scope.Container.Resolve<IProgressionService>();
+                IShopService shopService = scope.Container.Resolve<IShopService>();
+                questService = scope.Container.Resolve<IQuestService>();
+                var cropDatabase = scope.Container.Resolve<CozyLifeSim.UI.Settings.CropDatabase>();
+                var stickerDatabase = scope.Container.Resolve<CozyLifeSim.UI.Settings.StickerDatabase>();
+
+                if (saveService == null || inventoryService == null || progressionService == null || shopService == null || questService == null)
+                {
+                    throw new InvalidOperationException("Required services could not be resolved from VContainer.");
+                }
+
+                if (cropDatabase == null || stickerDatabase == null)
+                {
+                    throw new InvalidOperationException("CropDatabase or StickerDatabase is missing from GameLifetimeScope.");
+                }
+
+                backup = CloneSave(saveService.ActiveSave);
+
+                SaveData save = saveService.ActiveSave;
+                save.Coins = 500;
+                save.Seeds = 0;
+                save.Crops = 0;
+                save.PlayerLevel = 1;
+                save.PlayerXP = 0;
+                save.CompletedQuestIds.Clear();
+                save.ActiveQuestProgress.Clear();
+                save.StickerOwned.Clear();
+                save.HasMigratedStickerOwned = true;
+                saveService.Save();
+                inventoryService.ReloadFromSave();
+                questService.ReloadFromSave(false);
+
+                if (cropDatabase.GetCrop(2) == null || stickerDatabase.GetSticker(5) == null)
+                    throw new InvalidOperationException("Level 1 heritage crop/sticker templates are missing.");
+                if (!shopService.TryBuySeed(2) || !shopService.TryBuySticker(5))
+                    throw new InvalidOperationException("Level 1 heritage shop purchases failed.");
+                passCount++;
+                CozyValidationLog.Pass(category, "Level 1 Cay Mia Ngot seed and Ly Nuoc Mia sticker purchase path verified.");
+
+                if (shopService.TryBuySeed(3) || shopService.TryBuySticker(6))
+                    throw new InvalidOperationException("Level 2 heritage items must remain locked at PlayerLevel 1.");
+                passCount++;
+                CozyValidationLog.Pass(category, "Level 2 heritage shop locks verified at PlayerLevel 1.");
+
+                progressionService.AddXP(100);
+                if (progressionService.PlayerLevel != 2)
+                    throw new InvalidOperationException($"Expected PlayerLevel 2 after 100 XP, got {progressionService.PlayerLevel}.");
+                if (!shopService.TryBuySeed(3) || !shopService.TryBuySticker(6))
+                    throw new InvalidOperationException("Level 2 heritage shop purchases failed.");
+                passCount++;
+                CozyValidationLog.Pass(category, "Level 2 Lua Nuoc seed and Chiec Non La sticker purchase path verified.");
+
+                progressionService.AddXP(200);
+                if (progressionService.PlayerLevel != 3)
+                    throw new InvalidOperationException($"Expected PlayerLevel 3 after another 200 XP, got {progressionService.PlayerLevel}.");
+                if (!shopService.TryBuySeed(4) || !shopService.TryBuySticker(7))
+                    throw new InvalidOperationException("Level 3 heritage shop purchases failed.");
+                passCount++;
+                CozyValidationLog.Pass(category, "Level 3 Hoa Sen seed and Chiec Xich Lo sticker purchase path verified.");
+
+                save.Coins = 100;
+                save.PlayerLevel = 1;
+                save.PlayerXP = 0;
+                save.CompletedQuestIds.Clear();
+                save.ActiveQuestProgress.Clear();
+                saveService.Save();
+                inventoryService.ReloadFromSave();
+                questService.ReloadFromSave(false);
+                int startingQuestCoins = inventoryService.Coins;
+                int startingQuestLevel = progressionService.PlayerLevel;
+                int startingQuestXP = progressionService.PlayerXP;
+
+                QuestData heritageHarvestQuest = null;
+                foreach (QuestData quest in questService.ActiveQuests)
+                {
+                    if (quest.QuestId == 2)
+                    {
+                        heritageHarvestQuest = quest;
+                        break;
+                    }
+                }
+
+                if (heritageHarvestQuest == null || !heritageHarvestQuest.Title.Contains("Cay Mia Ngot"))
+                    throw new InvalidOperationException("First heritage harvest quest is missing or not targeting Cay Mia Ngot.");
+                if (!questService.TryProgressQuest(QuestType.HarvestCrops, heritageHarvestQuest.TargetCount))
+                    throw new InvalidOperationException("Could not complete first heritage harvest quest.");
+                if (!heritageHarvestQuest.IsCompleted || !save.CompletedQuestIds.Contains(2))
+                    throw new InvalidOperationException("First heritage harvest quest completion did not persist.");
+
+                int expectedCoins = startingQuestCoins + heritageHarvestQuest.RewardCoins;
+                GetExpectedProgressionAfterXP(startingQuestLevel, startingQuestXP, heritageHarvestQuest.RewardXP, out int expectedLevel, out int expectedXP);
+                if (inventoryService.Coins != expectedCoins || progressionService.PlayerLevel != expectedLevel || progressionService.PlayerXP != expectedXP)
+                {
+                    throw new InvalidOperationException($"Heritage harvest rewards mismatch. Coins={inventoryService.Coins}/{expectedCoins}, Level={progressionService.PlayerLevel}/{expectedLevel}, XP={progressionService.PlayerXP}/{expectedXP}.");
+                }
+                passCount++;
+                CozyValidationLog.Pass(category, "First heritage harvest quest completion and rewards verified.");
+            }
+            catch (Exception ex)
+            {
+                failCount = 1;
+                CozyValidationLog.Fail(category, ex.Message);
+            }
+            finally
+            {
+                if (saveService != null && backup != null)
+                {
+                    CopySave(backup, saveService.ActiveSave);
+                    saveService.Save();
+                    inventoryService?.ReloadFromSave();
+                    questService?.ReloadFromSave(false);
+                }
+
+                CozyValidationLog.Summary(category, passCount, failCount);
+            }
+        }
+
+        private static void GetExpectedProgressionAfterXP(int startingLevel, int startingXP, int addedXP, out int expectedLevel, out int expectedXP)
+        {
+            expectedLevel = Mathf.Max(1, startingLevel);
+            expectedXP = Mathf.Max(0, startingXP) + Mathf.Max(0, addedXP);
+
+            while (expectedXP >= expectedLevel * 100)
+            {
+                expectedXP -= expectedLevel * 100;
+                expectedLevel++;
+            }
+        }
+
         private static void Tick()
         {
             if (!Application.isPlaying)

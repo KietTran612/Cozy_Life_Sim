@@ -36,7 +36,7 @@ MonoBehaviour:
     Title: Net Dep Que Huong (Pet Meo Tam The 3 times)
     TargetCount: 3
     RewardCoins: 200
-    RewardXP: 100
+    RewardXP: 200
     Type: 2
   - QuestId: 5
     Title: Test Create Quest 5

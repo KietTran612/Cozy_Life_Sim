@@ -889,6 +889,102 @@ namespace CozyLifeSim.Editor
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "Economic Balance & Level Invariants verified");
 
+                // Test 12.5: Heritage Runtime Content Balance & Unlock Path
+                if (activeCrops.GetCrop(2) == null || activeCrops.GetCrop(3) == null || activeCrops.GetCrop(4) == null)
+                    throw new System.Exception("Heritage crops 2/3/4 must exist in CropDatabase.");
+                if (activeStickers.GetSticker(5) == null || activeStickers.GetSticker(6) == null || activeStickers.GetSticker(7) == null)
+                    throw new System.Exception("Heritage stickers 5/6/7 must exist in StickerDatabase.");
+
+                int maxContentLevel = GetMaxRequiredLevel(activeCrops.Crops, activeAnimals.Animals, activeStickers.Stickers);
+                int reachableLevel = SimulateReachableLevel(activeQuests.Quests);
+                if (reachableLevel < maxContentLevel)
+                {
+                    throw new System.Exception($"Heritage XP Balance Violation: total quest XP can only reach Level {reachableLevel}, but content requires Level {maxContentLevel}.");
+                }
+
+                var heritageShopSave = new SaveService();
+                heritageShopSave.ActiveSave.Coins = 500;
+                heritageShopSave.ActiveSave.Seeds = 0;
+                heritageShopSave.ActiveSave.Crops = 0;
+                heritageShopSave.ActiveSave.PlayerLevel = 1;
+                heritageShopSave.ActiveSave.PlayerXP = 0;
+                heritageShopSave.ActiveSave.StickerOwned.Clear();
+                heritageShopSave.ActiveSave.CompletedQuestIds.Clear();
+                heritageShopSave.ActiveSave.ActiveQuestProgress.Clear();
+                heritageShopSave.ActiveSave.HasMigratedStickerOwned = true;
+                heritageShopSave.Save();
+
+                var heritageShopInventory = new InventoryService(heritageShopSave);
+                var heritageProgression = new ProgressionService(heritageShopSave);
+                IShopService heritageShop = new ShopService(heritageShopSave, heritageShopInventory, heritageProgression, activeCrops, activeStickers);
+
+                if (!heritageShop.TryBuySeed(2))
+                    throw new System.Exception("Level 1 player should be able to buy Cay Mia Ngot seed.");
+                if (!heritageShop.TryBuySticker(5))
+                    throw new System.Exception("Level 1 player should be able to buy Ly Nuoc Mia sticker.");
+                if (heritageShop.TryBuySeed(3))
+                    throw new System.Exception("Level 1 player should not be able to buy Lua Nuoc seed.");
+                if (heritageShop.TryBuySticker(6))
+                    throw new System.Exception("Level 1 player should not be able to buy Chiec Non La sticker.");
+
+                heritageProgression.AddXP(100);
+                if (heritageProgression.PlayerLevel != 2)
+                    throw new System.Exception($"Heritage unlock flow should reach Level 2 after 100 XP, got Level {heritageProgression.PlayerLevel}.");
+                if (!heritageShop.TryBuySeed(3))
+                    throw new System.Exception("Level 2 player should be able to buy Lua Nuoc seed.");
+                if (!heritageShop.TryBuySticker(6))
+                    throw new System.Exception("Level 2 player should be able to buy Chiec Non La sticker.");
+
+                heritageProgression.AddXP(200);
+                if (heritageProgression.PlayerLevel != 3)
+                    throw new System.Exception($"Heritage unlock flow should reach Level 3 after another 200 XP, got Level {heritageProgression.PlayerLevel}.");
+                if (!heritageShop.TryBuySeed(4))
+                    throw new System.Exception("Level 3 player should be able to buy Hoa Sen seed.");
+                if (!heritageShop.TryBuySticker(7))
+                    throw new System.Exception("Level 3 player should be able to buy Chiec Xich Lo sticker.");
+
+                var heritageQuestSave = new SaveService();
+                heritageQuestSave.ActiveSave.Coins = 100;
+                heritageQuestSave.ActiveSave.PlayerLevel = 1;
+                heritageQuestSave.ActiveSave.PlayerXP = 0;
+                heritageQuestSave.ActiveSave.CompletedQuestIds.Clear();
+                heritageQuestSave.ActiveSave.ActiveQuestProgress.Clear();
+                heritageQuestSave.Save();
+
+                var heritageQuestInventory = new InventoryService(heritageQuestSave);
+                var heritageQuestProgression = new ProgressionService(heritageQuestSave);
+                var heritageQuestService = new QuestService(heritageQuestSave, heritageQuestInventory, heritageQuestProgression, activeQuests, false);
+                int startingQuestCoins = heritageQuestInventory.Coins;
+                int startingQuestLevel = heritageQuestProgression.PlayerLevel;
+                int startingQuestXP = heritageQuestProgression.PlayerXP;
+
+                QuestData firstHarvestQuest = null;
+                foreach (QuestData quest in heritageQuestService.ActiveQuests)
+                {
+                    if (quest.QuestId == 2)
+                    {
+                        firstHarvestQuest = quest;
+                        break;
+                    }
+                }
+
+                if (firstHarvestQuest == null || !firstHarvestQuest.Title.Contains("Cay Mia Ngot"))
+                    throw new System.Exception("First heritage harvest quest should target Cay Mia Ngot.");
+                if (!heritageQuestService.TryProgressQuest(QuestType.HarvestCrops, firstHarvestQuest.TargetCount))
+                    throw new System.Exception("Heritage harvest quest should complete through QuestService.");
+                if (!firstHarvestQuest.IsCompleted || !heritageQuestSave.ActiveSave.CompletedQuestIds.Contains(2))
+                    throw new System.Exception("Heritage harvest quest completion did not persist.");
+
+                int expectedCoins = startingQuestCoins + firstHarvestQuest.RewardCoins;
+                GetExpectedProgressionAfterXP(startingQuestLevel, startingQuestXP, firstHarvestQuest.RewardXP, out int expectedLevel, out int expectedXP);
+                if (heritageQuestInventory.Coins != expectedCoins || heritageQuestProgression.PlayerLevel != expectedLevel || heritageQuestProgression.PlayerXP != expectedXP)
+                {
+                    throw new System.Exception($"Heritage harvest rewards should apply exactly. Coins={heritageQuestInventory.Coins}/{expectedCoins}, Level={heritageQuestProgression.PlayerLevel}/{expectedLevel}, XP={heritageQuestProgression.PlayerXP}/{expectedXP}.");
+                }
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Heritage runtime content balance and unlock path verified");
+
                 // Test 13: Scene Component & DI Wiring Validation
                 ValidateSceneWiring(ref passCount);
 
@@ -1007,6 +1103,72 @@ namespace CozyLifeSim.Editor
                 }
             }
             return 1; // Default
+        }
+
+        private static int GetMaxRequiredLevel(
+            List<CozyLifeSim.UI.Settings.CropTemplate> crops,
+            List<CozyLifeSim.UI.Settings.AnimalTemplate> animals,
+            List<CozyLifeSim.UI.Settings.StickerTemplate> stickers)
+        {
+            int maxLevel = 1;
+
+            foreach (var crop in crops)
+            {
+                if (crop != null && crop.RequiredLevel > maxLevel)
+                {
+                    maxLevel = crop.RequiredLevel;
+                }
+            }
+
+            foreach (var animal in animals)
+            {
+                if (animal != null && animal.RequiredLevel > maxLevel)
+                {
+                    maxLevel = animal.RequiredLevel;
+                }
+            }
+
+            foreach (var sticker in stickers)
+            {
+                if (sticker != null && sticker.RequiredLevel > maxLevel)
+                {
+                    maxLevel = sticker.RequiredLevel;
+                }
+            }
+
+            return maxLevel;
+        }
+
+        private static int SimulateReachableLevel(List<QuestTemplate> quests)
+        {
+            int level = 1;
+            int xp = 0;
+
+            foreach (var quest in quests)
+            {
+                if (quest == null || quest.RewardXP <= 0) continue;
+
+                xp += quest.RewardXP;
+                while (xp >= level * 100)
+                {
+                    xp -= level * 100;
+                    level++;
+                }
+            }
+
+            return level;
+        }
+
+        private static void GetExpectedProgressionAfterXP(int startingLevel, int startingXP, int addedXP, out int expectedLevel, out int expectedXP)
+        {
+            expectedLevel = Mathf.Max(1, startingLevel);
+            expectedXP = Mathf.Max(0, startingXP) + Mathf.Max(0, addedXP);
+
+            while (expectedXP >= expectedLevel * 100)
+            {
+                expectedXP -= expectedLevel * 100;
+                expectedLevel++;
+            }
         }
 
         private static void ValidateSceneWiring(ref int passCount)

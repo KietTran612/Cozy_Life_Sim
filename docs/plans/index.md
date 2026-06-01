@@ -28,6 +28,8 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Shop Transaction Atomicity & Interface Safety [COMPLETED]: [2026-05-31-shop-atomicity-fixes.md](file:///c:/1.SOURCE/Unity/Source/Cozy_Life_Sim/docs/plans/2026-05-31-shop-atomicity-fixes.md)
 - Phase 2.3 & 2.4 Cozy Heritage, Idempotency & Polish [COMPLETED]: [2026-06-01-cozy-heritage-and-polish-plan.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-cozy-heritage-and-polish-plan.md)
 - Phase 3.1 UI/UX Juice & Animations [PROPOSED]: [2026-06-01-ui-ux-juice-animations.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-ui-ux-juice-animations.md)
+- Isolate Task 31 & Resolve Review [COMPLETED]: [2026-06-01-resolve-review-and-isolate-task31.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-resolve-review-and-isolate-task31.md)
+
 - Phase 3.2 Vietnamese Heritage Asset Sprite Integration [PROPOSED]: [2026-06-01-vietnamese-heritage-assets-generation.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-vietnamese-heritage-assets-generation.md)
 - Phase 3.3 Expanded Quests & Dialogue NPC System [PROPOSED]: [2026-06-01-quest-dialogue-npc-system.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-quest-dialogue-npc-system.md)
 - Phase 3.4 Scrapbook Polish & Custom Diary Notes [PROPOSED]: [2026-06-01-scrapbook-customization-diary-notes.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-scrapbook-customization-diary-notes.md)

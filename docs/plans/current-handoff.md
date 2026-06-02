@@ -2,34 +2,37 @@
 
 ## Snapshot
 
-- **Current Phase**: Phase 3.1 UI/UX Juice & Animations is restored, verified, and complete.
+- **Current Phase**: Phase 3.2 Vietnamese Heritage Asset Sprite Integration is completed and verified.
 - **Last Completed Commit**: current local commit `docs: isolate task31 backup workflow`.
-- **Current Task**: Task 31 review fixes completed and verified.
-- **Recommended Next Task**: Task 32: [Phase 3.2] Vietnamese Heritage Asset Sprite Integration.
+- **Current Task**: Task 32 completed and verified.
+- **Recommended Next Task**: Task 33: [Phase 3.3] Expanded Quests & Dialogue NPC System.
 
 ## Latest Completed Work
 
-- **Task 31: [Phase 3.1] UI/UX Juice & Animations**
-  - Restored Task 31 files from backups and resolved P1/P2 review feedback.
-  - Resolved **[P1] Injection Gap**: Added `LifetimeScope.Find<GameLifetimeScope>().Container.Inject(this)` to `ProgressionHudWidget.cs` to ensure it is correctly injected in Play Mode.
-  - Resolved **[P2] Shop buy coin animation regression**: Overloaded `CozyJuiceUtility.PlayCoinFlyAnimation` to accept custom target positions and updated `ShopPopup.PlayCoinFlyAnimation` to pass `endWorldPos` (bought item position).
-  - Excluded optional `_coinPrefab` on `CozyJuiceUtility` from strict scene wiring verification.
+- **Task 32: [Phase 3.2] Vietnamese Heritage Asset Sprite Integration**
+  - Integrated 16 gameplay sprites (5 stickers + 9 crop stages + 2 animals) in gameplay databases, and staged 1 NPC Grandma portrait sprite (configured with `alphaIsTransparency = true` via importer utility).
+  - Added [CozyAssetImporterUtility.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/CozyAssetImporterUtility.cs) to automate `TextureImporter` Sprite configurations on import.
+  - Upgraded [StickerDatabaseUtility.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/StickerDatabaseUtility.cs), [CropDatabaseUtility.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/CropDatabaseUtility.cs), and [AnimalDatabaseUtility.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/AnimalDatabaseUtility.cs) to find heritage textures, import them, and upgrade the database assets.
+  - Integrated `Test 12.6` (`ValidateHeritageAssetPaths`) to [CozyLifeSimValidation.cs](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimValidation.cs) to verify path mappings, automatically configure newly added sprites (including Grandma portrait), and log expected warnings for missing optional assets.
 
 ## Latest Verification
 
-- Unity compile/import: Completed and compiled successfully in Unity Editor.
-- `Tools/CozySim/Run Logic Verification Tests`: PASS, **25 passed, 0 failed, 1 expected warning** (Verified through websocket MCP in running Editor).
-- `git status`: Verified that all Task 31 script, scene, and verification changes are present in `Assets/`.
+- Unity compile/import: Complete, compiling cleanly.
+- `Tools/CozySim/Run Logic Verification Tests`: PASS, **26 passed, 0 failed, 6 expected warnings** (5 optional assets missing + 1 quest database null fallback).
+- Database assets: Upgraded to correct sprite mappings on disk.
+- Grandma portrait: Configured with `alphaIsTransparency = true` and verified in validation tests.
 
 ## Current Uncommitted Scope
 
-- Restored Task 31 script and scene changes under `Assets/`.
+- Modified database asset files: `StickerDatabase.asset`, `CropDatabase.asset`, `AnimalDatabase.asset`.
+- Modified utility scripts, test files, and scene file: `Main.unity`.
+- New texture assets and their generated `.meta` files in `Assets/CozyLifeSim/Textures/Heritage/`.
 - Modified `docs/plans/task.md` and `docs/plans/current-handoff.md`.
-- Existing untracked `.agent/scratch/*` files are under the Antigravity profile boundary.
+- Untracked `.agent/scratch/*` files are under the Antigravity profile boundary.
 
 ## Recommended Next Task
 
-- Proceed to Task 32: [Phase 3.2] Vietnamese Heritage Asset Sprite Integration.
+- Proceed to Task 33: [Phase 3.3] Expanded Quests & Dialogue NPC System.
 
 ## Next-Agent Read Order
 

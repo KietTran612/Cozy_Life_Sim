@@ -154,6 +154,40 @@ namespace CozyLifeSim.Editor
                 addedAny = true;
             }
 
+            // Idempotent Heritage Upgrade for Stickers (IDs 4 to 8)
+            var stickerHeritagePaths = new Dictionary<int, string>
+            {
+                { 4, "Assets/CozyLifeSim/Textures/Heritage/Sticker_BanhMiCart.png" },
+                { 5, "Assets/CozyLifeSim/Textures/Heritage/Sticker_SugarcaneJuice.png" },
+                { 6, "Assets/CozyLifeSim/Textures/Heritage/Sticker_ConicalHat.png" },
+                { 7, "Assets/CozyLifeSim/Textures/Heritage/Sticker_Cyclo.png" },
+                { 8, "Assets/CozyLifeSim/Textures/Heritage/Sticker_StarLantern.png" }
+            };
+
+            foreach (var pair in stickerHeritagePaths)
+            {
+                string filePath = pair.Value;
+                int stickerId = pair.Key;
+                if (File.Exists(filePath))
+                {
+                    CozyAssetImporterUtility.ConfigureAsSprite(filePath);
+                    Sprite realSprite = AssetDatabase.LoadAssetAtPath<Sprite>(filePath);
+                    if (realSprite != null)
+                    {
+                        var sticker = database.Stickers.Find(x => x != null && x.StickerId == stickerId);
+                        if (sticker != null)
+                        {
+                            if (sticker.Sprite != realSprite || sticker.ShadowSprite != realSprite)
+                            {
+                                sticker.Sprite = realSprite;
+                                sticker.ShadowSprite = realSprite;
+                                addedAny = true;
+                            }
+                        }
+                    }
+                }
+            }
+
             // Safety guard: if templates exist but their Sprites are null (e.g. package assets missing on this machine),
             // auto-repair them using fallback sprites to ensure they can spawn and participate in validation.
             foreach (var sticker in database.Stickers)

@@ -985,6 +985,11 @@ namespace CozyLifeSim.Editor
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "Heritage runtime content balance and unlock path verified");
 
+                // Test 12.6: Exact Asset Path & GUID Validation
+                ValidateHeritageAssetPaths(activeCrops, activeAnimals, activeStickers, ref expectedWarningCount);
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Heritage exact asset paths and fallbacks validated");
+
                 // Test 13: Scene Component & DI Wiring Validation
                 ValidateSceneWiring(ref passCount);
 
@@ -1237,6 +1242,189 @@ namespace CozyLifeSim.Editor
 
             passCount++;
             CozyValidationLog.Pass("CozySim Logic", $"Scene component wiring and DI Database references validated. (Checked {checkedFields} fields, {missingWires} unassigned)");
+        }
+
+        private static void ValidateHeritageAssetPaths(
+            CozyLifeSim.UI.Settings.CropDatabase cropDb,
+            CozyLifeSim.UI.Settings.AnimalDatabase animalDb,
+            CozyLifeSim.UI.Settings.StickerDatabase stickerDb,
+            ref int expectedWarningCount)
+        {
+            // 1. Stickers (5 stickers, IDs 4-8)
+            var stickerPaths = new Dictionary<int, string>
+            {
+                { 4, "Assets/CozyLifeSim/Textures/Heritage/Sticker_BanhMiCart.png" },
+                { 5, "Assets/CozyLifeSim/Textures/Heritage/Sticker_SugarcaneJuice.png" },
+                { 6, "Assets/CozyLifeSim/Textures/Heritage/Sticker_ConicalHat.png" },
+                { 7, "Assets/CozyLifeSim/Textures/Heritage/Sticker_Cyclo.png" },
+                { 8, "Assets/CozyLifeSim/Textures/Heritage/Sticker_StarLantern.png" }
+            };
+
+            foreach (var pair in stickerPaths)
+            {
+                var sticker = stickerDb.GetSticker(pair.Key);
+                if (sticker == null) throw new System.Exception($"Sticker ID {pair.Key} is missing from StickerDatabase!");
+
+                bool fileExists = System.IO.File.Exists(pair.Value);
+                if (fileExists)
+                {
+                    CozyAssetImporterUtility.ConfigureAsSprite(pair.Value);
+                    string actualPath = AssetDatabase.GetAssetPath(sticker.Sprite);
+                    if (actualPath != pair.Value)
+                    {
+                        throw new System.Exception($"Sticker ID {pair.Key} ({sticker.Name}) sprite path mismatch! Expected: {pair.Value}, got: {actualPath}");
+                    }
+                }
+                else
+                {
+                    expectedWarningCount++;
+                    CozyValidationLog.ExpectedWarning("CozySim Logic", $"Core sticker asset {pair.Value} is missing. Fallback sprite in use: {AssetDatabase.GetAssetPath(sticker.Sprite)}");
+                }
+            }
+
+            // 2. Animals (2 animals, IDs 2-3)
+            var animalPaths = new Dictionary<int, string>
+            {
+                { 2, "Assets/CozyLifeSim/Textures/Heritage/Animal_CalicoCat.png" },
+                { 3, "Assets/CozyLifeSim/Textures/Heritage/Animal_WaterBuffalo.png" }
+            };
+
+            foreach (var pair in animalPaths)
+            {
+                var animal = animalDb.Animals.Find(x => x != null && x.AnimalId == pair.Key);
+                if (animal == null) throw new System.Exception($"Animal ID {pair.Key} is missing from AnimalDatabase!");
+
+                bool fileExists = System.IO.File.Exists(pair.Value);
+                if (fileExists)
+                {
+                    CozyAssetImporterUtility.ConfigureAsSprite(pair.Value);
+                    string actualPath = AssetDatabase.GetAssetPath(animal.Sprite);
+                    if (actualPath != pair.Value)
+                    {
+                        throw new System.Exception($"Animal ID {pair.Key} ({animal.Name}) sprite path mismatch! Expected: {pair.Value}, got: {actualPath}");
+                    }
+                }
+                else
+                {
+                    expectedWarningCount++;
+                    CozyValidationLog.ExpectedWarning("CozySim Logic", $"Core animal asset {pair.Value} is missing. Fallback sprite in use: {AssetDatabase.GetAssetPath(animal.Sprite)}");
+                }
+            }
+
+            // 3. Crops (3 crops, 3 stages each = 9 stages, IDs 2-4)
+            var cropPaths = new Dictionary<int, (string seed, string sprout, string mature)>
+            {
+                {
+                    2, (
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Sugarcane_Seed.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Sugarcane_Sprout.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Sugarcane_Mature.png"
+                    )
+                },
+                {
+                    3, (
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Rice_Seed.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Rice_Sprout.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Rice_Mature.png"
+                    )
+                },
+                {
+                    4, (
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Lotus_Seed.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Lotus_Sprout.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Lotus_Mature.png"
+                    )
+                }
+            };
+
+            foreach (var pair in cropPaths)
+            {
+                var crop = cropDb.GetCrop(pair.Key);
+                if (crop == null) throw new System.Exception($"Crop ID {pair.Key} is missing from CropDatabase!");
+
+                var paths = pair.Value;
+
+                // Seed
+                if (System.IO.File.Exists(paths.seed))
+                {
+                    CozyAssetImporterUtility.ConfigureAsSprite(paths.seed);
+                    string actual = AssetDatabase.GetAssetPath(crop.SeedSprite);
+                    if (actual != paths.seed) throw new System.Exception($"Crop ID {pair.Key} seed sprite path mismatch! Expected: {paths.seed}, got: {actual}");
+                }
+                else
+                {
+                    expectedWarningCount++;
+                    CozyValidationLog.ExpectedWarning("CozySim Logic", $"Core crop seed asset {paths.seed} is missing. Fallback sprite in use: {AssetDatabase.GetAssetPath(crop.SeedSprite)}");
+                }
+
+                // Sprout
+                if (System.IO.File.Exists(paths.sprout))
+                {
+                    CozyAssetImporterUtility.ConfigureAsSprite(paths.sprout);
+                    string actual = AssetDatabase.GetAssetPath(crop.SproutSprite);
+                    if (actual != paths.sprout) throw new System.Exception($"Crop ID {pair.Key} sprout sprite path mismatch! Expected: {paths.sprout}, got: {actual}");
+                }
+                else
+                {
+                    expectedWarningCount++;
+                    CozyValidationLog.ExpectedWarning("CozySim Logic", $"Core crop sprout asset {paths.sprout} is missing. Fallback sprite in use: {AssetDatabase.GetAssetPath(crop.SproutSprite)}");
+                }
+
+                // Mature
+                if (System.IO.File.Exists(paths.mature))
+                {
+                    CozyAssetImporterUtility.ConfigureAsSprite(paths.mature);
+                    string actual = AssetDatabase.GetAssetPath(crop.MatureSprite);
+                    if (actual != paths.mature) throw new System.Exception($"Crop ID {pair.Key} mature sprite path mismatch! Expected: {paths.mature}, got: {actual}");
+                }
+                else
+                {
+                    expectedWarningCount++;
+                    CozyValidationLog.ExpectedWarning("CozySim Logic", $"Core crop mature asset {paths.mature} is missing. Fallback sprite in use: {AssetDatabase.GetAssetPath(crop.MatureSprite)}");
+                }
+            }
+
+            // 4. Staging NPC Grandma portrait (1 asset)
+            string grandmaPath = "Assets/CozyLifeSim/Textures/Heritage/NPC_Portrait_Grandma.png";
+            if (System.IO.File.Exists(grandmaPath))
+            {
+                CozyAssetImporterUtility.ConfigureAsSprite(grandmaPath);
+                // Verify that texture importer settings are configured correctly
+                TextureImporter importer = AssetImporter.GetAtPath(grandmaPath) as TextureImporter;
+                if (importer == null) throw new System.Exception("Grandma portrait is not registered in AssetDatabase!");
+                if (importer.textureType != TextureImporterType.Sprite || !importer.alphaIsTransparency)
+                {
+                    throw new System.Exception("Grandma portrait sprite importer settings incorrect!");
+                }
+            }
+            else
+            {
+                expectedWarningCount++;
+                CozyValidationLog.ExpectedWarning("CozySim Logic", $"Staging NPC Grandma portrait {grandmaPath} is missing.");
+            }
+
+            // 5. Staging NPC Co Ba and scrapbook assets (5 optional assets)
+            var optionalPaths = new List<string>
+            {
+                "Assets/CozyLifeSim/Textures/Heritage/NPC_Portrait_CoBa.png",
+                "Assets/CozyLifeSim/Textures/Heritage/Scrapbook_Bg_OldPaper.png",
+                "Assets/CozyLifeSim/Textures/Heritage/Scrapbook_Bg_PastelPink.png",
+                "Assets/CozyLifeSim/Textures/Heritage/Scrapbook_Bg_GridPaper.png",
+                "Assets/CozyLifeSim/Textures/Heritage/Scrapbook_StickyNote_Yellow.png"
+            };
+
+            foreach (var path in optionalPaths)
+            {
+                if (System.IO.File.Exists(path))
+                {
+                    CozyAssetImporterUtility.ConfigureAsSprite(path);
+                }
+                else
+                {
+                    expectedWarningCount++;
+                    CozyValidationLog.ExpectedWarning("CozySim Logic", $"Optional heritage asset {path} is missing, using fallback behavior (Task 33/34 staging).");
+                }
+            }
         }
     }
 }

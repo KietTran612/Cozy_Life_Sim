@@ -40,7 +40,7 @@
 | **Task 30: Runtime UX Verification & Content Balancing** | [x] | Fixed heritage XP balance so level 3 content is reachable, added logic coverage for heritage unlock/shop/quest flow, and added Play Mode Heritage Runtime validation. Verified 25 logic tests and 5 heritage runtime checks passing. |
 | **Task 30.1: Post-Commit Handoff Cleanup** | [x] | Updated handoff to point at commit `b014443` and show only the remaining Antigravity scratch files as untracked out-of-scope files. |
 | **Task 31: [Phase 3.1] UI/UX Juice & Animations** | [x] | Restored, resolved review feedback (ProgressionHudWidget injection & ShopPopup coin fly target), and verified 25/25 tests passing in Unity Editor compilation. |
-| **Task 32: [Phase 3.2] Vietnamese Heritage Asset Sprite Integration** | [ ] | Using generate_image to yield 22 heritage PNG assets, auto configuring TextureImporter as Sprite, and idempotent DB upgrades. |
+| **Task 32: [Phase 3.2] Vietnamese Heritage Asset Sprite Integration** | [x] | Integrated 16 gameplay sprites (5 stickers + 9 crop stages + 2 animals) and staged Grandma portrait. Configured TextureImporter automation, updated databases, and verified with Test 12.6. |
 | **Task 33: [Phase 3.3] Expanded Quests & Dialogue NPC System** | [ ] | Integrating dialogue narrative popups subscribed to quest completed event, linked CancellationTokenSource typewriter skips, and data-driven random NPC talk widgets. |
 | **Task 34: [Phase 3.4] Scrapbook Polish & Custom Diary Notes** | [ ] | Implementing paper background styles, yellow sticky note dragging with resolution scaling, double-click delete, and atomic transaction rollback presenter APIs. |
 

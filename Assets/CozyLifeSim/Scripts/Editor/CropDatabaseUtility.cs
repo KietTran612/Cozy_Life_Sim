@@ -145,6 +145,68 @@ namespace CozyLifeSim.Editor
                 addedAny = true;
             }
 
+            // Idempotent Heritage Upgrade for Crops (IDs 2 to 4)
+            var cropHeritagePaths = new Dictionary<int, (string seed, string sprout, string mature)>
+            {
+                {
+                    2, (
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Sugarcane_Seed.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Sugarcane_Sprout.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Sugarcane_Mature.png"
+                    )
+                },
+                {
+                    3, (
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Rice_Seed.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Rice_Sprout.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Rice_Mature.png"
+                    )
+                },
+                {
+                    4, (
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Lotus_Seed.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Lotus_Sprout.png",
+                        "Assets/CozyLifeSim/Textures/Heritage/Crop_Lotus_Mature.png"
+                    )
+                }
+            };
+
+            foreach (var pair in cropHeritagePaths)
+            {
+                int cropId = pair.Key;
+                var paths = pair.Value;
+                var crop = database.Crops.Find(x => x != null && x.CropId == cropId);
+                if (crop != null)
+                {
+                    // 1. Seed
+                    if (File.Exists(paths.seed))
+                    {
+                        CozyAssetImporterUtility.ConfigureAsSprite(paths.seed);
+                        Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(paths.seed);
+                        if (sprite != null && crop.SeedSprite != sprite) { crop.SeedSprite = sprite; addedAny = true; }
+                    }
+                    // 2. Sprout
+                    if (File.Exists(paths.sprout))
+                    {
+                        CozyAssetImporterUtility.ConfigureAsSprite(paths.sprout);
+                        Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(paths.sprout);
+                        if (sprite != null && crop.SproutSprite != sprite) { crop.SproutSprite = sprite; addedAny = true; }
+                    }
+                    // 3. Mature & Harvest
+                    if (File.Exists(paths.mature))
+                    {
+                        CozyAssetImporterUtility.ConfigureAsSprite(paths.mature);
+                        Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(paths.mature);
+                        if (sprite != null && (crop.MatureSprite != sprite || crop.HarvestSprite != sprite))
+                        {
+                            crop.MatureSprite = sprite;
+                            crop.HarvestSprite = sprite;
+                            addedAny = true;
+                        }
+                    }
+                }
+            }
+
             // Safety guard: if templates exist but their Sprites are null (e.g. package assets missing on this machine),
             // auto-repair them using fallback sprites to ensure they can render and participate in validation.
             foreach (var crop in database.Crops)

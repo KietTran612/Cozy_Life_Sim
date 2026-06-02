@@ -103,6 +103,36 @@ namespace CozyLifeSim.Editor
                 addedAny = true;
             }
 
+            // Idempotent Heritage Upgrade for Animals (IDs 2 and 3)
+            var animalHeritagePaths = new Dictionary<int, string>
+            {
+                { 2, "Assets/CozyLifeSim/Textures/Heritage/Animal_CalicoCat.png" },
+                { 3, "Assets/CozyLifeSim/Textures/Heritage/Animal_WaterBuffalo.png" }
+            };
+
+            foreach (var pair in animalHeritagePaths)
+            {
+                string filePath = pair.Value;
+                int animalId = pair.Key;
+                if (File.Exists(filePath))
+                {
+                    CozyAssetImporterUtility.ConfigureAsSprite(filePath);
+                    Sprite realSprite = AssetDatabase.LoadAssetAtPath<Sprite>(filePath);
+                    if (realSprite != null)
+                    {
+                        var animal = database.Animals.Find(x => x != null && x.AnimalId == animalId);
+                        if (animal != null)
+                        {
+                            if (animal.Sprite != realSprite)
+                            {
+                                animal.Sprite = realSprite;
+                                addedAny = true;
+                            }
+                        }
+                    }
+                }
+            }
+
             // Safety guard: if templates exist but their Sprites are null (e.g. package assets missing on this machine),
             // auto-repair them using fallback sprites to ensure they can render and participate in validation.
             foreach (var animal in database.Animals)

@@ -282,6 +282,17 @@ namespace CozyLifeSim.UI
                     {
                         canBuy = false;
                     }
+
+                    string reason = string.Empty;
+                    if (playerLevel < crop.RequiredLevel)
+                    {
+                        reason = $"Requires Level {crop.RequiredLevel}";
+                    }
+                    else if (_inventoryService == null || _inventoryService.Coins < crop.BuyPrice)
+                    {
+                        reason = $"Need {crop.BuyPrice} Coins";
+                    }
+
                     int cropId = crop.CropId;
 
                     widget.Setup(
@@ -290,6 +301,7 @@ namespace CozyLifeSim.UI
                         crop.BuyPrice,
                         "Buy",
                         canBuy,
+                        reason,
                         () => {
                             if (_presenter != null && _presenter.TryBuySeed(cropId))
                             {
@@ -319,6 +331,16 @@ namespace CozyLifeSim.UI
                         canBuy = false;
                     }
 
+                    string reason = string.Empty;
+                    if (playerLevel < sticker.RequiredLevel)
+                    {
+                        reason = $"Requires Level {sticker.RequiredLevel}";
+                    }
+                    else if (_inventoryService == null || _inventoryService.Coins < sticker.BuyPrice)
+                    {
+                        reason = $"Need {sticker.BuyPrice} Coins";
+                    }
+
                     string btnLabel = ownedCount > 0 ? $"Buy (x{ownedCount})" : "Buy";
                     int stickerId = sticker.StickerId;
 
@@ -328,6 +350,7 @@ namespace CozyLifeSim.UI
                         sticker.BuyPrice,
                         btnLabel,
                         canBuy,
+                        reason,
                         () => {
                             if (_presenter != null && _presenter.TryBuySticker(stickerId))
                             {
@@ -350,6 +373,10 @@ namespace CozyLifeSim.UI
                     widget.gameObject.SetActive(true);
 
                     bool canSell = _inventoryService != null && _inventoryService.Crops > 0;
+                    string reason = _inventoryService == null || _inventoryService.Crops <= 0
+                        ? "No crops to sell"
+                        : string.Empty;
+
                     int cropId = crop.CropId;
 
                     widget.Setup(
@@ -358,6 +385,7 @@ namespace CozyLifeSim.UI
                         crop.SellPrice,
                         $"Sell ({(_inventoryService != null ? _inventoryService.Crops : 0)})",
                         canSell,
+                        reason,
                         () => {
                             if (_presenter != null && _presenter.TrySellCrop(cropId))
                             {

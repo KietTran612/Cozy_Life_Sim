@@ -5,7 +5,8 @@
         "CozyLifeSim.Core",
         "CozyLifeSim.UI",
         "Unity.TextMeshPro",
-        "VContainer"
+        "VContainer",
+        "UniTask"
     ],
     "includePlatforms": [
         "Editor"

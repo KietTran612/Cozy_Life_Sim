@@ -21,7 +21,6 @@ namespace CozyLifeSim.Editor
             Debug.Log("<color=cyan>[CozySim TestRunner]</color> Starting core logic verification tests...");
 
             // Cleanup stale test game objects from previous runs if any
-            // Cleanup stale test game objects from previous runs if any
             foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
             {
                 if (go != null && (
@@ -29,7 +28,9 @@ namespace CozyLifeSim.Editor
                     go.name == "TempDialoguePopupTest155" ||
                     go.name == "TempNpcTest" ||
                     go.name == "MockEventSystem" ||
-                    go.name == "DummyUIObject"))
+                    go.name == "DummyUIObject" ||
+                    go.name == "TempShopItemWidgetTest" ||
+                    go.name == "TempFeedbackToastTest"))
                 {
                     Object.DestroyImmediate(go);
                 }
@@ -1392,6 +1393,152 @@ namespace CozyLifeSim.Editor
                     if (mockEventSystemGo != null) Object.DestroyImmediate(mockEventSystemGo);
                     if (test155DialogGo != null) Object.DestroyImmediate(test155DialogGo);
                     if (npcGo != null) Object.DestroyImmediate(npcGo);
+                }
+
+                // Test 15.6: ShopItemWidget's disabled states logic-style UI test
+                GameObject shopItemWidgetGo = null;
+                try
+                {
+                    shopItemWidgetGo = new GameObject("TempShopItemWidgetTest");
+                    var widget = shopItemWidgetGo.AddComponent<ShopItemWidget>();
+
+                    var itemNameText = new GameObject("ItemNameText").AddComponent<TextMeshProUGUI>();
+                    itemNameText.transform.SetParent(shopItemWidgetGo.transform);
+
+                    var priceText = new GameObject("PriceText").AddComponent<TextMeshProUGUI>();
+                    priceText.transform.SetParent(shopItemWidgetGo.transform);
+
+                    var actionButton = new GameObject("ActionButton").AddComponent<UnityEngine.UI.Button>();
+                    actionButton.transform.SetParent(shopItemWidgetGo.transform);
+
+                    var actionButtonText = new GameObject("ActionButtonText").AddComponent<TextMeshProUGUI>();
+                    actionButtonText.transform.SetParent(shopItemWidgetGo.transform);
+
+                    var disabledReasonText = new GameObject("DisabledReasonText").AddComponent<TextMeshProUGUI>();
+                    disabledReasonText.transform.SetParent(shopItemWidgetGo.transform);
+
+                    var itemIcon = new GameObject("ItemIcon").AddComponent<UnityEngine.UI.Image>();
+                    itemIcon.transform.SetParent(shopItemWidgetGo.transform);
+
+                    var typeWidget = typeof(ShopItemWidget);
+                    typeWidget.GetField("_itemNameText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(widget, itemNameText);
+                    typeWidget.GetField("_priceText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(widget, priceText);
+                    typeWidget.GetField("_actionButton", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(widget, actionButton);
+                    typeWidget.GetField("_actionButtonText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(widget, actionButtonText);
+                    typeWidget.GetField("_disabledReasonText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(widget, disabledReasonText);
+                    typeWidget.GetField("_itemIcon", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(widget, itemIcon);
+
+                    // Call Start via reflection to register button listener
+                    var startMethod = typeWidget.GetMethod("Start", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (startMethod != null) startMethod.Invoke(widget, null);
+
+                    int callbackCount = 0;
+                    System.Action callback = () => callbackCount++;
+
+                    // 1. Blocked setup
+                    widget.Setup("Test Item", null, 100, "Buy", false, "Need 999 Coins", callback);
+                    if (disabledReasonText.text != "Need 999 Coins")
+                    {
+                        throw new System.Exception($"Disabled reason text mismatch! Expected 'Need 999 Coins', got: '{disabledReasonText.text}'");
+                    }
+                    if (!disabledReasonText.gameObject.activeSelf)
+                    {
+                        throw new System.Exception("Disabled reason GameObject should be active when blocked and reason is non-empty");
+                    }
+                    if (actionButton.interactable)
+                    {
+                        throw new System.Exception("Action button should be non-interactable when blocked");
+                    }
+
+                    // 2. Interactable setup
+                    widget.Setup("Test Item", null, 100, "Buy", true, "", callback);
+                    if (disabledReasonText.gameObject.activeSelf)
+                    {
+                        throw new System.Exception("Disabled reason GameObject should be inactive when interactable");
+                    }
+                    if (!actionButton.interactable)
+                    {
+                        throw new System.Exception("Action button should be interactable when not blocked");
+                    }
+
+                    // Click action
+                    actionButton.onClick.Invoke();
+                    if (callbackCount != 1)
+                    {
+                        throw new System.Exception($"Callback should fire through action button click. Expected 1, got {callbackCount}");
+                    }
+
+                    passCount++;
+                    CozyValidationLog.Pass("CozySim Logic", "ShopItemWidget setup, disabled states, and button callback verified successfully");
+                }
+                finally
+                {
+                    if (shopItemWidgetGo != null) Object.DestroyImmediate(shopItemWidgetGo);
+                }
+
+                // Test 15.7: CozyFeedbackToast's Show method logic test
+                GameObject toastGo = null;
+                try
+                {
+                    toastGo = new GameObject("TempFeedbackToastTest");
+                    var toast = toastGo.AddComponent<CozyFeedbackToast>();
+
+                    var canvasGroup = toastGo.AddComponent<CanvasGroup>();
+                    var contentPanel = new GameObject("ContentPanel", typeof(RectTransform));
+                    contentPanel.transform.SetParent(toastGo.transform);
+                    var messageText = new GameObject("MessageText").AddComponent<TextMeshProUGUI>();
+                    messageText.transform.SetParent(contentPanel.transform);
+
+                    var typeToast = typeof(CozyFeedbackToast);
+                    typeToast.GetField("_canvasGroup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(toast, canvasGroup);
+                    typeToast.GetField("_contentPanel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(toast, contentPanel.GetComponent<RectTransform>());
+                    typeToast.GetField("_messageText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(toast, messageText);
+
+                    // Call Awake via reflection
+                    var awakeMethod = typeToast.GetMethod("Awake", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (awakeMethod != null) awakeMethod.Invoke(toast, null);
+
+                    // Initially contentPanel is inactive, CanvasGroup values are set
+                    if (contentPanel.activeSelf)
+                    {
+                        throw new System.Exception("Content panel should start inactive");
+                    }
+                    if (canvasGroup.alpha != 0f || canvasGroup.blocksRaycasts || canvasGroup.interactable)
+                    {
+                        throw new System.Exception("CanvasGroup alpha should be 0 and interaction disabled on Awake");
+                    }
+
+                    // Show with empty message should not activate
+                    toast.Show("");
+                    if (contentPanel.activeSelf)
+                    {
+                        throw new System.Exception("Content panel should not activate for empty message");
+                    }
+
+                    // Show with actual message should activate
+                    toast.Show(" Hello World ");
+                    if (!contentPanel.activeSelf)
+                    {
+                        throw new System.Exception("Content panel should activate for non-empty message");
+                    }
+                    if (messageText.text != "Hello World")
+                    {
+                        throw new System.Exception($"Message text mismatch! Expected 'Hello World', got: '{messageText.text}'");
+                    }
+
+                    // Show second message should replace the first message
+                    toast.Show("Second Message");
+                    if (messageText.text != "Second Message")
+                    {
+                        throw new System.Exception($"Message text should be replaced. Expected 'Second Message', got: '{messageText.text}'");
+                    }
+
+                    passCount++;
+                    CozyValidationLog.Pass("CozySim Logic", "CozyFeedbackToast Show behavior verified successfully");
+                }
+                finally
+                {
+                    if (toastGo != null) Object.DestroyImmediate(toastGo);
                 }
 
                 if (questDb != null)

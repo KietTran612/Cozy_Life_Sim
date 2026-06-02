@@ -48,6 +48,7 @@ namespace CozyLifeSim.Editor
             ValidateAnimalLoop(errors, passes);
             ValidateStickerLoop(errors, warnings, passes);
             ValidatePopupAndNavigationDocks(errors, passes);
+            ValidateScrapbookAndDialogues(errors, passes);
 
             PrintResults(passes, warnings, errors);
         }
@@ -109,6 +110,41 @@ namespace CozyLifeSim.Editor
                 else
                 {
                     passes.Add("GameLifetimeScope default style config is assigned.");
+                }
+
+                // Check _feedbackToast
+                SerializedProperty feedbackToastProp = so.FindProperty("_feedbackToast");
+                if (feedbackToastProp == null || feedbackToastProp.objectReferenceValue == null)
+                {
+                    errors.Add("GameLifetimeScope._feedbackToast is not assigned.");
+                }
+                else
+                {
+                    passes.Add("GameLifetimeScope._feedbackToast is assigned.");
+                }
+            }
+
+            CozyFeedbackToast toast = FindSceneComponent<CozyFeedbackToast>("FeedbackToast");
+            if (toast == null)
+            {
+                errors.Add("FeedbackToast object with CozyFeedbackToast component is missing from scene.");
+            }
+            else
+            {
+                passes.Add("FeedbackToast exists in scene.");
+                SerializedObject soToast = new SerializedObject(toast);
+                ValidateObjectReference(soToast, "_canvasGroup", "CozyFeedbackToast._canvasGroup", errors, passes);
+                ValidateObjectReference(soToast, "_contentPanel", "CozyFeedbackToast._contentPanel", errors, passes);
+                ValidateObjectReference(soToast, "_messageText", "CozyFeedbackToast._messageText", errors, passes);
+
+                CanvasGroup cg = GetReference<CanvasGroup>(soToast, "_canvasGroup");
+                if (cg != null && cg.blocksRaycasts)
+                {
+                    errors.Add("CozyFeedbackToast CanvasGroup.blocksRaycasts should be false to prevent blocking clicks.");
+                }
+                else if (cg != null)
+                {
+                    passes.Add("CozyFeedbackToast CanvasGroup blocksRaycasts is false.");
                 }
             }
 
@@ -696,13 +732,145 @@ namespace CozyLifeSim.Editor
         private static void PrintManualChecklist()
         {
             Debug.Log(
-                "<color=cyan>[Manual Gameplay Loop Checklist]</color>\n" +
-                "1. Enter Play Mode in Assets/CozyLifeSim/Scenes/Main.unity.\n" +
-                "2. Confirm HUD starts from saved/default Coins, Seeds, and Crops values.\n" +
-                "3. Click Plant Seed, then Water. Confirm watering can animates and crop stage/timer advances.\n" +
-                "4. Wait for maturity, click Harvest, and confirm Coins/Crops update in HUD and PlayerPrefs persists.\n" +
-                "5. Click Pet Chicken. Confirm Coins reward updates and a heart floats from Spawn_Root.\n" +
-                "6. Drag Bunny and Bear stickers onto StickerBook pages, flip pages, exit Play Mode, re-enter, and confirm placements restore.");
+                "<color=cyan>[Runtime Playtest Checklist]</color>\n" +
+                "1. Start Play Mode from Assets/CozyLifeSim/Scenes/Main.unity.\n" +
+                "2. Confirm HUD shows coins, seeds, crops, and level.\n" +
+                "3. Open shop and verify locked/unaffordable items explain why.\n" +
+                "4. Buy one seed and one sticker when affordable.\n" +
+                "5. Try a blocked farm action and confirm the feedback toast appears.\n" +
+                "6. Plant, water through all stages, harvest, and sell a crop.\n" +
+                "7. Complete at least one quest and confirm dialogue appears.\n" +
+                "8. Open scrapbook, place a sticker, cycle page style, add a diary note, drag it, and delete it.\n" +
+                "9. Stop and restart Play Mode; confirm persisted state is coherent.\n" +
+                "10. Run scene validation after playtest; confirm no scene wiring errors.");
+        }
+
+        private static void ValidateScrapbookAndDialogues(List<string> errors, List<string> passes)
+        {
+            StickerBook stickerBook = FindSceneComponent<StickerBook>("StickerBook_Panel");
+            if (stickerBook != null)
+            {
+                SerializedObject soBook = new SerializedObject(stickerBook);
+                ValidateObjectReference(soBook, "_changeStyleButton", "StickerBook style change button", errors, passes);
+                ValidateObjectReference(soBook, "_addDiaryNoteButton", "StickerBook add note button", errors, passes);
+                ValidateObjectReference(soBook, "_diaryNotePrefabTemplate", "StickerBook diary note template", errors, passes);
+                ValidateObjectReference(soBook, "_diaryInputPopup", "StickerBook diary input popup", errors, passes);
+
+                SerializedProperty pagesProp = soBook.FindProperty("_pages");
+                if (pagesProp != null)
+                {
+                    for (int i = 0; i < pagesProp.arraySize; i++)
+                    {
+                        var pageVal = pagesProp.GetArrayElementAtIndex(i).objectReferenceValue as StickerBookPage;
+                        if (pageVal == null)
+                        {
+                            errors.Add($"StickerBookPage reference at index {i} is null.");
+                        }
+                        else
+                        {
+                            passes.Add($"StickerBookPage at index {i} is assigned.");
+                            SerializedObject soPage = new SerializedObject(pageVal);
+                            ValidateObjectReference(soPage, "_diaryNotePrefabTemplate", $"StickerBookPage at index {i} diary note template", errors, passes);
+                            ValidateObjectReference(soPage, "_backgroundImage", $"StickerBookPage at index {i} page background image", errors, passes);
+                        }
+                    }
+                }
+            }
+
+            CozyDialoguePopup dialoguePopup = FindSceneComponent<CozyDialoguePopup>("Dialogue_Popup");
+            if (dialoguePopup == null)
+            {
+                errors.Add("CozyDialoguePopup is missing from the scene.");
+            }
+            else
+            {
+                passes.Add("CozyDialoguePopup exists in scene.");
+                if (!dialoguePopup.gameObject.activeSelf)
+                {
+                    errors.Add("CozyDialoguePopup parent GameObject must start active (dialogue system dynamic visibility is handled on Content_Panel).");
+                }
+                else
+                {
+                    passes.Add("CozyDialoguePopup parent GameObject is active.");
+                }
+
+                SerializedObject soDiag = new SerializedObject(dialoguePopup);
+                ValidateObjectReference(soDiag, "_contentPanel", "CozyDialoguePopup._contentPanel", errors, passes);
+                ValidateObjectReference(soDiag, "_portrait", "CozyDialoguePopup._portrait", errors, passes);
+                ValidateObjectReference(soDiag, "_nameText", "CozyDialoguePopup._nameText", errors, passes);
+                ValidateObjectReference(soDiag, "_dialogueText", "CozyDialoguePopup._dialogueText", errors, passes);
+                ValidateObjectReference(soDiag, "_nextButton", "CozyDialoguePopup._nextButton", errors, passes);
+
+                RectTransform contentPanel = GetReference<RectTransform>(soDiag, "_contentPanel");
+                if (contentPanel != null && contentPanel.gameObject.activeSelf)
+                {
+                    errors.Add("CozyDialoguePopup Content_Panel should start inactive in the scene.");
+                }
+                else if (contentPanel != null)
+                {
+                    passes.Add("CozyDialoguePopup Content_Panel starts inactive.");
+                }
+            }
+
+            List<CozyNPCWidget> npcWidgets = new List<CozyNPCWidget>();
+            foreach (var mb in FindSceneObjects<MonoBehaviour>())
+            {
+                if (mb is CozyNPCWidget widget)
+                {
+                    npcWidgets.Add(widget);
+                }
+            }
+
+            if (npcWidgets.Count == 0)
+            {
+                errors.Add("No CozyNPCWidget click widgets found in the scene.");
+            }
+            else
+            {
+                passes.Add($"Found {npcWidgets.Count} CozyNPCWidget click widgets.");
+                foreach (var npc in npcWidgets)
+                {
+                    SerializedObject soNpc = new SerializedObject(npc);
+                    SerializedProperty dataProp = soNpc.FindProperty("_npcData");
+                    if (dataProp == null)
+                    {
+                        errors.Add($"CozyNPCWidget on '{npc.gameObject.name}' is missing '_npcData' field.");
+                        continue;
+                    }
+
+                    string npcName = dataProp.FindPropertyRelative("NpcName")?.stringValue;
+                    if (string.IsNullOrWhiteSpace(npcName))
+                    {
+                        errors.Add($"CozyNPCWidget on '{npc.gameObject.name}' has empty NpcName.");
+                    }
+                    else
+                    {
+                        passes.Add($"CozyNPCWidget '{npcName}' has valid name.");
+                    }
+
+                    SerializedProperty dialoguesProp = dataProp.FindPropertyRelative("Dialogues");
+                    if (dialoguesProp == null || dialoguesProp.arraySize == 0)
+                    {
+                        errors.Add($"CozyNPCWidget '{npcName}' on '{npc.gameObject.name}' has 0 dialogues.");
+                    }
+                    else
+                    {
+                        passes.Add($"CozyNPCWidget '{npcName}' has {dialoguesProp.arraySize} dialogues.");
+                        for (int i = 0; i < dialoguesProp.arraySize; i++)
+                        {
+                            string line = dialoguesProp.GetArrayElementAtIndex(i).FindPropertyRelative("Line")?.stringValue;
+                            if (string.IsNullOrWhiteSpace(line))
+                            {
+                                errors.Add($"CozyNPCWidget '{npcName}' has empty dialogue line at index {i}.");
+                            }
+                            else
+                            {
+                                passes.Add($"CozyNPCWidget '{npcName}' dialogue line {i} is non-empty.");
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

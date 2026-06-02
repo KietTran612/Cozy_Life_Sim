@@ -4,12 +4,14 @@ using System.Reflection;
 using CozyLifeSim.Core;
 using CozyLifeSim.UI;
 using CozyLifeSim.UI.Services;
+using CozyLifeSim.UI.Presenters;
 using DG.Tweening;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
 using VContainer.Unity;
+using Cysharp.Threading.Tasks;
 
 namespace CozyLifeSim.Editor
 {
@@ -45,6 +47,7 @@ namespace CozyLifeSim.Editor
         private static int _seedBuyPrice;
         private static int _cropSellPrice;
         private static int _premiumStickerBuyPrice;
+        private static string _newDiaryNoteId;
 
         private static readonly Step[] Steps =
         {
@@ -63,6 +66,11 @@ namespace CozyLifeSim.Editor
             new Step("Verify unlocked sticker tray", VerifyUnlockedStickerTray),
             new Step("Pet chicken", PetChicken),
             new Step("Place sticker", PlaceSticker),
+            new Step("Open scrapbook and change page style", OpenScrapbookAndChangePageStyle),
+            new Step("Create diary note", CreateDiaryNote),
+            new Step("Move diary note", MoveDiaryNote),
+            new Step("Remove diary note", RemoveDiaryNote),
+            new Step("Complete quest dialogue trigger", CompleteQuestDialogueTrigger),
             new Step("Verify PlayerPrefs persistence with fresh services", VerifyFreshServicePersistence),
             new Step("Restore test save", RestoreTestSave)
         };
@@ -352,6 +360,8 @@ namespace CozyLifeSim.Editor
             activeSave.StickerOwned.Add(new StickerInventory(1, 99));
             activeSave.StickerOwned.Add(new StickerInventory(2, 99));
             activeSave.HasMigratedStickerOwned = true;
+            activeSave.PlacedDiaryNotes.Clear();
+            activeSave.PageStyles.Clear();
             _saveService.Save();
 
             // Re-initialize the in-memory services to reflect the cleared save data and rehydrate events/UI
@@ -678,6 +688,203 @@ namespace CozyLifeSim.Editor
             return true;
         }
 
+        private static bool OpenScrapbookAndChangePageStyle()
+        {
+            if (HasErrors()) return true;
+
+            var scope = LifetimeScope.Find<GameLifetimeScope>();
+            var presenter = scope.Container.Resolve<StickerBookPresenter>();
+            if (presenter == null)
+            {
+                Fail("StickerBookPresenter could not be resolved.");
+                return true;
+            }
+
+            var stickerBook = FindSceneComponent<StickerBook>("StickerBook_Panel");
+            if (stickerBook == null)
+            {
+                Fail("StickerBook_Panel was not found.");
+                return true;
+            }
+
+            // Find first page
+            var pagesField = typeof(StickerBook).GetField("_pages", BindingFlags.Instance | BindingFlags.NonPublic);
+            var pages = pagesField?.GetValue(stickerBook) as List<StickerBookPage>;
+            if (pages == null || pages.Count == 0 || pages[0] == null)
+            {
+                Fail("No StickerBookPage is assigned to StickerBook.");
+                return true;
+            }
+
+            int styleCount = pages[0].StyleCount;
+            if (styleCount <= 0)
+            {
+                Fail("StickerBookPage StyleCount is 0 or negative.");
+                return true;
+            }
+
+            // Set style
+            if (!presenter.TrySetPageStyle(0, 1, styleCount))
+            {
+                Fail("TrySetPageStyle(0, 1) failed.");
+                return true;
+            }
+
+            if (presenter.GetPageStyle(0) != 1)
+            {
+                Fail("Page style in memory was not updated to 1.");
+            }
+
+            return true;
+        }
+
+        private static bool CreateDiaryNote()
+        {
+            if (HasErrors()) return true;
+
+            var scope = LifetimeScope.Find<GameLifetimeScope>();
+            var presenter = scope.Container.Resolve<StickerBookPresenter>();
+            if (presenter == null)
+            {
+                Fail("StickerBookPresenter could not be resolved.");
+                return true;
+            }
+
+            _newDiaryNoteId = presenter.TryAddDiaryNote("Playtest note", 12f, -18f, 0);
+            if (string.IsNullOrEmpty(_newDiaryNoteId))
+            {
+                Fail("TryAddDiaryNote failed to return a valid note id.");
+                return true;
+            }
+
+            var note = System.Linq.Enumerable.FirstOrDefault(_memoryService.PlacedDiaryNotes, x => x.NoteId == _newDiaryNoteId);
+            if (string.IsNullOrEmpty(note.NoteId))
+            {
+                Fail("Created diary note was not found in memory service.");
+                return true;
+            }
+
+            if (note.Text != "Playtest note" || note.PageIndex != 0)
+            {
+                Fail($"Diary note text or page mismatch. Text: {note.Text}, PageIndex: {note.PageIndex}");
+            }
+
+            return true;
+        }
+
+        private static bool MoveDiaryNote()
+        {
+            if (HasErrors()) return true;
+            if (string.IsNullOrEmpty(_newDiaryNoteId))
+            {
+                Fail("No active diary note to move.");
+                return true;
+            }
+
+            var scope = LifetimeScope.Find<GameLifetimeScope>();
+            var presenter = scope.Container.Resolve<StickerBookPresenter>();
+            if (presenter == null)
+            {
+                Fail("StickerBookPresenter could not be resolved.");
+                return true;
+            }
+
+            if (!presenter.TryUpdateDiaryNotePosition(_newDiaryNoteId, 24f, -30f))
+            {
+                Fail("TryUpdateDiaryNotePosition failed.");
+                return true;
+            }
+
+            var note = System.Linq.Enumerable.FirstOrDefault(_memoryService.PlacedDiaryNotes, x => x.NoteId == _newDiaryNoteId);
+            if (string.IsNullOrEmpty(note.NoteId))
+            {
+                Fail("Diary note not found in memory after move.");
+                return true;
+            }
+
+            if (Mathf.Abs(note.PositionX - 24f) > 0.01f || Mathf.Abs(note.PositionY - (-30f)) > 0.01f)
+            {
+                Fail($"Diary note position was not updated in memory. X: {note.PositionX}, Y: {note.PositionY}");
+            }
+
+            return true;
+        }
+
+        private static bool RemoveDiaryNote()
+        {
+            if (HasErrors()) return true;
+            if (string.IsNullOrEmpty(_newDiaryNoteId))
+            {
+                Fail("No active diary note to remove.");
+                return true;
+            }
+
+            var scope = LifetimeScope.Find<GameLifetimeScope>();
+            var presenter = scope.Container.Resolve<StickerBookPresenter>();
+            if (presenter == null)
+            {
+                Fail("StickerBookPresenter could not be resolved.");
+                return true;
+            }
+
+            if (!presenter.TryRemoveDiaryNote(_newDiaryNoteId))
+            {
+                Fail("TryRemoveDiaryNote failed.");
+                return true;
+            }
+
+            var note = System.Linq.Enumerable.FirstOrDefault(_memoryService.PlacedDiaryNotes, x => x.NoteId == _newDiaryNoteId);
+            if (!string.IsNullOrEmpty(note.NoteId))
+            {
+                Fail("Diary note still exists in memory after removal.");
+            }
+
+            _newDiaryNoteId = null;
+            return true;
+        }
+
+        private static bool CompleteQuestDialogueTrigger()
+        {
+            if (HasErrors()) return true;
+
+            var popup = FindSceneComponent<CozyDialoguePopup>("Dialogue_Popup");
+            if (popup == null)
+            {
+                Fail("Dialogue_Popup was not found in the scene.");
+                return true;
+            }
+
+            var popupType = typeof(CozyDialoguePopup);
+            var contentPanelField = popupType.GetField("_contentPanel", BindingFlags.Instance | BindingFlags.NonPublic);
+            var contentPanel = contentPanelField?.GetValue(popup) as RectTransform;
+            if (contentPanel == null)
+            {
+                Fail("CozyDialoguePopup Content_Panel was not found.");
+                return true;
+            }
+
+            // Call ShowDialogue and SkipOrNext
+            popup.ShowDialogue("Ba", "Con lam tot lam.", null).Forget();
+            popup.SkipOrNext();
+
+            var isTypingField = popupType.GetField("_isTyping", BindingFlags.Instance | BindingFlags.NonPublic);
+            bool isTyping = (bool)(isTypingField?.GetValue(popup) ?? false);
+            if (isTyping)
+            {
+                Fail("Dialogue should have finished typewriter animation after SkipOrNext.");
+                return true;
+            }
+
+            // Close the dialogue by clicking next again
+            popup.SkipOrNext();
+            if (contentPanel.gameObject.activeSelf)
+            {
+                Fail("Dialogue content panel should be inactive after closing dialogue popup.");
+            }
+
+            return true;
+        }
+
         private static bool VerifyFreshServicePersistence()
         {
             if (HasErrors()) return true;
@@ -909,6 +1116,24 @@ namespace CozyLifeSim.Editor
             foreach (QuestProgressData quest in source.ActiveQuestProgress)
             {
                 destination.ActiveQuestProgress.Add(quest);
+            }
+
+            destination.PlacedDiaryNotes.Clear();
+            if (source.PlacedDiaryNotes != null)
+            {
+                foreach (var note in source.PlacedDiaryNotes)
+                {
+                    destination.PlacedDiaryNotes.Add(note);
+                }
+            }
+
+            destination.PageStyles.Clear();
+            if (source.PageStyles != null)
+            {
+                foreach (var style in source.PageStyles)
+                {
+                    destination.PageStyles.Add(style);
+                }
             }
         }
 

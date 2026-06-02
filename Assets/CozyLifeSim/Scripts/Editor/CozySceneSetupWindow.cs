@@ -1085,6 +1085,12 @@ namespace CozyLifeSim.Editor
             TextMeshProUGUI itemActionTxt = itemActionBtn.GetComponentInChildren<TextMeshProUGUI>();
             if (!Mathf.Approximately(itemActionTxt.fontSize, 12f)) { itemActionTxt.fontSize = 12f; isSceneDirty = true; }
 
+            TextMeshProUGUI itemDisabledReason = SetupText(shopItemTemplate, "Disabled_Reason", "", "", ref isSceneDirty);
+            if (!Mathf.Approximately(itemDisabledReason.fontSize, 10f)) { itemDisabledReason.fontSize = 10f; isSceneDirty = true; }
+            Color reasonColor = new Color(0.9f, 0.3f, 0.3f, 1f);
+            if (itemDisabledReason.color != reasonColor) { itemDisabledReason.color = reasonColor; isSceneDirty = true; }
+            if (itemDisabledReason.alignment != TextAlignmentOptions.Center) { itemDisabledReason.alignment = TextAlignmentOptions.Center; isSceneDirty = true; }
+
             // Wire ShopItemWidget
             SerializedObject soItem = new SerializedObject(widgetComponent);
             bool itemDirty = false;
@@ -1093,6 +1099,7 @@ namespace CozyLifeSim.Editor
             SafeSetObjectReference(soItem.FindProperty("_priceText"), itemPrice, ref itemDirty);
             SafeSetObjectReference(soItem.FindProperty("_actionButton"), itemActionBtn, ref itemDirty);
             SafeSetObjectReference(soItem.FindProperty("_actionButtonText"), itemActionTxt, ref itemDirty);
+            SafeSetObjectReference(soItem.FindProperty("_disabledReasonText"), itemDisabledReason, ref itemDirty);
             if (itemDirty)
             {
                 soItem.ApplyModifiedProperties();
@@ -1441,6 +1448,113 @@ namespace CozyLifeSim.Editor
                 soScopeUpdateDialogue.ApplyModifiedProperties();
                 isSceneDirty = true;
             }
+
+            // D. Setup Popup_Root under canvas.transform
+            RectTransform popupRoot = SetupPanel(canvas.transform, "Popup_Root", ref isSceneDirty);
+            StretchToFill(popupRoot, ref isSceneDirty);
+
+            // E. Setup Feedback Toast under Popup_Root
+            RectTransform feedbackToastPanel = SetupPanel(popupRoot, "FeedbackToast", ref isSceneDirty);
+            StretchToFill(feedbackToastPanel, ref isSceneDirty);
+
+            if (!feedbackToastPanel.gameObject.activeSelf)
+            {
+                feedbackToastPanel.gameObject.SetActive(true);
+                isSceneDirty = true;
+            }
+
+            CozyFeedbackToast feedbackToast = feedbackToastPanel.gameObject.GetComponent<CozyFeedbackToast>();
+            if (feedbackToast == null)
+            {
+                feedbackToast = feedbackToastPanel.gameObject.AddComponent<CozyFeedbackToast>();
+                isSceneDirty = true;
+            }
+
+            RectTransform ftContentPanel = SetupPanel(feedbackToastPanel, "Content_Panel", ref isSceneDirty);
+            SafeSetAnchor(ftContentPanel, new Vector2(0.5f, 0.18f), new Vector2(0.5f, 0.18f), ref isSceneDirty);
+            SafeSetPivot(ftContentPanel, new Vector2(0.5f, 0.5f), ref isSceneDirty);
+            SafeSetSizeDelta(ftContentPanel, new Vector2(400f, 60f), ref isSceneDirty);
+            SafeSetAnchoredPosition(ftContentPanel, Vector2.zero, ref isSceneDirty);
+
+            Image ftBgImage = ftContentPanel.gameObject.GetComponent<Image>();
+            if (ftBgImage == null)
+            {
+                ftBgImage = ftContentPanel.gameObject.AddComponent<Image>();
+                isSceneDirty = true;
+            }
+            Color toastBgColor = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+            if (ftBgImage.color != toastBgColor)
+            {
+                ftBgImage.color = toastBgColor;
+                isSceneDirty = true;
+            }
+
+            CanvasGroup ftCanvasGroup = ftContentPanel.gameObject.GetComponent<CanvasGroup>();
+            if (ftCanvasGroup == null)
+            {
+                ftCanvasGroup = ftContentPanel.gameObject.AddComponent<CanvasGroup>();
+                isSceneDirty = true;
+            }
+            if (ftCanvasGroup.blocksRaycasts)
+            {
+                ftCanvasGroup.blocksRaycasts = false;
+                isSceneDirty = true;
+            }
+            if (ftCanvasGroup.interactable)
+            {
+                ftCanvasGroup.interactable = false;
+                isSceneDirty = true;
+            }
+
+            TextMeshProUGUI ftText = SetupText(ftContentPanel, "Message_Text", "Toast Message", "", ref isSceneDirty);
+            RectTransform ftTextRect = ftText.GetComponent<RectTransform>();
+            SafeSetAnchor(ftTextRect, Vector2.zero, Vector2.one, ref isSceneDirty);
+            SafeSetSizeDelta(ftTextRect, new Vector2(-20f, -10f), ref isSceneDirty);
+            SafeSetAnchoredPosition(ftTextRect, Vector2.zero, ref isSceneDirty);
+            if (ftText.alignment != TextAlignmentOptions.Center)
+            {
+                ftText.alignment = TextAlignmentOptions.Center;
+                isSceneDirty = true;
+            }
+            if (!Mathf.Approximately(ftText.fontSize, 16f))
+            {
+                ftText.fontSize = 16f;
+                isSceneDirty = true;
+            }
+            if (ftText.color != Color.white)
+            {
+                ftText.color = Color.white;
+                isSceneDirty = true;
+            }
+
+            if (ftContentPanel.gameObject.activeSelf)
+            {
+                ftContentPanel.gameObject.SetActive(false);
+                isSceneDirty = true;
+            }
+
+            // Wire CozyFeedbackToast
+            SerializedObject soToast = new SerializedObject(feedbackToast);
+            bool toastDirty = false;
+            SafeSetObjectReference(soToast.FindProperty("_canvasGroup"), ftCanvasGroup, ref toastDirty);
+            SafeSetObjectReference(soToast.FindProperty("_contentPanel"), ftContentPanel, ref toastDirty);
+            SafeSetObjectReference(soToast.FindProperty("_messageText"), ftText, ref toastDirty);
+            if (toastDirty)
+            {
+                soToast.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
+            // Wire CozyFeedbackToast to GameLifetimeScope
+            SerializedObject soScopeUpdateToast = new SerializedObject(lifetimeScope);
+            bool scopeUpdateToastDirty = false;
+            SafeSetObjectReference(soScopeUpdateToast.FindProperty("_feedbackToast"), feedbackToast, ref scopeUpdateToastDirty);
+            if (scopeUpdateToastDirty)
+            {
+                soScopeUpdateToast.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
 
             // Wire CozySidebar
             CozySidebar sidebar = sidebarPanel.gameObject.GetComponent<CozySidebar>();

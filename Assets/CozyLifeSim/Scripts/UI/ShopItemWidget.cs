@@ -11,6 +11,7 @@ namespace CozyLifeSim.UI
         [SerializeField] private TextMeshProUGUI _priceText;
         [SerializeField] private Button _actionButton;
         [SerializeField] private TextMeshProUGUI _actionButtonText;
+        [SerializeField] private TextMeshProUGUI _disabledReasonText;
 
         private System.Action _onActionCallback;
 
@@ -30,7 +31,14 @@ namespace CozyLifeSim.UI
             }
         }
 
-        public void Setup(string itemName, Sprite icon, int price, string buttonLabel, bool isInteractable, System.Action onAction)
+        public void Setup(
+            string itemName,
+            Sprite icon,
+            int price,
+            string buttonLabel,
+            bool isInteractable,
+            string disabledReason,
+            System.Action onAction)
         {
             if (_itemNameText != null) _itemNameText.text = itemName;
             if (_itemIcon != null)
@@ -41,6 +49,16 @@ namespace CozyLifeSim.UI
             if (_priceText != null) _priceText.text = $"{price} Coins";
             if (_actionButtonText != null) _actionButtonText.text = buttonLabel;
             if (_actionButton != null) _actionButton.interactable = isInteractable;
+
+            if (_disabledReasonText != null)
+            {
+                bool showReason = !isInteractable && !string.IsNullOrWhiteSpace(disabledReason);
+                _disabledReasonText.gameObject.SetActive(showReason);
+                if (showReason)
+                {
+                    _disabledReasonText.text = disabledReason.Trim();
+                }
+            }
 
             _onActionCallback = onAction;
         }

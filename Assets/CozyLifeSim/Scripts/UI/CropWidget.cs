@@ -39,6 +39,7 @@ namespace CozyLifeSim.UI
         private bool _isWatering;
         private FarmPresenter _presenter;
         private CozyJuiceUtility _juiceUtility;
+        private CozyFeedbackToast _feedbackToast;
         private CropDatabase _cropDatabase;
         private CropTemplate _cropTemplate;
         private CozyLifeSim.UI.Style.IStyleService _styleService;
@@ -99,6 +100,11 @@ namespace CozyLifeSim.UI
                 _juiceUtility = FindFirstObjectByType<CozyJuiceUtility>();
             }
 
+            if (_feedbackToast == null)
+            {
+                _feedbackToast = FindFirstObjectByType<CozyFeedbackToast>();
+            }
+
             if (_presenter != null)
             {
                 _presenter.OnCropHarvested += PlayHarvestCoinFly;
@@ -136,20 +142,50 @@ namespace CozyLifeSim.UI
             }
         }
 
+        private void ShowFeedback(string message)
+        {
+            if (_feedbackToast != null)
+            {
+                _feedbackToast.Show(message);
+            }
+        }
+
         private void PlantSeed()
         {
-            if (_state.GrowthStage != -1 || _presenter == null) return;
+            if (_state.GrowthStage != -1)
+            {
+                ShowFeedback("This plot is already growing.");
+                return;
+            }
+            if (_presenter == null)
+            {
+                ShowFeedback("Farm is not ready yet.");
+                return;
+            }
 
             if (_presenter.TryPlantCrop())
             {
                 _state = new CropState(_cropId, 0, GetStageDuration(), false);
                 UpdateVisuals();
             }
+            else
+            {
+                ShowFeedback("You need a seed to plant.");
+            }
         }
 
         private void HarvestCrop()
         {
-            if (_state.GrowthStage < 3 || _presenter == null) return;
+            if (_state.GrowthStage < 3)
+            {
+                ShowFeedback("Keep growing this crop.");
+                return;
+            }
+            if (_presenter == null)
+            {
+                ShowFeedback("Farm is not ready yet.");
+                return;
+            }
 
             _presenter.HarvestCrop();
 
@@ -173,8 +209,23 @@ namespace CozyLifeSim.UI
 
         private void Irrigate()
         {
-            if (_isWatering || _state.IsWatered || _state.GrowthStage == -1 || _state.GrowthStage >= 3)
+            if (_isWatering)
             {
+                return;
+            }
+            if (_state.GrowthStage == -1)
+            {
+                ShowFeedback("Plant a seed first.");
+                return;
+            }
+            if (_state.IsWatered)
+            {
+                ShowFeedback("Already watered.");
+                return;
+            }
+            if (_state.GrowthStage >= 3)
+            {
+                ShowFeedback("Ready to harvest.");
                 return;
             }
 

@@ -38,6 +38,7 @@ namespace CozyLifeSim.UI
         private Tween _cropFeedbackTween;
         private bool _isWatering;
         private FarmPresenter _presenter;
+        private CozyJuiceUtility _juiceUtility;
         private CropDatabase _cropDatabase;
         private CropTemplate _cropTemplate;
         private CozyLifeSim.UI.Style.IStyleService _styleService;
@@ -91,6 +92,16 @@ namespace CozyLifeSim.UI
             if (_harvestButton != null)
             {
                 _harvestButton.onClick.AddListener(HarvestCrop);
+            }
+
+            if (_juiceUtility == null)
+            {
+                _juiceUtility = FindFirstObjectByType<CozyJuiceUtility>();
+            }
+
+            if (_presenter != null)
+            {
+                _presenter.OnCropHarvested += PlayHarvestCoinFly;
             }
 
             _cts = new CancellationTokenSource();
@@ -302,8 +313,21 @@ namespace CozyLifeSim.UI
             }
         }
 
+        private void PlayHarvestCoinFly(int rewardCoinsAmount)
+        {
+            if (_juiceUtility != null && _cropVisual != null)
+            {
+                _juiceUtility.PlayCoinFlyAnimation(_cropVisual.transform.position, rewardCoinsAmount);
+            }
+        }
+
         private void OnDestroy()
         {
+            if (_presenter != null)
+            {
+                _presenter.OnCropHarvested -= PlayHarvestCoinFly;
+            }
+
             _cts?.Cancel();
             _cts?.Dispose();
             _wateringSequence?.Kill();
@@ -326,4 +350,3 @@ namespace CozyLifeSim.UI
         }
     }
 }
-

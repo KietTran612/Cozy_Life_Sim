@@ -3,6 +3,7 @@ using TMPro;
 using VContainer;
 using VContainer.Unity;
 using CozyLifeSim.Core;
+using DG.Tweening;
 
 namespace CozyLifeSim.UI
 {
@@ -14,6 +15,8 @@ namespace CozyLifeSim.UI
 
         private IInventoryService _inventoryService;
         private bool _isSubscribed;
+        private int _displayedCoins = -1;
+        private Tween _coinTween;
 
         [Inject]
         public void Construct(IInventoryService inventoryService)
@@ -28,7 +31,7 @@ namespace CozyLifeSim.UI
             }
 
             _inventoryService = inventoryService;
-            
+
             if (_inventoryService != null)
             {
                 // Subscribe to asset changes
@@ -36,7 +39,7 @@ namespace CozyLifeSim.UI
                 _inventoryService.OnSeedsChanged += UpdateSeeds;
                 _inventoryService.OnCropsChanged += UpdateCrops;
                 _isSubscribed = true;
-                
+
                 // Initial display
                 UpdateCoins(_inventoryService.Coins);
                 UpdateSeeds(_inventoryService.Seeds);
@@ -58,7 +61,19 @@ namespace CozyLifeSim.UI
 
         private void UpdateCoins(int value)
         {
-            if (_coinsText != null) _coinsText.text = $"Coins: {value}";
+            if (_coinsText == null) return;
+            if (_displayedCoins == -1 || !Application.isPlaying)
+            {
+                _displayedCoins = value;
+                _coinsText.text = $"Coins: {value}";
+                return;
+            }
+
+            _coinTween?.Kill();
+            _coinTween = DOTween.To(() => _displayedCoins, x => {
+                _displayedCoins = x;
+                _coinsText.text = $"Coins: {x}";
+            }, value, 0.75f).SetEase(Ease.OutQuad).SetTarget(this);
         }
 
         private void UpdateSeeds(int value)
@@ -80,6 +95,7 @@ namespace CozyLifeSim.UI
                 _inventoryService.OnCropsChanged -= UpdateCrops;
                 _isSubscribed = false;
             }
+            _coinTween?.Kill();
         }
     }
 }

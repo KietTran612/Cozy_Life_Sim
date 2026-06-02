@@ -38,6 +38,7 @@ namespace CozyLifeSim.UI
 
         private readonly List<ShopItemWidget> _spawnedWidgets = new List<ShopItemWidget>();
         private bool _isSubscribed;
+        private CozyJuiceUtility _juiceUtility;
 
         private enum ShopTab { Seeds, Stickers, Crops }
         private ShopTab _currentTab = ShopTab.Seeds;
@@ -88,6 +89,11 @@ namespace CozyLifeSim.UI
         protected override void Start()
         {
             base.Start();
+
+            if (_juiceUtility == null)
+            {
+                _juiceUtility = FindFirstObjectByType<CozyJuiceUtility>();
+            }
 
             if (_itemPrefabTemplate != null)
             {
@@ -190,6 +196,11 @@ namespace CozyLifeSim.UI
         public void PlayCoinFlyAnimation(Vector3 startWorldPos, Vector3 endWorldPos)
         {
             if (!Application.isPlaying) return;
+            if (_juiceUtility != null)
+            {
+                _juiceUtility.PlayCoinFlyAnimation(startWorldPos, endWorldPos, 10);
+                return;
+            }
             int coinCount = 6;
 
             for (int i = 0; i < coinCount; i++)

@@ -73,6 +73,8 @@ namespace CozyLifeSim.UI.Services
             }
         }
 
+        public int GetXPThresholdForLevel(int level) => GetXPThreshold(level);
+
         private int GetXPThreshold(int level)
         {
             return level * 100;

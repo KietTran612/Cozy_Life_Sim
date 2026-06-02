@@ -23,6 +23,7 @@ namespace CozyLifeSim.UI
         private Vector3 _baseScale;
         private bool _isPetting;
         private AnimalPresenter _presenter;
+        private CozyJuiceUtility _juiceUtility;
         private AnimalDatabase _animalDatabase;
         private AnimalTemplate _animalTemplate;
         private CozyLifeSim.UI.Style.IStyleService _styleService;
@@ -49,6 +50,16 @@ namespace CozyLifeSim.UI
 
             Transform animTarget = _animalVisual != null ? _animalVisual.transform : transform;
             _baseScale = animTarget.localScale;
+
+            if (_juiceUtility == null)
+            {
+                _juiceUtility = FindFirstObjectByType<CozyJuiceUtility>();
+            }
+
+            if (_presenter != null)
+            {
+                _presenter.OnPetRewardGiven += PlayPetCoinFly;
+            }
 
             // Apply dynamic sprite or flat fallback from database
             if (_animalVisual != null && _animalTemplate != null)
@@ -185,8 +196,21 @@ namespace CozyLifeSim.UI
                 duration);
         }
 
+        private void PlayPetCoinFly(int rewardCoinsAmount)
+        {
+            if (_juiceUtility != null && _animalVisual != null)
+            {
+                _juiceUtility.PlayCoinFlyAnimation(_animalVisual.transform.position, rewardCoinsAmount);
+            }
+        }
+
         private void OnDestroy()
         {
+            if (_presenter != null)
+            {
+                _presenter.OnPetRewardGiven -= PlayPetCoinFly;
+            }
+
             _breathTween?.Kill();
             _petSequence?.Kill();
 

@@ -9,6 +9,7 @@ namespace CozyLifeSim.Core
         void AddXP(int amount);
         void AddXPNonSaving(int amount);
         void SetProgressionNonSaving(int level, int xp);
+        int GetXPThresholdForLevel(int level);
         event Action<int> OnLevelUp;
         event Action<int> OnXPChanged;
     }

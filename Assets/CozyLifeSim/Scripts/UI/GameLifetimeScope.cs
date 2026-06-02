@@ -15,9 +15,27 @@ namespace CozyLifeSim.UI
         [SerializeField] private CozyLifeSim.UI.Settings.CropDatabase _cropDatabase;
         [SerializeField] private CozyLifeSim.UI.Settings.AnimalDatabase _animalDatabase;
         [SerializeField] private CozyLifeSim.UI.Settings.StickerDatabase _stickerDatabase;
+        [SerializeField] private CozyJuiceUtility _juiceUtility;
 
         protected override void Configure(IContainerBuilder builder)
         {
+            if (_juiceUtility != null)
+            {
+                builder.RegisterComponent(_juiceUtility);
+            }
+            else
+            {
+                var foundUtility = FindFirstObjectByType<CozyJuiceUtility>();
+                if (foundUtility != null)
+                {
+                    builder.RegisterComponent(foundUtility);
+                }
+                else
+                {
+                    Debug.LogWarning("[CozySim] CozyJuiceUtility is missing from the scene!");
+                }
+            }
+
             // Register Style Service as Singleton in Presentation boundary
             builder.Register<IStyleService>(container => new StyleService(_defaultStyleConfig), Lifetime.Singleton);
 

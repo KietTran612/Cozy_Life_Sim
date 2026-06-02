@@ -274,6 +274,86 @@ namespace CozyLifeSim.Editor
                 isSceneDirty = true;
             }
 
+            // Setup Progression_HUD under Header_Panel
+            RectTransform progressionHud = SetupPanel(headerPanel, "Progression_HUD", ref isSceneDirty);
+            SafeSetSizeDelta(progressionHud, new Vector2(250f, 40f), ref isSceneDirty);
+
+            HorizontalLayoutGroup progLayout = progressionHud.gameObject.GetComponent<HorizontalLayoutGroup>();
+            if (progLayout == null)
+            {
+                progLayout = progressionHud.gameObject.AddComponent<HorizontalLayoutGroup>();
+                isSceneDirty = true;
+            }
+            if (progLayout.childAlignment != TextAnchor.MiddleCenter) { progLayout.childAlignment = TextAnchor.MiddleCenter; isSceneDirty = true; }
+            if (!Mathf.Approximately(progLayout.spacing, 10f)) { progLayout.spacing = 10f; isSceneDirty = true; }
+            if (!progLayout.childControlHeight) { progLayout.childControlHeight = true; isSceneDirty = true; }
+            if (!progLayout.childControlWidth) { progLayout.childControlWidth = true; isSceneDirty = true; }
+
+            TextMeshProUGUI levelText = SetupText(progressionHud, "Level_Text", "Level: 1", "Header_Text", ref isSceneDirty);
+
+            RectTransform xpBarContainer = SetupPanel(progressionHud, "XP_Bar_Container", ref isSceneDirty);
+            SafeSetSizeDelta(xpBarContainer, new Vector2(150f, 20f), ref isSceneDirty);
+
+            Image xpBarBg = SetupImage(xpBarContainer, "XP_Bar_Bg", ref isSceneDirty);
+            StretchToFill(xpBarBg.GetComponent<RectTransform>(), ref isSceneDirty);
+            Color bgCol = new Color(0.2f, 0.2f, 0.2f, 0.5f);
+            if (xpBarBg.color != bgCol) { xpBarBg.color = bgCol; isSceneDirty = true; }
+
+            Image xpBarFill = SetupImage(xpBarContainer, "XP_Bar_Fill", ref isSceneDirty);
+            StretchToFill(xpBarFill.GetComponent<RectTransform>(), ref isSceneDirty);
+            Color fillCol = new Color(0.2f, 0.8f, 0.2f, 1f);
+            if (xpBarFill.color != fillCol) { xpBarFill.color = fillCol; isSceneDirty = true; }
+
+            if (xpBarFill.type != Image.Type.Filled) { xpBarFill.type = Image.Type.Filled; isSceneDirty = true; }
+            if (xpBarFill.fillMethod != Image.FillMethod.Horizontal) { xpBarFill.fillMethod = Image.FillMethod.Horizontal; isSceneDirty = true; }
+            if (xpBarFill.fillOrigin != (int)Image.OriginHorizontal.Left) { xpBarFill.fillOrigin = (int)Image.OriginHorizontal.Left; isSceneDirty = true; }
+
+            // Attach ProgressionHudWidget
+            ProgressionHudWidget progWidget = progressionHud.gameObject.GetComponent<ProgressionHudWidget>();
+            if (progWidget == null)
+            {
+                progWidget = progressionHud.gameObject.AddComponent<ProgressionHudWidget>();
+                isSceneDirty = true;
+            }
+
+            SerializedObject soProg = new SerializedObject(progWidget);
+            bool progDirty = false;
+            SafeSetObjectReference(soProg.FindProperty("_levelText"), levelText, ref progDirty);
+            SafeSetObjectReference(soProg.FindProperty("_xpProgressBar"), xpBarFill, ref progDirty);
+            if (progDirty)
+            {
+                soProg.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
+            // Setup Cozy_Juice_Utility under UI_Root
+            RectTransform juiceUtilityRect = SetupPanel(uiRoot, "Cozy_Juice_Utility", ref isSceneDirty);
+            CozyJuiceUtility juiceUtility = juiceUtilityRect.gameObject.GetComponent<CozyJuiceUtility>();
+            if (juiceUtility == null)
+            {
+                juiceUtility = juiceUtilityRect.gameObject.AddComponent<CozyJuiceUtility>();
+                isSceneDirty = true;
+            }
+
+            SerializedObject soJuice = new SerializedObject(juiceUtility);
+            bool juiceDirty = false;
+            SafeSetObjectReference(soJuice.FindProperty("_coinTargetTransform"), coinsText.GetComponent<RectTransform>(), ref juiceDirty);
+            if (juiceDirty)
+            {
+                soJuice.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
+            // Wire CozyJuiceUtility to GameLifetimeScope
+            SerializedObject soScopeUpdate = new SerializedObject(lifetimeScope);
+            bool scopeUpdateDirty = false;
+            SafeSetObjectReference(soScopeUpdate.FindProperty("_juiceUtility"), juiceUtility, ref scopeUpdateDirty);
+            if (scopeUpdateDirty)
+            {
+                soScopeUpdate.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
             // Horizontal layout for header panel
             HorizontalLayoutGroup headerLayout = headerPanel.gameObject.GetComponent<HorizontalLayoutGroup>();
             if (headerLayout == null)
@@ -1483,6 +1563,13 @@ namespace CozyLifeSim.Editor
             if (btn == null)
             {
                 btn = panel.gameObject.AddComponent<Button>();
+                isDirty = true;
+            }
+
+            CozyButtonJuice juice = btn.gameObject.GetComponent<CozyButtonJuice>();
+            if (juice == null)
+            {
+                juice = btn.gameObject.AddComponent<CozyButtonJuice>();
                 isDirty = true;
             }
 

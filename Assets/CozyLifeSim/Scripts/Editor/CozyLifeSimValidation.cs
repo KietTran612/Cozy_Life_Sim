@@ -1197,6 +1197,10 @@ namespace CozyLifeSim.Editor
 
                     if (!typeof(Object).IsAssignableFrom(field.FieldType)) continue;
 
+                    // Exclude optional fields that have runtime procedural fallbacks
+                    if (type.Name == "CozyJuiceUtility" && field.Name == "_coinPrefab")
+                        continue;
+
                     checkedFields++;
                     Object val = field.GetValue(mb) as Object;
 

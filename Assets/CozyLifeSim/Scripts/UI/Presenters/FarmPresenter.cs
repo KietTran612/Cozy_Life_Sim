@@ -12,7 +12,7 @@ namespace CozyLifeSim.UI.Presenters
         private readonly ISaveService _saveService;
 
         public event Action<bool> OnPlantAttemptResult;
-        public event Action OnCropHarvested;
+        public event Action<int> OnCropHarvested;
 
         [Inject]
         public FarmPresenter(IInventoryService inventory, IQuestService quest, ISaveService saveService)
@@ -46,7 +46,7 @@ namespace CozyLifeSim.UI.Presenters
                 _inventory.AddCrops(1);
                 _inventory.AddCoins(10);
                 _quest.TryProgressQuest(QuestType.HarvestCrops, 1);
-                OnCropHarvested?.Invoke();
+                OnCropHarvested?.Invoke(10);
                 return;
             }
 
@@ -65,7 +65,7 @@ namespace CozyLifeSim.UI.Presenters
             }
 
             _quest.TryProgressQuest(QuestType.HarvestCrops, 1);
-            OnCropHarvested?.Invoke();
+            OnCropHarvested?.Invoke(10);
         }
 
         public void Dispose() { }

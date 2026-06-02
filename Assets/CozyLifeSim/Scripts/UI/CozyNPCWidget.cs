@@ -8,6 +8,10 @@ namespace CozyLifeSim.UI
     [RequireComponent(typeof(Collider2D))]
     public class CozyNPCWidget : MonoBehaviour
     {
+#if UNITY_EDITOR
+        public static System.Func<bool> PointerOverUiOverride;
+#endif
+
         [System.Serializable]
         public class NpcDialogueLine
         {
@@ -36,7 +40,7 @@ namespace CozyLifeSim.UI
         private void OnMouseDown()
         {
             // Pointer Guard: block click neu chuot dang đè len UI (vi du shop button, close button)
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            if (IsPointerOverUi())
             {
                 return;
             }
@@ -47,6 +51,17 @@ namespace CozyLifeSim.UI
                 string randomDialogue = _npcData.Dialogues[randomIndex].Line;
                 _dialoguePopup.ShowDialogue(_npcData.NpcName, randomDialogue, _npcData.Portrait).Forget();
             }
+        }
+
+        private static bool IsPointerOverUi()
+        {
+#if UNITY_EDITOR
+            if (PointerOverUiOverride != null)
+            {
+                return PointerOverUiOverride();
+            }
+#endif
+            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
         }
     }
 }

@@ -9,6 +9,8 @@ namespace CozyLifeSim.UI.Services
         private SaveData ActiveSave => _saveService.ActiveSave;
 
         public IReadOnlyList<StickerPlacedData> PlacedStickers => ActiveSave.PlacedStickers;
+        public IReadOnlyList<DiaryNotePlacedData> PlacedDiaryNotes => ActiveSave.PlacedDiaryNotes;
+        public IReadOnlyList<PageStyleData> PageStyles => ActiveSave.PageStyles;
 
         public MemoryService(ISaveService saveService)
         {
@@ -70,6 +72,77 @@ namespace CozyLifeSim.UI.Services
                 return true;
             }
             return false;
+        }
+
+        public DiaryNotePlacedData AddDiaryNoteNonSaving(string noteId, string text, float x, float y, int pageIndex)
+        {
+            var list = ActiveSave.PlacedDiaryNotes;
+            bool hasDuplicate = false;
+            if (!string.IsNullOrEmpty(noteId))
+            {
+                hasDuplicate = list.Exists(note => note.NoteId == noteId);
+            }
+
+            if (string.IsNullOrEmpty(noteId) || hasDuplicate)
+            {
+                noteId = System.Guid.NewGuid().ToString();
+            }
+
+            var data = new DiaryNotePlacedData(noteId, text, x, y, pageIndex);
+            list.Add(data);
+            return data;
+        }
+
+        public bool UpdateDiaryNotePositionNonSaving(string noteId, float x, float y, out DiaryNotePlacedData updatedData)
+        {
+            updatedData = default;
+            if (string.IsNullOrEmpty(noteId)) return false;
+
+            var list = ActiveSave.PlacedDiaryNotes;
+            int index = list.FindIndex(note => note.NoteId == noteId);
+            if (index < 0) return false;
+
+            var noteData = list[index];
+            noteData.PositionX = x;
+            noteData.PositionY = y;
+            list[index] = noteData;
+            updatedData = noteData;
+            return true;
+        }
+
+        public bool RemoveDiaryNoteNonSaving(string noteId, out DiaryNotePlacedData removedData)
+        {
+            removedData = default;
+            if (string.IsNullOrEmpty(noteId)) return false;
+
+            var list = ActiveSave.PlacedDiaryNotes;
+            int index = list.FindIndex(note => note.NoteId == noteId);
+            if (index < 0) return false;
+
+            removedData = list[index];
+            list.RemoveAt(index);
+            return true;
+        }
+
+        public void SetPageStyleNonSaving(int pageIndex, int styleIndex)
+        {
+            var list = ActiveSave.PageStyles;
+            int index = list.FindIndex(style => style.PageIndex == pageIndex);
+            var data = new PageStyleData(pageIndex, styleIndex);
+            if (index >= 0)
+            {
+                list[index] = data;
+            }
+            else
+            {
+                list.Add(data);
+            }
+        }
+
+        public void RestoreMemoryStateNonSaving(List<DiaryNotePlacedData> notes, List<PageStyleData> styles)
+        {
+            ActiveSave.PlacedDiaryNotes = notes != null ? new List<DiaryNotePlacedData>(notes) : new List<DiaryNotePlacedData>();
+            ActiveSave.PageStyles = styles != null ? new List<PageStyleData>(styles) : new List<PageStyleData>();
         }
     }
 }

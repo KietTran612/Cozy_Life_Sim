@@ -55,6 +55,16 @@ namespace CozyLifeSim.UI.Services
                 ActiveSave.PlacedStickers = new List<StickerPlacedData>();
                 isDirty = true;
             }
+            if (ActiveSave.PlacedDiaryNotes == null)
+            {
+                ActiveSave.PlacedDiaryNotes = new List<DiaryNotePlacedData>();
+                isDirty = true;
+            }
+            if (ActiveSave.PageStyles == null)
+            {
+                ActiveSave.PageStyles = new List<PageStyleData>();
+                isDirty = true;
+            }
             if (ActiveSave.CompletedQuestIds == null)
             {
                 ActiveSave.CompletedQuestIds = new List<int>();
@@ -109,7 +119,43 @@ namespace CozyLifeSim.UI.Services
                 seenIds.Add(placed.PlacementId);
             }
 
-            // 4. Luu file neu thuc su thay doi
+            // 4. Backfill NoteId cho diary notes cu (Null-Safe, Struct-Safe & Duplicate-Safe)
+            var seenNoteIds = new HashSet<string>();
+            for (int i = 0; i < ActiveSave.PlacedDiaryNotes.Count; i++)
+            {
+                var note = ActiveSave.PlacedDiaryNotes[i];
+                if (string.IsNullOrEmpty(note.NoteId) || seenNoteIds.Contains(note.NoteId))
+                {
+                    note.NoteId = System.Guid.NewGuid().ToString();
+                    ActiveSave.PlacedDiaryNotes[i] = note;
+                    isDirty = true;
+                }
+                seenNoteIds.Add(note.NoteId);
+            }
+
+            // 5. Compact duplicate page style records, keeping the last saved style per page
+            var lastStyleByPage = new Dictionary<int, PageStyleData>();
+            var pageOrder = new List<int>();
+            foreach (var style in ActiveSave.PageStyles)
+            {
+                if (!lastStyleByPage.ContainsKey(style.PageIndex))
+                {
+                    pageOrder.Add(style.PageIndex);
+                }
+                lastStyleByPage[style.PageIndex] = style;
+            }
+
+            if (lastStyleByPage.Count != ActiveSave.PageStyles.Count)
+            {
+                ActiveSave.PageStyles.Clear();
+                foreach (int pageIndex in pageOrder)
+                {
+                    ActiveSave.PageStyles.Add(lastStyleByPage[pageIndex]);
+                }
+                isDirty = true;
+            }
+
+            // 6. Luu file neu thuc su thay doi
             if (isDirty)
             {
                 Save();

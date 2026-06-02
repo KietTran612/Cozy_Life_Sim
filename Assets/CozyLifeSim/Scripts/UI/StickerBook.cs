@@ -16,10 +16,14 @@ namespace CozyLifeSim.UI
         [SerializeField] private RectTransform _flipPageIndicator; // Target for ScaleX compression
         [SerializeField] private Button _nextButton;
         [SerializeField] private Button _prevButton;
+        [SerializeField] private Button _changeStyleButton;
+        [SerializeField] private Button _addDiaryNoteButton;
 
         [Header("Dynamic Templates")]
         [SerializeField] private Transform _inventoryTrayRoot;
         [SerializeField] private CozySticker _stickerPrefabTemplate; // Single generic prefab reference
+        [SerializeField] private CozyDiaryNote _diaryNotePrefabTemplate;
+        [SerializeField] private CozyDiaryInputPopup _diaryInputPopup;
 
         private int _currentPageIndex = 0;
         private bool _isTransitioning = false;
@@ -72,8 +76,11 @@ namespace CozyLifeSim.UI
 
             if (_nextButton != null) _nextButton.onClick.AddListener(NextPage);
             if (_prevButton != null) _prevButton.onClick.AddListener(PrevPage);
+            if (_changeStyleButton != null) _changeStyleButton.onClick.AddListener(ChangeCurrentPageStyle);
+            if (_addDiaryNoteButton != null) _addDiaryNoteButton.onClick.AddListener(OpenDiaryNoteInput);
             
             UpdateNavigationButtons();
+            InitializePages();
 
             // Subscribe to shop and inventory reload events
             if (_shopService != null)
@@ -94,6 +101,20 @@ namespace CozyLifeSim.UI
 
             // Restore sticker layouts from database on load
             RestoreStickers();
+            RestoreScrapbookCustomizations();
+        }
+
+        private void InitializePages()
+        {
+            if (_pages == null) return;
+
+            foreach (var page in _pages)
+            {
+                if (page != null)
+                {
+                    page.Initialize(_presenter, _diaryNotePrefabTemplate);
+                }
+            }
         }
 
         private void SpawnDynamicStickers()
@@ -178,6 +199,54 @@ namespace CozyLifeSim.UI
                     spawned.FinalizePlacement(targetPage.transform, rect.anchoredPosition, item.PageIndex, false);
                 }
             }
+        }
+
+        private void RestoreScrapbookCustomizations()
+        {
+            if (_presenter == null || _pages == null) return;
+
+            var notes = _presenter.GetPlacedDiaryNotes();
+            foreach (var page in _pages)
+            {
+                if (page == null) continue;
+
+                page.ApplyPageStyle(_presenter.GetPageStyle(page.PageIndex));
+                page.RestoreDiaryNotes(notes);
+            }
+        }
+
+        private void ChangeCurrentPageStyle()
+        {
+            StickerBookPage page = GetCurrentPage();
+            if (page == null || _presenter == null) return;
+
+            int styleCount = page.StyleCount;
+            if (styleCount <= 0) return;
+
+            int nextStyle = _presenter.GetPageStyle(page.PageIndex) + 1;
+            if (nextStyle >= styleCount)
+            {
+                nextStyle = 0;
+            }
+            _presenter.TrySetPageStyle(page.PageIndex, nextStyle, styleCount);
+        }
+
+        private void OpenDiaryNoteInput()
+        {
+            StickerBookPage page = GetCurrentPage();
+            if (page == null || _diaryInputPopup == null || _presenter == null) return;
+
+            _diaryInputPopup.OpenPopup(text =>
+            {
+                _presenter.TryAddDiaryNote(text, 0f, 0f, page.PageIndex);
+            });
+        }
+
+        private StickerBookPage GetCurrentPage()
+        {
+            if (_pages == null || _pages.Count == 0) return null;
+            if (_currentPageIndex < 0 || _currentPageIndex >= _pages.Count) return null;
+            return _pages[_currentPageIndex];
         }
 
         public void NextPage()
@@ -268,6 +337,8 @@ namespace CozyLifeSim.UI
             _flipSequence?.Kill();
             if (_nextButton != null) _nextButton.onClick.RemoveListener(NextPage);
             if (_prevButton != null) _prevButton.onClick.RemoveListener(PrevPage);
+            if (_changeStyleButton != null) _changeStyleButton.onClick.RemoveListener(ChangeCurrentPageStyle);
+            if (_addDiaryNoteButton != null) _addDiaryNoteButton.onClick.RemoveListener(OpenDiaryNoteInput);
             if (_shopService != null)
             {
                 _shopService.OnShopTransactionSuccess -= SpawnDynamicStickers;

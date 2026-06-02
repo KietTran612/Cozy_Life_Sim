@@ -838,6 +838,122 @@ namespace CozyLifeSim.Editor
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "StickerBookPresenter atomic placement and return with simulated failure rollback verified");
 
+                // Test 11.19: Scrapbook Diary Notes & Page Styles persistence, sanitization, and atomic rollback
+                SaveService scrapbookSave = new SaveService();
+                scrapbookSave.ActiveSave.PlacedDiaryNotes = new List<DiaryNotePlacedData>
+                {
+                    new DiaryNotePlacedData("", "Old note", 1f, 2f, 0),
+                    new DiaryNotePlacedData("duplicate-note", "First duplicate", 3f, 4f, 0),
+                    new DiaryNotePlacedData("duplicate-note", "Second duplicate", 5f, 6f, 1)
+                };
+                scrapbookSave.ActiveSave.PageStyles = new List<PageStyleData>
+                {
+                    new PageStyleData(0, 1),
+                    new PageStyleData(0, 2),
+                    new PageStyleData(1, 1)
+                };
+                scrapbookSave.NormalizeSaveData();
+
+                if (scrapbookSave.ActiveSave.PlacedDiaryNotes == null) throw new System.Exception("PlacedDiaryNotes should be normalized to a non-null list");
+                if (scrapbookSave.ActiveSave.PageStyles == null) throw new System.Exception("PageStyles should be normalized to a non-null list");
+                var normalizedNoteIds = new HashSet<string>();
+                foreach (var note in scrapbookSave.ActiveSave.PlacedDiaryNotes)
+                {
+                    if (string.IsNullOrEmpty(note.NoteId)) throw new System.Exception("Diary note normalization should backfill empty NoteId");
+                    if (!normalizedNoteIds.Add(note.NoteId)) throw new System.Exception("Diary note normalization should backfill duplicate NoteId");
+                }
+                if (scrapbookSave.ActiveSave.PageStyles.Count != 2) throw new System.Exception($"Duplicate PageStyles should compact to 2 records, got {scrapbookSave.ActiveSave.PageStyles.Count}");
+                if (scrapbookSave.ActiveSave.PageStyles[0].PageIndex != 0 || scrapbookSave.ActiveSave.PageStyles[0].StyleIndex != 2)
+                {
+                    throw new System.Exception("PageStyles compact should keep the most recent style for page 0");
+                }
+
+                var scrapbookMemory = new MemoryService(scrapbookSave);
+                var diaryA = scrapbookMemory.AddDiaryNoteNonSaving("", "Xin chao", 10f, 20f, 0);
+                var diaryB = scrapbookMemory.AddDiaryNoteNonSaving(diaryA.NoteId, "Trung id", 30f, 40f, 0);
+                if (string.IsNullOrEmpty(diaryA.NoteId)) throw new System.Exception("AddDiaryNoteNonSaving should assign NoteId");
+                if (diaryA.NoteId == diaryB.NoteId) throw new System.Exception("AddDiaryNoteNonSaving should self-heal duplicate NoteId");
+                if (!scrapbookMemory.UpdateDiaryNotePositionNonSaving(diaryA.NoteId, 111f, 222f, out var updatedDiary))
+                {
+                    throw new System.Exception("UpdateDiaryNotePositionNonSaving should update existing note");
+                }
+                if (!Mathf.Approximately(updatedDiary.PositionX, 111f) || !Mathf.Approximately(updatedDiary.PositionY, 222f))
+                {
+                    throw new System.Exception("Diary note update should persist new coordinates in RAM");
+                }
+                scrapbookMemory.SetPageStyleNonSaving(0, 1);
+                scrapbookSave.Save();
+
+                SaveService scrapbookReloadSave = new SaveService();
+                bool foundReloadedNote = false;
+                foreach (var note in scrapbookReloadSave.ActiveSave.PlacedDiaryNotes)
+                {
+                    if (note.NoteId == diaryA.NoteId && Mathf.Approximately(note.PositionX, 111f) && Mathf.Approximately(note.PositionY, 222f))
+                    {
+                        foundReloadedNote = true;
+                    }
+                }
+                if (!foundReloadedNote) throw new System.Exception("Diary note position should persist across save/load");
+                bool foundReloadedStyle = false;
+                foreach (var style in scrapbookReloadSave.ActiveSave.PageStyles)
+                {
+                    if (style.PageIndex == 0 && style.StyleIndex == 1)
+                    {
+                        foundReloadedStyle = true;
+                    }
+                }
+                if (!foundReloadedStyle) throw new System.Exception("Page style should persist across save/load");
+
+                var scrapbookInventory = new InventoryService(scrapbookReloadSave);
+                var scrapbookPresenter = new StickerBookPresenter(new MemoryService(scrapbookReloadSave), scrapbookInventory, scrapbookReloadSave);
+                int addedEvents = 0;
+                int updatedEvents = 0;
+                int removedEvents = 0;
+                int styleEvents = 0;
+                scrapbookPresenter.OnDiaryNoteAdded += _ => addedEvents++;
+                scrapbookPresenter.OnDiaryNotePositionUpdated += _ => updatedEvents++;
+                scrapbookPresenter.OnDiaryNoteRemoved += _ => removedEvents++;
+                scrapbookPresenter.OnPageStyleChanged += _ => styleEvents++;
+
+                string presenterNoteId = scrapbookPresenter.TryAddDiaryNote("  Mot ngay dep troi o scrapbook  ", 12f, 24f, 1);
+                if (string.IsNullOrEmpty(presenterNoteId)) throw new System.Exception("TryAddDiaryNote should return a generated note id on success");
+                if (addedEvents != 1) throw new System.Exception($"OnDiaryNoteAdded should fire once after successful save, got {addedEvents}");
+                if (!scrapbookPresenter.TryUpdateDiaryNotePosition(presenterNoteId, 90f, 91f)) throw new System.Exception("TryUpdateDiaryNotePosition should succeed");
+                if (updatedEvents != 1) throw new System.Exception($"OnDiaryNotePositionUpdated should fire once after successful save, got {updatedEvents}");
+                if (!scrapbookPresenter.TrySetPageStyle(1, 99, 3)) throw new System.Exception("TrySetPageStyle should clamp and save valid style");
+                if (scrapbookPresenter.GetPageStyle(1) != 2) throw new System.Exception($"TrySetPageStyle should clamp to max style index 2, got {scrapbookPresenter.GetPageStyle(1)}");
+                if (styleEvents != 1) throw new System.Exception($"OnPageStyleChanged should fire once after successful save, got {styleEvents}");
+
+                int noteCountBeforeFailure = scrapbookReloadSave.ActiveSave.PlacedDiaryNotes.Count;
+                int styleBeforeFailure = scrapbookPresenter.GetPageStyle(1);
+                try
+                {
+                    scrapbookReloadSave.ForceSaveFailure = true;
+                    string failedNoteId = scrapbookPresenter.TryAddDiaryNote("Rollback note", 1f, 1f, 1);
+                    if (!string.IsNullOrEmpty(failedNoteId)) throw new System.Exception("TryAddDiaryNote should fail under simulated save failure");
+                    if (scrapbookReloadSave.ActiveSave.PlacedDiaryNotes.Count != noteCountBeforeFailure) throw new System.Exception("Failed diary note add should rollback RAM note count");
+                    if (addedEvents != 1) throw new System.Exception("OnDiaryNoteAdded should not fire on failed save");
+
+                    bool failedStyle = scrapbookPresenter.TrySetPageStyle(1, 0, 3);
+                    if (failedStyle) throw new System.Exception("TrySetPageStyle should fail under simulated save failure");
+                    if (scrapbookPresenter.GetPageStyle(1) != styleBeforeFailure) throw new System.Exception("Failed page style change should rollback RAM style");
+                    if (styleEvents != 1) throw new System.Exception("OnPageStyleChanged should not fire on failed save");
+
+                    bool failedRemove = scrapbookPresenter.TryRemoveDiaryNote(presenterNoteId);
+                    if (failedRemove) throw new System.Exception("TryRemoveDiaryNote should fail under simulated save failure");
+                    if (removedEvents != 0) throw new System.Exception("OnDiaryNoteRemoved should not fire on failed save");
+                }
+                finally
+                {
+                    scrapbookReloadSave.ForceSaveFailure = false;
+                }
+
+                if (!scrapbookPresenter.TryRemoveDiaryNote(presenterNoteId)) throw new System.Exception("TryRemoveDiaryNote should succeed after save failure is disabled");
+                if (removedEvents != 1) throw new System.Exception($"OnDiaryNoteRemoved should fire once after successful save, got {removedEvents}");
+
+                passCount++;
+                CozyValidationLog.Pass("CozySim Logic", "Scrapbook diary notes and page styles persistence, sanitization, events, and rollback verified");
+
                 // Test 12: Economic Balance & Level Invariants (Crops, Animals, Stickers & Quests)
                 var activeCrops = LoadDatabase<CozyLifeSim.UI.Settings.CropDatabase>();
                 var activeAnimals = LoadDatabase<CozyLifeSim.UI.Settings.AnimalDatabase>();
@@ -1150,7 +1266,6 @@ namespace CozyLifeSim.Editor
                 GameObject test155DialogGo = null;
                 GameObject npcGo = null;
                 GameObject mockEventSystemGo = null;
-                var oldEventSystem = UnityEngine.EventSystems.EventSystem.current;
                 try
                 {
                     // 1. Create a dialogue popup GameObject and wire it
@@ -1186,6 +1301,7 @@ namespace CozyLifeSim.Editor
 
                     // 2. Create NPC GameObject
                     npcGo = new GameObject("TempNpcTest");
+                    npcGo.AddComponent<BoxCollider2D>();
                     var npcWidget = npcGo.AddComponent<CozyNPCWidget>();
                     if (npcWidget == null)
                     {
@@ -1223,11 +1339,7 @@ namespace CozyLifeSim.Editor
                     }
 
                     // 4. Test normal successful click path (without pointer over UI)
-                    mockEventSystemGo = new GameObject("MockEventSystem");
-                    var mockEventSystem = mockEventSystemGo.AddComponent<UnityEngine.EventSystems.EventSystem>();
-                    var mockInputModule = mockEventSystemGo.AddComponent<MockInputModule>();
-                    UnityEngine.EventSystems.EventSystem.current = mockEventSystem;
-                    mockInputModule.IsOverUI = false;
+                    CozyNPCWidget.PointerOverUiOverride = () => false;
 
                     var onMouseDownMethod = typeNpc.GetMethod("OnMouseDown", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                     if (onMouseDownMethod == null) throw new System.Exception("Could not find OnMouseDown method on CozyNPCWidget!");
@@ -1248,7 +1360,7 @@ namespace CozyLifeSim.Editor
                     test155ContentPanel.SetActive(false);
 
                     // 5. Test Pointer-over-UI Guard (click should be blocked)
-                    mockInputModule.IsOverUI = true;
+                    CozyNPCWidget.PointerOverUiOverride = () => true;
 
                     onMouseDownMethod.Invoke(npcWidget, null);
 
@@ -1257,10 +1369,7 @@ namespace CozyLifeSim.Editor
                         throw new System.Exception("Dialogue popup content panel should NOT be active when clicking NPC while mouse is over UI!");
                     }
 
-                    // Restore event system
-                    UnityEngine.EventSystems.EventSystem.current = oldEventSystem;
-                    Object.DestroyImmediate(mockEventSystemGo);
-                    mockEventSystemGo = null;
+                    CozyNPCWidget.PointerOverUiOverride = null;
 
                     // 6. Test fallback when CozyDialoguePopup is missing in scene (should not throw exceptions)
                     // Remove the dialogue popup from scene and lookup reference
@@ -1279,7 +1388,7 @@ namespace CozyLifeSim.Editor
                 }
                 finally
                 {
-                    UnityEngine.EventSystems.EventSystem.current = oldEventSystem;
+                    CozyNPCWidget.PointerOverUiOverride = null;
                     if (mockEventSystemGo != null) Object.DestroyImmediate(mockEventSystemGo);
                     if (test155DialogGo != null) Object.DestroyImmediate(test155DialogGo);
                     if (npcGo != null) Object.DestroyImmediate(npcGo);

@@ -276,7 +276,7 @@ namespace CozyLifeSim.Editor
 
             // Setup Progression_HUD under Header_Panel
             RectTransform progressionHud = SetupPanel(headerPanel, "Progression_HUD", ref isSceneDirty);
-            SafeSetSizeDelta(progressionHud, new Vector2(250f, 40f), ref isSceneDirty);
+            SafeSetSizeDelta(progressionHud, Vector2.zero, ref isSceneDirty);
 
             HorizontalLayoutGroup progLayout = progressionHud.gameObject.GetComponent<HorizontalLayoutGroup>();
             if (progLayout == null)
@@ -292,7 +292,7 @@ namespace CozyLifeSim.Editor
             TextMeshProUGUI levelText = SetupText(progressionHud, "Level_Text", "Level: 1", "Header_Text", ref isSceneDirty);
 
             RectTransform xpBarContainer = SetupPanel(progressionHud, "XP_Bar_Container", ref isSceneDirty);
-            SafeSetSizeDelta(xpBarContainer, new Vector2(150f, 20f), ref isSceneDirty);
+            SafeSetSizeDelta(xpBarContainer, Vector2.zero, ref isSceneDirty);
 
             Image xpBarBg = SetupImage(xpBarContainer, "XP_Bar_Bg", ref isSceneDirty);
             StretchToFill(xpBarBg.GetComponent<RectTransform>(), ref isSceneDirty);
@@ -583,6 +583,10 @@ namespace CozyLifeSim.Editor
 
             Button prevBtn = SetupButton(stickerBookPanel, "Prev_Button", "< Page", ref isSceneDirty);
             Button nextBtn = SetupButton(stickerBookPanel, "Next_Button", "Page >", ref isSceneDirty);
+            Button styleBtn = SetupButton(stickerBookPanel, "Style_Button", "Style", ref isSceneDirty);
+            Button addNoteBtn = SetupButton(stickerBookPanel, "Add_Note_Button", "Note", ref isSceneDirty);
+            SafeSetSizeDelta(styleBtn.GetComponent<RectTransform>(), new Vector2(90f, 35f), ref isSceneDirty);
+            SafeSetSizeDelta(addNoteBtn.GetComponent<RectTransform>(), new Vector2(90f, 35f), ref isSceneDirty);
             RectTransform flipIndicator = SetupPanel(stickerBookPanel, "Flip_Page_Indicator", ref isSceneDirty);
             if (flipIndicator.gameObject.activeSelf)
             {
@@ -600,6 +604,8 @@ namespace CozyLifeSim.Editor
             SerializedObject soPage0 = new SerializedObject(bookPage0);
             bool page0Dirty = false;
             SafeSetInt(soPage0.FindProperty("_pageIndex"), 0, ref page0Dirty);
+            SafeSetObjectReference(soPage0.FindProperty("_backgroundImage"), page0.GetComponent<Image>(), ref page0Dirty);
+            SafeSetInt(soPage0.FindProperty("_fallbackStyleCount"), 3, ref page0Dirty);
             if (page0Dirty)
             {
                 soPage0.ApplyModifiedProperties();
@@ -616,6 +622,8 @@ namespace CozyLifeSim.Editor
             SerializedObject soPage1 = new SerializedObject(bookPage1);
             bool page1Dirty = false;
             SafeSetInt(soPage1.FindProperty("_pageIndex"), 1, ref page1Dirty);
+            SafeSetObjectReference(soPage1.FindProperty("_backgroundImage"), page1.GetComponent<Image>(), ref page1Dirty);
+            SafeSetInt(soPage1.FindProperty("_fallbackStyleCount"), 3, ref page1Dirty);
             if (page1Dirty)
             {
                 soPage1.ApplyModifiedProperties();
@@ -640,6 +648,8 @@ namespace CozyLifeSim.Editor
             SafeSetObjectReference(soBook.FindProperty("_flipPageIndicator"), flipIndicator, ref bookDirty);
             SafeSetObjectReference(soBook.FindProperty("_nextButton"), nextBtn, ref bookDirty);
             SafeSetObjectReference(soBook.FindProperty("_prevButton"), prevBtn, ref bookDirty);
+            SafeSetObjectReference(soBook.FindProperty("_changeStyleButton"), styleBtn, ref bookDirty);
+            SafeSetObjectReference(soBook.FindProperty("_addDiaryNoteButton"), addNoteBtn, ref bookDirty);
 
             // Wire pages list
             SerializedProperty pagesListProp = soBook.FindProperty("_pages");
@@ -716,10 +726,10 @@ namespace CozyLifeSim.Editor
 
             // Safe Sibling reuse for Sidebar buttons to avoid ClearChildren
             Button questBtn = SetupButton(sidebarPanel, "Quest_Button", "Q", ref isSceneDirty);
-            SafeSetSizeDelta(questBtn.GetComponent<RectTransform>(), new Vector2(55f, 55f), ref isSceneDirty);
+            SafeSetSizeDelta(questBtn.GetComponent<RectTransform>(), new Vector2(0f, 55f), ref isSceneDirty);
 
             Button shopBtn = SetupButton(sidebarPanel, "Shop_Button", "S", ref isSceneDirty);
-            SafeSetSizeDelta(shopBtn.GetComponent<RectTransform>(), new Vector2(55f, 55f), ref isSceneDirty);
+            SafeSetSizeDelta(shopBtn.GetComponent<RectTransform>(), new Vector2(0f, 55f), ref isSceneDirty);
 
             // A. Setup Quest Popup
             RectTransform questPopupPanel = SetupPanel(canvas.transform, "Quest_Popup", ref isSceneDirty);
@@ -1109,6 +1119,161 @@ namespace CozyLifeSim.Editor
             if (sPopupDirty)
             {
                 soSPopup.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
+            // B.5. Setup Diary Input Popup
+            RectTransform diaryPopupPanel = SetupPanel(canvas.transform, "Diary_Input_Popup", ref isSceneDirty);
+            StretchToFill(diaryPopupPanel, ref isSceneDirty);
+            if (diaryPopupPanel.gameObject.activeSelf)
+            {
+                diaryPopupPanel.gameObject.SetActive(false);
+                isSceneDirty = true;
+            }
+
+            CozyDiaryInputPopup diaryInputPopup = diaryPopupPanel.gameObject.GetComponent<CozyDiaryInputPopup>();
+            if (diaryInputPopup == null)
+            {
+                diaryInputPopup = diaryPopupPanel.gameObject.AddComponent<CozyDiaryInputPopup>();
+                isSceneDirty = true;
+            }
+
+            RectTransform diaryDimPanel = SetupPanel(diaryPopupPanel, "Background_Dim", ref isSceneDirty);
+            StretchToFill(diaryDimPanel, ref isSceneDirty);
+            CanvasGroup diaryDimGroup = diaryDimPanel.gameObject.GetComponent<CanvasGroup>();
+            if (diaryDimGroup == null)
+            {
+                diaryDimGroup = diaryDimPanel.gameObject.AddComponent<CanvasGroup>();
+                isSceneDirty = true;
+            }
+            if (!Mathf.Approximately(diaryDimGroup.alpha, 0f))
+            {
+                diaryDimGroup.alpha = 0f;
+                isSceneDirty = true;
+            }
+            Image diaryDimImg = diaryDimPanel.gameObject.GetComponent<Image>();
+            if (diaryDimImg == null)
+            {
+                diaryDimImg = diaryDimPanel.gameObject.AddComponent<Image>();
+                isSceneDirty = true;
+            }
+            Color diaryDimColor = new Color(0f, 0f, 0f, 0.55f);
+            if (diaryDimImg.color != diaryDimColor)
+            {
+                diaryDimImg.color = diaryDimColor;
+                isSceneDirty = true;
+            }
+
+            RectTransform diaryContentPanel = SetupPanel(diaryPopupPanel, "Content_Panel", ref isSceneDirty);
+            SafeSetAnchor(diaryContentPanel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), ref isSceneDirty);
+            SafeSetPivot(diaryContentPanel, new Vector2(0.5f, 0.5f), ref isSceneDirty);
+            SafeSetSizeDelta(diaryContentPanel, new Vector2(420f, 260f), ref isSceneDirty);
+            SafeSetAnchoredPosition(diaryContentPanel, Vector2.zero, ref isSceneDirty);
+            Image diaryContentImg = diaryContentPanel.gameObject.GetComponent<Image>();
+            if (diaryContentImg == null)
+            {
+                diaryContentImg = diaryContentPanel.gameObject.AddComponent<Image>();
+                isSceneDirty = true;
+            }
+            Color diaryContentColor = new Color(0.98f, 0.86f, 0.35f, 0.98f);
+            if (diaryContentImg.color != diaryContentColor)
+            {
+                diaryContentImg.color = diaryContentColor;
+                isSceneDirty = true;
+            }
+
+            TextMeshProUGUI diaryTitle = SetupText(diaryContentPanel, "Title_Text", "DIARY NOTE", "Header_Text", ref isSceneDirty);
+            RectTransform diaryTitleRect = diaryTitle.GetComponent<RectTransform>();
+            SafeSetAnchor(diaryTitleRect, new Vector2(0.1f, 0.78f), new Vector2(0.9f, 0.95f), ref isSceneDirty);
+            SafeSetSizeDelta(diaryTitleRect, Vector2.zero, ref isSceneDirty);
+            SafeSetAnchoredPosition(diaryTitleRect, Vector2.zero, ref isSceneDirty);
+            if (!Mathf.Approximately(diaryTitle.fontSize, 22f)) { diaryTitle.fontSize = 22f; isSceneDirty = true; }
+
+            RectTransform diaryInputRect = SetupPanel(diaryContentPanel, "Input_Field", ref isSceneDirty);
+            SafeSetAnchor(diaryInputRect, new Vector2(0.1f, 0.36f), new Vector2(0.9f, 0.72f), ref isSceneDirty);
+            SafeSetSizeDelta(diaryInputRect, Vector2.zero, ref isSceneDirty);
+            SafeSetAnchoredPosition(diaryInputRect, Vector2.zero, ref isSceneDirty);
+            Image diaryInputImg = diaryInputRect.gameObject.GetComponent<Image>();
+            if (diaryInputImg == null)
+            {
+                diaryInputImg = diaryInputRect.gameObject.AddComponent<Image>();
+                isSceneDirty = true;
+            }
+            Color diaryInputColor = new Color(1f, 0.96f, 0.72f, 1f);
+            if (diaryInputImg.color != diaryInputColor)
+            {
+                diaryInputImg.color = diaryInputColor;
+                isSceneDirty = true;
+            }
+            TMP_InputField diaryInput = diaryInputRect.gameObject.GetComponent<TMP_InputField>();
+            if (diaryInput == null)
+            {
+                diaryInput = diaryInputRect.gameObject.AddComponent<TMP_InputField>();
+                isSceneDirty = true;
+            }
+            if (diaryInput.characterLimit != 60)
+            {
+                diaryInput.characterLimit = 60;
+                isSceneDirty = true;
+            }
+
+            TextMeshProUGUI diaryInputText = SetupText(diaryInputRect, "Text", "", "", ref isSceneDirty);
+            RectTransform diaryInputTextRect = diaryInputText.GetComponent<RectTransform>();
+            SafeSetAnchor(diaryInputTextRect, Vector2.zero, Vector2.one, ref isSceneDirty);
+            SafeSetSizeDelta(diaryInputTextRect, new Vector2(-20f, -16f), ref isSceneDirty);
+            SafeSetAnchoredPosition(diaryInputTextRect, Vector2.zero, ref isSceneDirty);
+            if (diaryInputText.alignment != TextAlignmentOptions.TopLeft) { diaryInputText.alignment = TextAlignmentOptions.TopLeft; isSceneDirty = true; }
+            if (!Mathf.Approximately(diaryInputText.fontSize, 18f)) { diaryInputText.fontSize = 18f; isSceneDirty = true; }
+            if (diaryInputText.color != Color.black) { diaryInputText.color = Color.black; isSceneDirty = true; }
+
+            TextMeshProUGUI diaryPlaceholder = SetupText(diaryInputRect, "Placeholder", "Write a memory...", "", ref isSceneDirty);
+            RectTransform diaryPlaceholderRect = diaryPlaceholder.GetComponent<RectTransform>();
+            SafeSetAnchor(diaryPlaceholderRect, Vector2.zero, Vector2.one, ref isSceneDirty);
+            SafeSetSizeDelta(diaryPlaceholderRect, new Vector2(-20f, -16f), ref isSceneDirty);
+            SafeSetAnchoredPosition(diaryPlaceholderRect, Vector2.zero, ref isSceneDirty);
+            if (diaryPlaceholder.alignment != TextAlignmentOptions.TopLeft) { diaryPlaceholder.alignment = TextAlignmentOptions.TopLeft; isSceneDirty = true; }
+            if (!Mathf.Approximately(diaryPlaceholder.fontSize, 18f)) { diaryPlaceholder.fontSize = 18f; isSceneDirty = true; }
+            Color placeholderColor = new Color(0f, 0f, 0f, 0.45f);
+            if (diaryPlaceholder.color != placeholderColor) { diaryPlaceholder.color = placeholderColor; isSceneDirty = true; }
+
+            if (diaryInput.textComponent != diaryInputText)
+            {
+                diaryInput.textComponent = diaryInputText;
+                isSceneDirty = true;
+            }
+            if (diaryInput.placeholder != diaryPlaceholder)
+            {
+                diaryInput.placeholder = diaryPlaceholder;
+                isSceneDirty = true;
+            }
+
+            Button diaryConfirmBtn = SetupButton(diaryContentPanel, "Confirm_Button", "Add", ref isSceneDirty);
+            RectTransform diaryConfirmRect = diaryConfirmBtn.GetComponent<RectTransform>();
+            SafeSetAnchor(diaryConfirmRect, new Vector2(0.58f, 0.08f), new Vector2(0.88f, 0.25f), ref isSceneDirty);
+            SafeSetSizeDelta(diaryConfirmRect, Vector2.zero, ref isSceneDirty);
+            SafeSetAnchoredPosition(diaryConfirmRect, Vector2.zero, ref isSceneDirty);
+            TextMeshProUGUI diaryConfirmText = diaryConfirmBtn.GetComponentInChildren<TextMeshProUGUI>();
+            if (!Mathf.Approximately(diaryConfirmText.fontSize, 18f)) { diaryConfirmText.fontSize = 18f; isSceneDirty = true; }
+
+            Button diaryCancelBtn = SetupButton(diaryContentPanel, "Cancel_Button", "Cancel", ref isSceneDirty);
+            RectTransform diaryCancelRect = diaryCancelBtn.GetComponent<RectTransform>();
+            SafeSetAnchor(diaryCancelRect, new Vector2(0.12f, 0.08f), new Vector2(0.42f, 0.25f), ref isSceneDirty);
+            SafeSetSizeDelta(diaryCancelRect, Vector2.zero, ref isSceneDirty);
+            SafeSetAnchoredPosition(diaryCancelRect, Vector2.zero, ref isSceneDirty);
+            TextMeshProUGUI diaryCancelText = diaryCancelBtn.GetComponentInChildren<TextMeshProUGUI>();
+            if (!Mathf.Approximately(diaryCancelText.fontSize, 18f)) { diaryCancelText.fontSize = 18f; isSceneDirty = true; }
+
+            SerializedObject soDiaryPopup = new SerializedObject(diaryInputPopup);
+            bool diaryPopupDirty = false;
+            SafeSetObjectReference(soDiaryPopup.FindProperty("_contentPanel"), diaryContentPanel, ref diaryPopupDirty);
+            SafeSetObjectReference(soDiaryPopup.FindProperty("_backgroundDim"), diaryDimGroup, ref diaryPopupDirty);
+            SafeSetObjectReference(soDiaryPopup.FindProperty("_closeButton"), diaryCancelBtn, ref diaryPopupDirty);
+            SafeSetObjectReference(soDiaryPopup.FindProperty("_inputField"), diaryInput, ref diaryPopupDirty);
+            SafeSetObjectReference(soDiaryPopup.FindProperty("_confirmButton"), diaryConfirmBtn, ref diaryPopupDirty);
+            SafeSetObjectReference(soDiaryPopup.FindProperty("_cancelButton"), diaryCancelBtn, ref diaryPopupDirty);
+            if (diaryPopupDirty)
+            {
+                soDiaryPopup.ApplyModifiedProperties();
                 isSceneDirty = true;
             }
 
@@ -1566,6 +1731,79 @@ namespace CozyLifeSim.Editor
                 isSceneDirty = true;
             }
 
+            // Create a diary note template under Prefabs_Holder
+            RectTransform diaryNoteTemplate = SetupPanel(prefabsHolder, "Diary_Note_Template", ref isSceneDirty);
+            SafeSetSizeDelta(diaryNoteTemplate, new Vector2(150f, 120f), ref isSceneDirty);
+            if (diaryNoteTemplate.gameObject.activeSelf)
+            {
+                diaryNoteTemplate.gameObject.SetActive(false);
+                isSceneDirty = true;
+            }
+
+            Image diaryNoteImg = diaryNoteTemplate.gameObject.GetComponent<Image>();
+            if (diaryNoteImg == null)
+            {
+                diaryNoteImg = diaryNoteTemplate.gameObject.AddComponent<Image>();
+                isSceneDirty = true;
+            }
+            Color diaryNoteColor = new Color(1f, 0.92f, 0.35f, 1f);
+            if (diaryNoteImg.color != diaryNoteColor)
+            {
+                diaryNoteImg.color = diaryNoteColor;
+                isSceneDirty = true;
+            }
+
+            CanvasGroup diaryNoteGroup = diaryNoteTemplate.gameObject.GetComponent<CanvasGroup>();
+            if (diaryNoteGroup == null)
+            {
+                diaryNoteGroup = diaryNoteTemplate.gameObject.AddComponent<CanvasGroup>();
+                isSceneDirty = true;
+            }
+
+            CozyDiaryNote diaryNoteComponent = diaryNoteTemplate.gameObject.GetComponent<CozyDiaryNote>();
+            if (diaryNoteComponent == null)
+            {
+                diaryNoteComponent = diaryNoteTemplate.gameObject.AddComponent<CozyDiaryNote>();
+                isSceneDirty = true;
+            }
+
+            TextMeshProUGUI diaryNoteText = SetupText(diaryNoteTemplate, "Note_Text", "New memory", "", ref isSceneDirty);
+            RectTransform diaryNoteTextRect = diaryNoteText.GetComponent<RectTransform>();
+            SafeSetAnchor(diaryNoteTextRect, new Vector2(0.08f, 0.08f), new Vector2(0.92f, 0.92f), ref isSceneDirty);
+            SafeSetSizeDelta(diaryNoteTextRect, Vector2.zero, ref isSceneDirty);
+            SafeSetAnchoredPosition(diaryNoteTextRect, Vector2.zero, ref isSceneDirty);
+            if (diaryNoteText.alignment != TextAlignmentOptions.TopLeft) { diaryNoteText.alignment = TextAlignmentOptions.TopLeft; isSceneDirty = true; }
+            if (!Mathf.Approximately(diaryNoteText.fontSize, 16f)) { diaryNoteText.fontSize = 16f; isSceneDirty = true; }
+            if (diaryNoteText.color != Color.black) { diaryNoteText.color = Color.black; isSceneDirty = true; }
+
+            SerializedObject soDiaryNote = new SerializedObject(diaryNoteComponent);
+            bool diaryNoteDirty = false;
+            SafeSetObjectReference(soDiaryNote.FindProperty("_text"), diaryNoteText, ref diaryNoteDirty);
+            SafeSetObjectReference(soDiaryNote.FindProperty("_canvasGroup"), diaryNoteGroup, ref diaryNoteDirty);
+            if (diaryNoteDirty)
+            {
+                soDiaryNote.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
+            SerializedObject soPage0Diary = new SerializedObject(bookPage0);
+            bool page0DiaryDirty = false;
+            SafeSetObjectReference(soPage0Diary.FindProperty("_diaryNotePrefabTemplate"), diaryNoteComponent, ref page0DiaryDirty);
+            if (page0DiaryDirty)
+            {
+                soPage0Diary.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
+            SerializedObject soPage1Diary = new SerializedObject(bookPage1);
+            bool page1DiaryDirty = false;
+            SafeSetObjectReference(soPage1Diary.FindProperty("_diaryNotePrefabTemplate"), diaryNoteComponent, ref page1DiaryDirty);
+            if (page1DiaryDirty)
+            {
+                soPage1Diary.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
             // Wire templates/tray to StickerBook
             SerializedObject soBookUpdate = new SerializedObject(stickerBook);
             bool bookUpDirty = false;
@@ -1578,6 +1816,16 @@ namespace CozyLifeSim.Editor
             if (prefabProp != null)
             {
                 SafeSetObjectReference(prefabProp, genericSticker, ref bookUpDirty);
+            }
+            SerializedProperty diaryPrefabProp = soBookUpdate.FindProperty("_diaryNotePrefabTemplate");
+            if (diaryPrefabProp != null)
+            {
+                SafeSetObjectReference(diaryPrefabProp, diaryNoteComponent, ref bookUpDirty);
+            }
+            SerializedProperty diaryPopupProp = soBookUpdate.FindProperty("_diaryInputPopup");
+            if (diaryPopupProp != null)
+            {
+                SafeSetObjectReference(diaryPopupProp, diaryInputPopup, ref bookUpDirty);
             }
             if (bookUpDirty)
             {

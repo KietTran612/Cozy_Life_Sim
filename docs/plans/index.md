@@ -35,6 +35,7 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Phase 3.4 Scrapbook Polish & Custom Diary Notes [PROPOSED]: [2026-06-01-scrapbook-customization-diary-notes.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-scrapbook-customization-diary-notes.md)
 - Phase 3.6 Runtime Playtest & Vertical Slice Polish [COMPLETED]: [2026-06-02-runtime-playtest-vertical-slice-polish.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-02-runtime-playtest-vertical-slice-polish.md)
 - Runtime Playtest Checklist: [2026-06-02-runtime-playtest-checklist.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-02-runtime-playtest-checklist.md)
+- Phase 3.7 Landscape-Only Startup, Camera & Layout Hardening [PROPOSED]: [2026-06-02-landscape-startup-camera-layout-hardening.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-02-landscape-startup-camera-layout-hardening.md)
 
 ## Database Editors
 
@@ -46,5 +47,5 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 
 ## Suggested Next Plan
 
-Task 37 Main menu and new/continue game flow is the next planned feature work, unless Task 35 asset generation resumes first when quota is available.
+Task 37 Landscape-Only Startup, Camera & Layout Hardening is the next planned feature work. The project will boot directly into `Main.unity`; no main menu, new/continue/reset flow, separate loading scene, or portrait support is planned for this task.
 Work checklist and implementation tasks track live at `docs/plans/task.md`.

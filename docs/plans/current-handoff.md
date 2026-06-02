@@ -2,11 +2,11 @@
 
 ## Snapshot
 
-- **Current Phase**: Phase 3.6 Runtime Playtest & Vertical Slice Polish.
-- **Last Completed Commit**: `feat: generate and import 17 primary Vietnamese Heritage and UI assets` (`e9bd894`).
-- **Current Task**: Task 36 completed (Feedback Toast, Shop disabled reasons, Farm blocked-action feedback, expanded scene/runtime validations, and playtest checklist).
-- **Planned Next Feature**: Task 37 Main menu, new game/continue flow, or resuming Task 35 asset generation when quota is available.
-- **Recommended Next Task**: Implement Task 37 Main menu and new/continue game flow, or finish Task 35 asset generation.
+- **Current Phase**: Phase 3.7 Landscape-Only Startup, Camera & Layout Hardening.
+- **Last Completed Commit**: `feat: polish runtime vertical slice` (`d418ae0`).
+- **Current Task**: Task 37 planned; implementation pending user approval.
+- **Planned Next Feature**: Direct boot into `Main.unity` with in-scene startup loading overlay, hardened orthographic camera, landscape-only player/build settings, responsive landscape layout, and validation.
+- **Recommended Next Task**: Implement Task 37 from `docs/plans/2026-06-02-landscape-startup-camera-layout-hardening.md`.
 
 ## Latest Completed Work
 
@@ -18,6 +18,11 @@
   - Added robust scene validations in `CozyLifeSimSceneGameplayValidation` to check StickerBook pages, Dialogue Popup, and NPC widgets configurations.
   - Added 5 new steps to MCP gameplay loop play mode validation (page style cycles, note CRUD operations, NPC dialogues) and verified state rollback integrity.
   - Created a concise human-executable manual playtest checklist at `docs/plans/2026-06-02-runtime-playtest-checklist.md`.
+
+- **Task 37 Plan: Landscape-Only Startup, Camera & Layout Hardening**
+  - Replaced the previous main-menu/new/continue direction with direct boot into `Main.unity`.
+  - Chose an in-scene loading overlay instead of a separate loading scene to avoid VContainer scene-root refactors.
+  - Scoped camera hardening, landscape-only PlayerSettings/build settings, landscape layout responsiveness, and validation coverage.
 
 - **Task 34: [Phase 3.4] Scrapbook Polish & Custom Diary Notes**
   - Added `DiaryNotePlacedData` and `PageStyleData` to save data with load-time normalization.
@@ -33,21 +38,18 @@
 
 ## Latest Verification
 
-- Unity compile/import: Complete, compiling cleanly with no errors.
+- Latest verified implementation remains Task 36.
+- Unity compile/import for Task 36: Complete, compiling cleanly with no errors.
 - `Tools/CozySim/Run Logic Verification Tests`: PASS, **31 passed, 0 failed, 1 expected warnings**.
 - Scene wiring validation: PASS, **107 passed, 0 failed**.
 - Play Mode Runtime Loop Validation: PASS, **22 passed, 0 failed**.
-- Code Hygiene: `git diff --check` passes.
+- Code Hygiene: `git diff --check` passed before the Task 36 commit.
+- Task 37 currently has plan/docs changes only; no Unity code changes have been made yet.
 
 ## Current Uncommitted Scope
 
-- Modified scene/config: `Main.unity`, `CozyLifeSim.Editor.asmdef`.
-- Modified UI code: `CropWidget.cs`, `GameLifetimeScope.cs`, `ShopItemWidget.cs`, `ShopPopup.cs`.
-- Modified editor/validation code: `CozySceneSetupWindow.cs`, `CozyLifeSimValidation.cs`, `CozyLifeSimMcpGameplayLoopValidation.cs`, `CozyLifeSimSceneGameplayValidation.cs`.
-- New UI script and Unity-generated meta: `CozyFeedbackToast.cs`, `CozyFeedbackToast.cs.meta`.
-- Modified plans/docs: `task.md`, `current-handoff.md`, `index.md`.
-- New implementation plan: `docs/plans/2026-06-02-runtime-playtest-vertical-slice-polish.md`.
-- New playtest checklist: `docs/plans/2026-06-02-runtime-playtest-checklist.md`.
+- Modified plans/docs: `docs/plans/task.md`, `docs/plans/current-handoff.md`, `docs/plans/index.md`.
+- New implementation plan: `docs/plans/2026-06-02-landscape-startup-camera-layout-hardening.md`.
 - Existing `.agent/scratch/*` files remain out of scope.
 
 ## Next-Agent Read Order

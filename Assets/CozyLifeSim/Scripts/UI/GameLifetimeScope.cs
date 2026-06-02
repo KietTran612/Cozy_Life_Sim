@@ -16,6 +16,7 @@ namespace CozyLifeSim.UI
         [SerializeField] private CozyLifeSim.UI.Settings.AnimalDatabase _animalDatabase;
         [SerializeField] private CozyLifeSim.UI.Settings.StickerDatabase _stickerDatabase;
         [SerializeField] private CozyJuiceUtility _juiceUtility;
+        [SerializeField] private CozyDialoguePopup _dialoguePopup;
 
         protected override void Configure(IContainerBuilder builder)
         {
@@ -33,6 +34,23 @@ namespace CozyLifeSim.UI
                 else
                 {
                     Debug.LogWarning("[CozySim] CozyJuiceUtility is missing from the scene!");
+                }
+            }
+
+            if (_dialoguePopup != null)
+            {
+                builder.RegisterComponent(_dialoguePopup);
+            }
+            else
+            {
+                var foundPopup = FindFirstObjectByType<CozyDialoguePopup>();
+                if (foundPopup != null)
+                {
+                    builder.RegisterComponent(foundPopup);
+                }
+                else
+                {
+                    Debug.LogWarning("[CozySim] CozyDialoguePopup is missing from the scene!");
                 }
             }
 

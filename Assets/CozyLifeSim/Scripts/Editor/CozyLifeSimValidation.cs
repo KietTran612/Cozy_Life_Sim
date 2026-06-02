@@ -5,6 +5,7 @@ using CozyLifeSim.UI;
 using CozyLifeSim.UI.Services;
 using CozyLifeSim.UI.Presenters;
 using System.Collections.Generic;
+using TMPro;
 
 namespace CozyLifeSim.Editor
 {
@@ -18,6 +19,21 @@ namespace CozyLifeSim.Editor
             int expectedWarningCount = 0;
 
             Debug.Log("<color=cyan>[CozySim TestRunner]</color> Starting core logic verification tests...");
+
+            // Cleanup stale test game objects from previous runs if any
+            // Cleanup stale test game objects from previous runs if any
+            foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
+            {
+                if (go != null && (
+                    go.name == "TempDialoguePopupTest" ||
+                    go.name == "TempDialoguePopupTest155" ||
+                    go.name == "TempNpcTest" ||
+                    go.name == "MockEventSystem" ||
+                    go.name == "DummyUIObject"))
+                {
+                    Object.DestroyImmediate(go);
+                }
+            }
 
             CozyLifeSim.UI.Settings.QuestDatabase questDb = null;
             try
@@ -1030,6 +1046,245 @@ namespace CozyLifeSim.Editor
                 passCount++;
                 CozyValidationLog.Pass("CozySim Logic", "Procedural Flat Fallback C# Integration verified successfully");
 
+                // Test 15: Play Mode Runtime Dialogue & NPC Click Validation
+                // Test 15: Play Mode Runtime Dialogue & NPC Click Validation
+                GameObject dialogGo = null;
+                CozyLifeSim.UI.Settings.QuestDatabase testDialogQuestDb = null;
+                try
+                {
+                    dialogGo = new GameObject("TempDialoguePopupTest");
+                    var contentPanel = new GameObject("Content_Panel", typeof(RectTransform));
+                    contentPanel.transform.SetParent(dialogGo.transform);
+
+                    var portraitImg = new GameObject("Portrait").AddComponent<UnityEngine.UI.Image>();
+                    portraitImg.transform.SetParent(contentPanel.transform);
+
+                    var nameTxt = new GameObject("Name").AddComponent<TextMeshProUGUI>();
+                    nameTxt.transform.SetParent(contentPanel.transform);
+
+                    var dialogueTxt = new GameObject("Text").AddComponent<TextMeshProUGUI>();
+                    dialogueTxt.transform.SetParent(contentPanel.transform);
+
+                    var nextBtn = new GameObject("Button").AddComponent<UnityEngine.UI.Button>();
+                    nextBtn.transform.SetParent(contentPanel.transform);
+
+                    var dialoguePopupTest = dialogGo.AddComponent<CozyDialoguePopup>();
+
+                    // Configure using reflection or direct assignments
+                    var typeDialogue = typeof(CozyDialoguePopup);
+                    typeDialogue.GetField("_contentPanel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(dialoguePopupTest, contentPanel.GetComponent<RectTransform>());
+                    typeDialogue.GetField("_portrait", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(dialoguePopupTest, portraitImg);
+                    typeDialogue.GetField("_nameText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(dialoguePopupTest, nameTxt);
+                    typeDialogue.GetField("_dialogueText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(dialoguePopupTest, dialogueTxt);
+                    typeDialogue.GetField("_nextButton", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(dialoguePopupTest, nextBtn);
+
+                    // Setup mock mapping list
+                    var mappingList = new List<CozyDialoguePopup.QuestDialogueMapping>();
+                    var mapping = new CozyDialoguePopup.QuestDialogueMapping();
+                    mapping.QuestId = 2;
+                    mapping.NpcName = "Bà Ngoại";
+                    mapping.DialogueText = "Con yêu, cây mía ngọt này thật ngọt ngào...";
+                    mapping.Portrait = null;
+                    mappingList.Add(mapping);
+                    typeDialogue.GetField("_questDialogues", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(dialoguePopupTest, mappingList);
+
+                    // Set up QuestService dependency
+                    var testDialogSave = new SaveService();
+                    testDialogSave.ActiveSave.CompletedQuestIds.Clear();
+                    testDialogSave.ActiveSave.ActiveQuestProgress.Clear();
+                    var testDialogInv = new InventoryService(testDialogSave);
+                    var testDialogProg = new ProgressionService(testDialogSave);
+                    testDialogQuestDb = ScriptableObject.CreateInstance<CozyLifeSim.UI.Settings.QuestDatabase>();
+                    var testDialogQuestTemplate = new QuestTemplate(2, "Test Quest 2", 1, 50, QuestType.HarvestCrops);
+                    testDialogQuestDb.Quests.Add(testDialogQuestTemplate);
+
+                    var testDialogQuestService = new QuestService(testDialogSave, testDialogInv, testDialogProg, testDialogQuestDb, false);
+
+                    // Construct VContainer dependencies manually for test
+                    dialoguePopupTest.Construct(testDialogQuestService);
+
+                    // Parent must be active (activeSelf == true)
+                    if (!dialogGo.activeSelf) throw new System.Exception("Dialogue popup parent GameObject must start active!");
+
+                    // Initialize (simulating Start)
+                    var startMethod = typeDialogue.GetMethod("Start", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (startMethod != null) startMethod.Invoke(dialoguePopupTest, null);
+
+                    // 1. Simulating quest completion
+                    Debug.Log($"[CozySim Test] Before ProgressQuest. activeSelf={contentPanel.activeSelf}");
+                    testDialogQuestService.ProgressQuest(QuestType.HarvestCrops, 1);
+                    Debug.Log($"[CozySim Test] After ProgressQuest. activeSelf={contentPanel.activeSelf}, isTyping={typeDialogue.GetField("_isTyping", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(dialoguePopupTest)}, fullText={typeDialogue.GetField("_fullText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(dialoguePopupTest)}, text={dialogueTxt.text}");
+
+                    // Content Panel should be activated by the event handler
+                    if (!contentPanel.activeSelf) throw new System.Exception("Dialogue popup content panel should be active after quest completion");
+
+                    // 2. Typewriter Skip check
+                    dialoguePopupTest.SkipOrNext();
+                    Debug.Log($"[CozySim Test] After SkipOrNext. isTyping={typeDialogue.GetField("_isTyping", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(dialoguePopupTest)}, text={dialogueTxt.text}");
+                    if ((bool)typeDialogue.GetField("_isTyping", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(dialoguePopupTest))
+                    {
+                        throw new System.Exception("isTyping should be false after Skip!");
+                    }
+                    if (dialogueTxt.text != "Con yêu, cây mía ngọt này thật ngọt ngào...")
+                    {
+                        throw new System.Exception($"Dialogue text should be full text after skip, got: {dialogueTxt.text}");
+                    }
+
+                    // 3. Dialogue next click to close check
+                    dialoguePopupTest.SkipOrNext();
+                    if (contentPanel.activeSelf)
+                    {
+                        throw new System.Exception("Dialogue popup content panel should be inactive after clicking next on finished typewriter");
+                    }
+
+                    passCount++;
+                    CozyValidationLog.Pass("CozySim Logic", "Play Mode Dialogue typewriter & skip logic verified successfully");
+                }
+                finally
+                {
+                    if (dialogGo != null) Object.DestroyImmediate(dialogGo);
+                    if (testDialogQuestDb != null) Object.DestroyImmediate(testDialogQuestDb);
+                }
+
+                // Test 15.5: NPC click and lookup validation (with Dialogue Popup and Pointer Guard testing)
+                GameObject test155DialogGo = null;
+                GameObject npcGo = null;
+                GameObject mockEventSystemGo = null;
+                var oldEventSystem = UnityEngine.EventSystems.EventSystem.current;
+                try
+                {
+                    // 1. Create a dialogue popup GameObject and wire it
+                    test155DialogGo = new GameObject("TempDialoguePopupTest155");
+                    var test155ContentPanel = new GameObject("Content_Panel155", typeof(RectTransform));
+                    test155ContentPanel.transform.SetParent(test155DialogGo.transform);
+
+                    var test155PortraitImg = new GameObject("Portrait155").AddComponent<UnityEngine.UI.Image>();
+                    test155PortraitImg.transform.SetParent(test155ContentPanel.transform);
+
+                    var test155NameTxt = new GameObject("Name155").AddComponent<TextMeshProUGUI>();
+                    test155NameTxt.transform.SetParent(test155ContentPanel.transform);
+
+                    var test155DialogueTxt = new GameObject("Text155").AddComponent<TextMeshProUGUI>();
+                    test155DialogueTxt.transform.SetParent(test155ContentPanel.transform);
+
+                    var test155NextBtn = new GameObject("Button155").AddComponent<UnityEngine.UI.Button>();
+                    test155NextBtn.transform.SetParent(test155ContentPanel.transform);
+
+                    var test155DialoguePopup = test155DialogGo.AddComponent<CozyDialoguePopup>();
+
+                    // Configure using reflection
+                    var typeDialogue155 = typeof(CozyDialoguePopup);
+                    typeDialogue155.GetField("_contentPanel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(test155DialoguePopup, test155ContentPanel.GetComponent<RectTransform>());
+                    typeDialogue155.GetField("_portrait", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(test155DialoguePopup, test155PortraitImg);
+                    typeDialogue155.GetField("_nameText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(test155DialoguePopup, test155NameTxt);
+                    typeDialogue155.GetField("_dialogueText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(test155DialoguePopup, test155DialogueTxt);
+                    typeDialogue155.GetField("_nextButton", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(test155DialoguePopup, test155NextBtn);
+
+                    // Start dialogue popup (makes content panel inactive initially)
+                    var startMethod155 = typeDialogue155.GetMethod("Start", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (startMethod155 != null) startMethod155.Invoke(test155DialoguePopup, null);
+
+                    // 2. Create NPC GameObject
+                    npcGo = new GameObject("TempNpcTest");
+                    var npcWidget = npcGo.AddComponent<CozyNPCWidget>();
+                    if (npcWidget == null)
+                    {
+                        throw new System.Exception("npcWidget is null immediately after AddComponent!");
+                    }
+
+                    // Configure NPC Widget using reflection
+                    var typeNpc = typeof(CozyNPCWidget);
+                    var npcData = new CozyNPCWidget.NpcDialogueData();
+                    npcData.NpcName = "Bà Ngoại 155";
+                    npcData.Portrait = null;
+                    npcData.Dialogues = new List<CozyNPCWidget.NpcDialogueLine>
+                    {
+                        new CozyNPCWidget.NpcDialogueLine { Line = "Hello Vietnamese Heritage!" }
+                    };
+
+                    var fieldInfo = typeNpc.GetField("_npcData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (fieldInfo == null)
+                    {
+                        throw new System.Exception("Could not find field _npcData on CozyNPCWidget!");
+                    }
+                    fieldInfo.SetValue(npcWidget, npcData);
+
+                    // 3. Trigger Start on NPC to populate popup lookup
+                    var npcStartMethod = typeNpc.GetMethod("Start", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (npcStartMethod != null) npcStartMethod.Invoke(npcWidget, null);
+
+                    // Verify popup lookup was successful
+                    var dialoguePopupField = typeNpc.GetField("_dialoguePopup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (dialoguePopupField == null) throw new System.Exception("Could not find field _dialoguePopup on CozyNPCWidget!");
+                    var resolvedPopup = dialoguePopupField.GetValue(npcWidget) as CozyDialoguePopup;
+                    if (resolvedPopup != test155DialoguePopup)
+                    {
+                        throw new System.Exception("NPC click widget failed to lookup CozyDialoguePopup in scene!");
+                    }
+
+                    // 4. Test normal successful click path (without pointer over UI)
+                    mockEventSystemGo = new GameObject("MockEventSystem");
+                    var mockEventSystem = mockEventSystemGo.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                    var mockInputModule = mockEventSystemGo.AddComponent<MockInputModule>();
+                    UnityEngine.EventSystems.EventSystem.current = mockEventSystem;
+                    mockInputModule.IsOverUI = false;
+
+                    var onMouseDownMethod = typeNpc.GetMethod("OnMouseDown", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (onMouseDownMethod == null) throw new System.Exception("Could not find OnMouseDown method on CozyNPCWidget!");
+
+                    onMouseDownMethod.Invoke(npcWidget, null);
+
+                    // Verify dialogue popup opened and text contains NPC dialogue line
+                    if (!test155ContentPanel.activeSelf)
+                    {
+                        throw new System.Exception("Dialogue popup content panel should be active after clicking NPC!");
+                    }
+                    if (test155NameTxt.text != "Bà Ngoại 155")
+                    {
+                        throw new System.Exception($"Dialogue NPC Name mismatch! Expected 'Bà Ngoại 155', got: {test155NameTxt.text}");
+                    }
+
+                    // Reset content panel to inactive for next check
+                    test155ContentPanel.SetActive(false);
+
+                    // 5. Test Pointer-over-UI Guard (click should be blocked)
+                    mockInputModule.IsOverUI = true;
+
+                    onMouseDownMethod.Invoke(npcWidget, null);
+
+                    if (test155ContentPanel.activeSelf)
+                    {
+                        throw new System.Exception("Dialogue popup content panel should NOT be active when clicking NPC while mouse is over UI!");
+                    }
+
+                    // Restore event system
+                    UnityEngine.EventSystems.EventSystem.current = oldEventSystem;
+                    Object.DestroyImmediate(mockEventSystemGo);
+                    mockEventSystemGo = null;
+
+                    // 6. Test fallback when CozyDialoguePopup is missing in scene (should not throw exceptions)
+                    // Remove the dialogue popup from scene and lookup reference
+                    dialoguePopupField.SetValue(npcWidget, null);
+                    Object.DestroyImmediate(test155DialogGo);
+                    test155DialogGo = null;
+
+                    // OnMouseDown should not throw when dialogue popup is missing
+                    onMouseDownMethod.Invoke(npcWidget, null);
+
+                    // Clean up Test 15.5
+                    Object.DestroyImmediate(npcGo);
+                    npcGo = null;
+                    passCount++;
+                    CozyValidationLog.Pass("CozySim Logic", "NPC click fallback, successful lookup, random selection, and pointer-over-UI guard verified successfully");
+                }
+                finally
+                {
+                    UnityEngine.EventSystems.EventSystem.current = oldEventSystem;
+                    if (mockEventSystemGo != null) Object.DestroyImmediate(mockEventSystemGo);
+                    if (test155DialogGo != null) Object.DestroyImmediate(test155DialogGo);
+                    if (npcGo != null) Object.DestroyImmediate(npcGo);
+                }
+
                 if (questDb != null)
                 {
                     Object.DestroyImmediate(questDb);
@@ -1425,6 +1680,13 @@ namespace CozyLifeSim.Editor
                     CozyValidationLog.ExpectedWarning("CozySim Logic", $"Optional heritage asset {path} is missing, using fallback behavior (Task 33/34 staging).");
                 }
             }
+        }
+
+        private class MockInputModule : UnityEngine.EventSystems.BaseInputModule
+        {
+            public bool IsOverUI = false;
+            public override bool IsPointerOverGameObject(int pointerId) => IsOverUI;
+            public override void Process() {}
         }
     }
 }

@@ -1112,6 +1112,171 @@ namespace CozyLifeSim.Editor
                 isSceneDirty = true;
             }
 
+            // C. Setup Dialogue Popup
+            RectTransform dialoguePopupPanel = SetupPanel(canvas.transform, "Dialogue_Popup", ref isSceneDirty);
+            StretchToFill(dialoguePopupPanel, ref isSceneDirty);
+
+            // Parent MUST be active for Construct to run, but we can set its activeSelf to true.
+            if (!dialoguePopupPanel.gameObject.activeSelf)
+            {
+                dialoguePopupPanel.gameObject.SetActive(true);
+                isSceneDirty = true;
+            }
+
+            CozyDialoguePopup dialoguePopup = dialoguePopupPanel.gameObject.GetComponent<CozyDialoguePopup>();
+            if (dialoguePopup == null)
+            {
+                dialoguePopup = dialoguePopupPanel.gameObject.AddComponent<CozyDialoguePopup>();
+                isSceneDirty = true;
+            }
+
+            // Dialogue popup Content Panel (inner panel that actually gets toggled)
+            RectTransform dContentPanel = SetupPanel(dialoguePopupPanel, "Content_Panel", ref isSceneDirty);
+            SafeSetAnchor(dContentPanel, new Vector2(0.5f, 0.15f), new Vector2(0.5f, 0.15f), ref isSceneDirty);
+            SafeSetPivot(dContentPanel, new Vector2(0.5f, 0.5f), ref isSceneDirty);
+            SafeSetSizeDelta(dContentPanel, new Vector2(800f, 180f), ref isSceneDirty);
+            SafeSetAnchoredPosition(dContentPanel, Vector2.zero, ref isSceneDirty);
+            Image dContentImg = dContentPanel.gameObject.GetComponent<Image>();
+            if (dContentImg == null)
+            {
+                dContentImg = dContentPanel.gameObject.AddComponent<Image>();
+                isSceneDirty = true;
+            }
+            if (dContentImg.color != contentBg)
+            {
+                dContentImg.color = contentBg;
+                isSceneDirty = true;
+            }
+            // Ensure content panel is inactive by default (the script will activate it)
+            if (dContentPanel.gameObject.activeSelf)
+            {
+                dContentPanel.gameObject.SetActive(false);
+                isSceneDirty = true;
+            }
+
+            // Portrait inside Content Panel
+            Image dPortrait = SetupImage(dContentPanel, "Portrait", ref isSceneDirty);
+            RectTransform dPortraitRect = dPortrait.GetComponent<RectTransform>();
+            SafeSetAnchor(dPortraitRect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), ref isSceneDirty);
+            SafeSetPivot(dPortraitRect, new Vector2(0f, 0.5f), ref isSceneDirty);
+            SafeSetSizeDelta(dPortraitRect, new Vector2(140f, 140f), ref isSceneDirty);
+            SafeSetAnchoredPosition(dPortraitRect, new Vector2(20f, 0f), ref isSceneDirty);
+
+            // Name Text inside Content Panel
+            TextMeshProUGUI dNameText = SetupText(dContentPanel, "Name_Text", "NPC Name", "Header_Text", ref isSceneDirty);
+            RectTransform dNameRect = dNameText.GetComponent<RectTransform>();
+            SafeSetAnchor(dNameRect, new Vector2(0f, 1f), new Vector2(1f, 1f), ref isSceneDirty);
+            SafeSetPivot(dNameRect, new Vector2(0.5f, 1f), ref isSceneDirty);
+            SafeSetSizeDelta(dNameRect, new Vector2(-220f, 40f), ref isSceneDirty);
+            SafeSetAnchoredPosition(dNameRect, new Vector2(90f, -15f), ref isSceneDirty);
+            if (dNameText.alignment != TextAlignmentOptions.Left)
+            {
+                dNameText.alignment = TextAlignmentOptions.Left;
+                isSceneDirty = true;
+            }
+            if (dNameText.fontStyle != FontStyles.Bold)
+            {
+                dNameText.fontStyle = FontStyles.Bold;
+                isSceneDirty = true;
+            }
+            if (!Mathf.Approximately(dNameText.fontSize, 20f))
+            {
+                dNameText.fontSize = 20f;
+                isSceneDirty = true;
+                UnityEditor.EditorUtility.SetDirty(dNameText);
+            }
+
+            // Dialogue Text inside Content Panel
+            TextMeshProUGUI dDialogueText = SetupText(dContentPanel, "Dialogue_Text", "... Dialogue text running ...", "", ref isSceneDirty);
+            RectTransform dDialogueRect = dDialogueText.GetComponent<RectTransform>();
+            SafeSetAnchor(dDialogueRect, new Vector2(0f, 0f), new Vector2(1f, 1f), ref isSceneDirty);
+            SafeSetPivot(dDialogueRect, new Vector2(0.5f, 0.5f), ref isSceneDirty);
+            // Height matches bottom area under Name_Text. We offset top by -60, left/right margins
+            SafeSetSizeDelta(dDialogueRect, new Vector2(-220f, -90f), ref isSceneDirty);
+            SafeSetAnchoredPosition(dDialogueRect, new Vector2(90f, -30f), ref isSceneDirty);
+            if (dDialogueText.alignment != TextAlignmentOptions.TopLeft)
+            {
+                dDialogueText.alignment = TextAlignmentOptions.TopLeft;
+                isSceneDirty = true;
+            }
+            if (!Mathf.Approximately(dDialogueText.fontSize, 18f))
+            {
+                dDialogueText.fontSize = 18f;
+                isSceneDirty = true;
+                UnityEditor.EditorUtility.SetDirty(dDialogueText);
+            }
+
+            // Next / Skip Button inside Content Panel
+            Button dNextBtn = SetupButton(dContentPanel, "Next_Button", "Next", ref isSceneDirty);
+            RectTransform dNextRect = dNextBtn.GetComponent<RectTransform>();
+            SafeSetAnchor(dNextRect, new Vector2(1f, 0f), new Vector2(1f, 0f), ref isSceneDirty);
+            SafeSetPivot(dNextRect, new Vector2(1f, 0f), ref isSceneDirty);
+            SafeSetSizeDelta(dNextRect, new Vector2(100f, 40f), ref isSceneDirty);
+            SafeSetAnchoredPosition(dNextRect, new Vector2(-20f, 15f), ref isSceneDirty);
+            TextMeshProUGUI dNextTxt = dNextBtn.GetComponentInChildren<TextMeshProUGUI>();
+            if (!Mathf.Approximately(dNextTxt.fontSize, 16f)) { dNextTxt.fontSize = 16f; isSceneDirty = true; }
+
+            // Wire CozyDialoguePopup
+            SerializedObject soDPopup = new SerializedObject(dialoguePopup);
+            bool dPopupDirty = false;
+            SafeSetObjectReference(soDPopup.FindProperty("_contentPanel"), dContentPanel, ref dPopupDirty);
+            SafeSetObjectReference(soDPopup.FindProperty("_portrait"), dPortrait, ref dPopupDirty);
+            SafeSetObjectReference(soDPopup.FindProperty("_nameText"), dNameText, ref dPopupDirty);
+            SafeSetObjectReference(soDPopup.FindProperty("_dialogueText"), dDialogueText, ref dPopupDirty);
+            SafeSetObjectReference(soDPopup.FindProperty("_nextButton"), dNextBtn, ref dPopupDirty);
+
+            SerializedProperty dialoguesProp = soDPopup.FindProperty("_questDialogues");
+            if (dialoguesProp != null)
+            {
+                dialoguesProp.ClearArray();
+                int index = 0;
+
+                // Add mapping for Quest 2
+                dialoguesProp.InsertArrayElementAtIndex(index);
+                SerializedProperty element2 = dialoguesProp.GetArrayElementAtIndex(index);
+                element2.FindPropertyRelative("QuestId").intValue = 2;
+                element2.FindPropertyRelative("NpcName").stringValue = "Bà Ngoại";
+                element2.FindPropertyRelative("DialogueText").stringValue = "Con yêu, cây mía ngọt này chính là hương vị mùa hè ở quê mình đấy. Ngày xưa mỗi lần trời nắng nóng, bà lại ép nước mía cho mẹ con uống.";
+                element2.FindPropertyRelative("Portrait").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CozyLifeSim/Textures/Heritage/NPC_Portrait_Grandma.png");
+                index++;
+
+                // Add mapping for Quest 3
+                dialoguesProp.InsertArrayElementAtIndex(index);
+                SerializedProperty element3 = dialoguesProp.GetArrayElementAtIndex(index);
+                element3.FindPropertyRelative("QuestId").intValue = 3;
+                element3.FindPropertyRelative("NpcName").stringValue = "Bà Ngoại";
+                element3.FindPropertyRelative("DialogueText").stringValue = "Hạt gạo vàng từ bông lúa nước này làm nên bánh chưng, bánh dày thơm dẻo mỗi dịp Tết. Giữ lấy hạt gạo là giữ lấy hồn quê hương, con nhé.";
+                element3.FindPropertyRelative("Portrait").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CozyLifeSim/Textures/Heritage/NPC_Portrait_Grandma.png");
+                index++;
+
+                // Add mapping for Quest 4
+                dialoguesProp.InsertArrayElementAtIndex(index);
+                SerializedProperty element4 = dialoguesProp.GetArrayElementAtIndex(index);
+                element4.FindPropertyRelative("QuestId").intValue = 4;
+                element4.FindPropertyRelative("NpcName").stringValue = "Bà Ngoại";
+                element4.FindPropertyRelative("DialogueText").stringValue = "Chú mèo tam thể này ngoan lắm. Động vật ở quê mình luôn hiền lành và ấm áp như thế, hãy luôn yêu thương chúng nhé con.";
+                element4.FindPropertyRelative("Portrait").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CozyLifeSim/Textures/Heritage/NPC_Portrait_Grandma.png");
+                index++;
+
+                dPopupDirty = true;
+            }
+
+            if (dPopupDirty)
+            {
+                soDPopup.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
+            // Wire CozyDialoguePopup to GameLifetimeScope
+            SerializedObject soScopeUpdateDialogue = new SerializedObject(lifetimeScope);
+            bool scopeUpdateDialogueDirty = false;
+            SafeSetObjectReference(soScopeUpdateDialogue.FindProperty("_dialoguePopup"), dialoguePopup, ref scopeUpdateDialogueDirty);
+            if (scopeUpdateDialogueDirty)
+            {
+                soScopeUpdateDialogue.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
             // Wire CozySidebar
             CozySidebar sidebar = sidebarPanel.gameObject.GetComponent<CozySidebar>();
             if (sidebar == null)
@@ -1209,6 +1374,96 @@ namespace CozyLifeSim.Editor
             if (sInterDirty)
             {
                 soSInteractive.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+
+            // Setup NPC Grandma
+            GameObject npcGrandmaGo = GameObject.Find("NPC_BaNgoai");
+            if (npcGrandmaGo == null)
+            {
+                npcGrandmaGo = new GameObject("NPC_BaNgoai");
+                isSceneDirty = true;
+            }
+            Vector3 targetGrandmaPos = new Vector3(0f, -2.5f, 0f);
+            if (Vector3.Distance(npcGrandmaGo.transform.position, targetGrandmaPos) > 0.001f)
+            {
+                npcGrandmaGo.transform.position = targetGrandmaPos;
+                isSceneDirty = true;
+            }
+
+            Sprite grandmaWorldSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CozyLifeSim/Textures/Heritage/NPC_Portrait_Grandma.png");
+            if (grandmaWorldSprite == null)
+            {
+                grandmaWorldSprite = chickenSprite != null ? chickenSprite : defaultSprite;
+            }
+
+            ConfigureWorldClickVisual(npcGrandmaGo, grandmaWorldSprite, Color.white, new Vector3(1f, 1f, 1f), 1, ref isSceneDirty);
+
+            BoxCollider2D grandmaCollider = npcGrandmaGo.GetComponent<BoxCollider2D>();
+            if (grandmaCollider == null)
+            {
+                grandmaCollider = npcGrandmaGo.AddComponent<BoxCollider2D>();
+                isSceneDirty = true;
+            }
+            Vector2 expectedGrandmaCollSize = new Vector2(2f, 2f);
+            if (grandmaCollider.size != expectedGrandmaCollSize)
+            {
+                grandmaCollider.size = expectedGrandmaCollSize;
+                isSceneDirty = true;
+            }
+
+            CozyNPCWidget grandmaWidget = npcGrandmaGo.GetComponent<CozyNPCWidget>();
+            if (grandmaWidget == null)
+            {
+                grandmaWidget = npcGrandmaGo.AddComponent<CozyNPCWidget>();
+                isSceneDirty = true;
+            }
+
+            SerializedObject soGrandma = new SerializedObject(grandmaWidget);
+            bool grandmaDirty = false;
+
+            SerializedProperty npcDataProp = soGrandma.FindProperty("_npcData");
+            if (npcDataProp != null)
+            {
+                SerializedProperty nameProp = npcDataProp.FindPropertyRelative("NpcName");
+                if (nameProp.stringValue != "Bà Ngoại")
+                {
+                    nameProp.stringValue = "Bà Ngoại";
+                    grandmaDirty = true;
+                }
+
+                SerializedProperty portraitProp = npcDataProp.FindPropertyRelative("Portrait");
+                if (portraitProp.objectReferenceValue != grandmaWorldSprite)
+                {
+                    portraitProp.objectReferenceValue = grandmaWorldSprite;
+                    grandmaDirty = true;
+                }
+
+                SerializedProperty dialoguesListProp = npcDataProp.FindPropertyRelative("Dialogues");
+                if (dialoguesListProp != null)
+                {
+                    dialoguesListProp.ClearArray();
+
+                    int dIdx = 0;
+                    dialoguesListProp.InsertArrayElementAtIndex(dIdx);
+                    dialoguesListProp.GetArrayElementAtIndex(dIdx).FindPropertyRelative("Line").stringValue = "Quê mình đẹp lắm con ơi, lúa chín vàng đồng, ngọt lịm hương mía nồng nàn.";
+                    dIdx++;
+
+                    dialoguesListProp.InsertArrayElementAtIndex(dIdx);
+                    dialoguesListProp.GetArrayElementAtIndex(dIdx).FindPropertyRelative("Line").stringValue = "Hãy chăm chỉ tưới nước cho mía ngọt nhé, bông lúa nước ngoài kia cũng đang lớn dần kìa.";
+                    dIdx++;
+
+                    dialoguesListProp.InsertArrayElementAtIndex(dIdx);
+                    dialoguesListProp.GetArrayElementAtIndex(dIdx).FindPropertyRelative("Line").stringValue = "Cảm nhận từng làn gió ấm áp của làng quê, mọi thứ thật êm đềm phải không con?";
+                    dIdx++;
+
+                    grandmaDirty = true;
+                }
+            }
+
+            if (grandmaDirty)
+            {
+                soGrandma.ApplyModifiedProperties();
                 isSceneDirty = true;
             }
 
@@ -1479,6 +1734,12 @@ namespace CozyLifeSim.Editor
             {
                 tmp = panel.gameObject.AddComponent<TextMeshProUGUI>();
                 isDirty = true;
+            }
+            if (tmp.fontSize <= 0f || Mathf.Approximately(tmp.fontSize, -99f))
+            {
+                tmp.fontSize = 16f;
+                isDirty = true;
+                UnityEditor.EditorUtility.SetDirty(tmp);
             }
 
             // Fallback default font to prevent TMPro NullReferenceException during layout rendering

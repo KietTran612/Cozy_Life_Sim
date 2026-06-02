@@ -2,10 +2,10 @@
 
 ## Snapshot
 
-- **Current Phase**: Phase 3.4 Scrapbook Polish & Custom Diary Notes is completed, verified, and review-hardened.
-- **Last Completed Commit**: current local commit `docs: isolate task31 backup workflow`.
-- **Current Task**: Task 34 completed and review-hardened.
-- **Recommended Next Task**: Review Task 34, then continue with the next Phase 3 task from `docs/plans/task.md`.
+- **Current Phase**: Phase 3.5 Vietnamese Heritage Secondary Asset Generation.
+- **Last Completed Commit**: `feat: generate and import 17 primary Vietnamese Heritage and UI assets` (`e9bd894`).
+- **Current Task**: Task 35 in progress (staged & committed 17 primary assets; waiting on quota for remaining 20).
+- **Recommended Next Task**: Tiếp tục phát triển các tính năng tiếp theo (nếu có). Lưu ý: Việc tạo asset ở Task 35 không ảnh hưởng đến chức năng khác vì hệ thống tự động sử dụng cơ chế fallback khi thiếu asset; khi có quota sẽ bổ sung các asset còn lại sau.
 
 ## Latest Completed Work
 
@@ -35,8 +35,7 @@
 
 ## Current Uncommitted Scope
 
-- Modified scene/code/tests/docs: `Main.unity`, `SaveData.cs`, `IMemoryService.cs`, `SaveService.cs`, `MemoryService.cs`, `StickerBookPresenter.cs`, `StickerBook.cs`, `StickerBookPage.cs`, `CozyNPCWidget.cs`, `CozySceneSetupWindow.cs`, `CozyLifeSimValidation.cs`, `task.md`, `current-handoff.md`.
-- New scripts and Unity-generated `.meta` files: `CozyDiaryInputPopup.cs`, `CozyDiaryNote.cs`, and their `.meta` files.
+- Modified docs: `task.md`, `current-handoff.md`.
 - Existing `.agent/scratch/*` files remain out of scope.
 
 ## Next-Agent Read Order

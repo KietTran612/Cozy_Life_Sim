@@ -55,21 +55,38 @@ namespace CozyLifeSim.UI
             {
                 _bgImage.sprite = bg;
                 _bgImage.gameObject.SetActive(bg != null);
+                ConfigureSlicedBackgroundImage(_bgImage);
             }
 
             if (_typeIcon != null)
             {
                 _typeIcon.sprite = typeIcon;
                 _typeIcon.gameObject.SetActive(typeIcon != null);
+                ConfigureSimpleArtImage(_typeIcon);
             }
 
             if (_stampOverlay != null)
             {
                 _stampOverlay.sprite = stamp;
                 _stampOverlay.gameObject.SetActive(quest.IsCompleted && stamp != null);
+                ConfigureSimpleArtImage(_stampOverlay);
             }
 
             UpdateRaycastTargets();
+        }
+
+        private static void ConfigureSimpleArtImage(Image image)
+        {
+            if (image == null) return;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
+        }
+
+        private static void ConfigureSlicedBackgroundImage(Image image)
+        {
+            if (image == null) return;
+            image.type = Image.Type.Sliced;
+            image.preserveAspect = false;
         }
     }
 }

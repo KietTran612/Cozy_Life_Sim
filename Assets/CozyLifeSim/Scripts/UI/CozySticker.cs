@@ -69,6 +69,7 @@ namespace CozyLifeSim.UI
                 if (targetImg != null)
                 {
                     Style.CozyProceduralUI.ApplyFlatFallback(targetImg, tint);
+                    ConfigureSimpleArtImage(targetImg);
                 }
                 if (_shadowOffset != null)
                 {
@@ -76,6 +77,7 @@ namespace CozyLifeSim.UI
                     if (shadowImg != null)
                     {
                         Style.CozyProceduralUI.ApplyFlatFallback(shadowImg, new Color(0f, 0f, 0f, 0.25f));
+                        ConfigureSimpleArtImage(shadowImg);
                     }
                 }
             }
@@ -85,6 +87,7 @@ namespace CozyLifeSim.UI
                 {
                     targetImg.sprite = mainSprite;
                     targetImg.color = Color.white;
+                    ConfigureSimpleArtImage(targetImg);
                     var outline = targetImg.GetComponent<Outline>();
                     if (outline != null) Destroy(outline);
                     var shadow = targetImg.GetComponent<Shadow>();
@@ -98,6 +101,7 @@ namespace CozyLifeSim.UI
                     {
                         shadowImg.sprite = shadowSprite != null ? shadowSprite : mainSprite;
                         shadowImg.color = new Color(0f, 0f, 0f, 0.3f);
+                        ConfigureSimpleArtImage(shadowImg);
                         var shadowComp = shadowImg.GetComponent<Shadow>();
                         if (shadowComp != null) Destroy(shadowComp);
                         var outlineComp = shadowImg.GetComponent<Outline>();
@@ -356,6 +360,13 @@ namespace CozyLifeSim.UI
         {
             _scaleTween?.Kill();
             _shadowTween?.Kill();
+        }
+
+        private static void ConfigureSimpleArtImage(Image image)
+        {
+            if (image == null) return;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
         }
     }
 }

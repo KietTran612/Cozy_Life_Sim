@@ -84,11 +84,13 @@ namespace CozyLifeSim.UI
                 _backgroundImage.sprite = _backgroundStyles[clamped];
                 _backgroundImage.color = Color.white;
                 _backgroundImage.type = Image.Type.Sliced;
+                _backgroundImage.preserveAspect = false;
             }
             else
             {
                 _backgroundImage.sprite = null;
                 _backgroundImage.type = Image.Type.Simple;
+                _backgroundImage.preserveAspect = false;
                 Color[] fallbackColors =
                 {
                     new Color(0.98f, 0.92f, 0.76f, 1f),

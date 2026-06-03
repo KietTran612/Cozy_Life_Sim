@@ -71,11 +71,13 @@ namespace CozyLifeSim.UI
                 {
                     Color tint = Style.CozyProceduralUI.GetColorForAnimal(_animalId);
                     Style.CozyProceduralUI.ApplyFlatFallback(_animalVisual, tint);
+                    ConfigureSimpleArtImage(_animalVisual);
                 }
                 else if (_animalTemplate.Sprite != null)
                 {
                     _animalVisual.sprite = _animalTemplate.Sprite;
                     _animalVisual.color = Color.white;
+                    ConfigureSimpleArtImage(_animalVisual);
                     var outline = _animalVisual.GetComponent<Outline>();
                     if (outline != null) Destroy(outline);
                     var shadow = _animalVisual.GetComponent<Shadow>();
@@ -150,13 +152,14 @@ namespace CozyLifeSim.UI
             heart.localScale = Vector3.zero;
 
             // Apply custom heart pop sprite from database if set
-            if (_animalTemplate != null && _animalTemplate.HeartFeedbackSprite != null)
+            var img = heart.GetComponent<Image>();
+            if (img != null)
             {
-                var img = heart.GetComponent<Image>();
-                if (img != null)
+                if (_animalTemplate != null && _animalTemplate.HeartFeedbackSprite != null)
                 {
                     img.sprite = _animalTemplate.HeartFeedbackSprite;
                 }
+                ConfigureSimpleArtImage(img);
             }
 
             if (!heart.TryGetComponent(out CanvasGroup canvasGroup))
@@ -225,6 +228,13 @@ namespace CozyLifeSim.UI
             {
                 _interactionButton.onClick.RemoveListener(PetAnimal);
             }
+        }
+
+        private static void ConfigureSimpleArtImage(Image image)
+        {
+            if (image == null) return;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
         }
     }
 }

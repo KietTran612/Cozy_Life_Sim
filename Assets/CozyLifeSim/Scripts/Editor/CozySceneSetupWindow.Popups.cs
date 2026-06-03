@@ -79,16 +79,7 @@ namespace CozyLifeSim.Editor
                 qContentImg.sprite = targetQContentSprite;
                 isSceneDirty = true;
             }
-            if (qContentImg.type != Image.Type.Sliced)
-            {
-                qContentImg.type = Image.Type.Sliced;
-                isSceneDirty = true;
-            }
-            if (qContentImg.color != Color.white)
-            {
-                qContentImg.color = Color.white;
-                isSceneDirty = true;
-            }
+            ConfigureSlicedImage(qContentImg, ref isSceneDirty);
 
             Button qCloseBtn = SetupButton(qContentPanel, "Close_Button", "X", ref isSceneDirty);
             RectTransform qCloseRect = qCloseBtn.GetComponent<RectTransform>();
@@ -227,16 +218,7 @@ namespace CozyLifeSim.Editor
                 sContentImg.sprite = targetSContentSprite;
                 isSceneDirty = true;
             }
-            if (sContentImg.type != Image.Type.Sliced)
-            {
-                sContentImg.type = Image.Type.Sliced;
-                isSceneDirty = true;
-            }
-            if (sContentImg.color != Color.white)
-            {
-                sContentImg.color = Color.white;
-                isSceneDirty = true;
-            }
+            ConfigureSlicedImage(sContentImg, ref isSceneDirty);
 
             Button sCloseBtn = SetupButton(sContentPanel, "Close_Button", "X", ref isSceneDirty);
             RectTransform sCloseRect = sCloseBtn.GetComponent<RectTransform>();
@@ -400,6 +382,7 @@ namespace CozyLifeSim.Editor
             }
 
             Image itemIcon = SetupImage(shopItemTemplate, "Item_Icon", ref isSceneDirty);
+            ConfigureSimpleImage(itemIcon, true, ref isSceneDirty);
             SafeSetSizeDelta(itemIcon.GetComponent<RectTransform>(), new Vector2(50f, 50f), ref isSceneDirty);
             TextMeshProUGUI itemName = SetupText(shopItemTemplate, "Item_Name", "Product Name", "", ref isSceneDirty);
             if (!Mathf.Approximately(itemName.fontSize, 14f)) { itemName.fontSize = 14f; isSceneDirty = true; }
@@ -521,16 +504,7 @@ namespace CozyLifeSim.Editor
                 diaryContentImg.sprite = targetDiaryContentSprite;
                 isSceneDirty = true;
             }
-            if (diaryContentImg.type != Image.Type.Sliced)
-            {
-                diaryContentImg.type = Image.Type.Sliced;
-                isSceneDirty = true;
-            }
-            if (diaryContentImg.color != Color.white)
-            {
-                diaryContentImg.color = Color.white;
-                isSceneDirty = true;
-            }
+            ConfigureSlicedImage(diaryContentImg, ref isSceneDirty);
 
             TextMeshProUGUI diaryTitle = SetupText(diaryContentPanel, "Title_Text", "DIARY NOTE", "Header_Text", ref isSceneDirty);
             RectTransform diaryTitleRect = diaryTitle.GetComponent<RectTransform>();
@@ -671,16 +645,7 @@ namespace CozyLifeSim.Editor
                 dContentImg.sprite = targetDContentSprite;
                 isSceneDirty = true;
             }
-            if (dContentImg.type != Image.Type.Sliced)
-            {
-                dContentImg.type = Image.Type.Sliced;
-                isSceneDirty = true;
-            }
-            if (dContentImg.color != Color.white)
-            {
-                dContentImg.color = Color.white;
-                isSceneDirty = true;
-            }
+            ConfigureSlicedImage(dContentImg, ref isSceneDirty);
             // Ensure content panel is inactive by default (the script will activate it)
             if (dContentPanel.gameObject.activeSelf)
             {
@@ -690,6 +655,7 @@ namespace CozyLifeSim.Editor
 
             // Portrait inside Content Panel
             Image dPortrait = SetupImage(dContentPanel, "Portrait", ref isSceneDirty);
+            ConfigureSimpleImage(dPortrait, true, ref isSceneDirty);
             RectTransform dPortraitRect = dPortrait.GetComponent<RectTransform>();
             SafeSetAnchor(dPortraitRect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), ref isSceneDirty);
             SafeSetPivot(dPortraitRect, new Vector2(0f, 0.5f), ref isSceneDirty);
@@ -767,16 +733,7 @@ namespace CozyLifeSim.Editor
                 dIndicatorImg.sprite = dIndicatorSprite;
                 isSceneDirty = true;
             }
-            if (dIndicatorImg.type != Image.Type.Simple)
-            {
-                dIndicatorImg.type = Image.Type.Simple;
-                isSceneDirty = true;
-            }
-            if (dIndicatorImg.color != Color.white)
-            {
-                dIndicatorImg.color = Color.white;
-                isSceneDirty = true;
-            }
+            ConfigureSimpleImage(dIndicatorImg, true, ref isSceneDirty);
 
             // Wire CozyDialoguePopup
             SerializedObject soDPopup = new SerializedObject(dialoguePopup);

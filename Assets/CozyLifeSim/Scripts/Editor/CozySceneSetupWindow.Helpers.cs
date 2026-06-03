@@ -366,16 +366,7 @@ namespace CozyLifeSim.Editor
                     btnImg.sprite = closeSprite;
                     isDirty = true;
                 }
-                if (btnImg.type != Image.Type.Simple)
-                {
-                    btnImg.type = Image.Type.Simple;
-                    isDirty = true;
-                }
-                if (btnImg.color != Color.white)
-                {
-                    btnImg.color = Color.white;
-                    isDirty = true;
-                }
+                ConfigureSimpleImage(btnImg, true, ref isDirty);
             }
             TextMeshProUGUI label = btn.GetComponentInChildren<TextMeshProUGUI>(true);
             if (label != null && label.gameObject.activeSelf)
@@ -400,16 +391,7 @@ namespace CozyLifeSim.Editor
                 img.sprite = iconSprite;
                 isDirty = true;
             }
-            if (img.type != Image.Type.Simple)
-            {
-                img.type = Image.Type.Simple;
-                isDirty = true;
-            }
-            if (img.color != Color.white)
-            {
-                img.color = Color.white;
-                isDirty = true;
-            }
+            ConfigureSimpleImage(img, true, ref isDirty);
             SafeSetAnchor(iconPanel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), ref isDirty);
             SafeSetPivot(iconPanel, new Vector2(0.5f, 0.5f), ref isDirty);
             SafeSetSizeDelta(iconPanel, new Vector2(40f, 40f), ref isDirty);
@@ -419,6 +401,78 @@ namespace CozyLifeSim.Editor
             if (label != null && label.gameObject.activeSelf)
             {
                 label.gameObject.SetActive(false);
+                isDirty = true;
+            }
+        }
+
+        private static void ConfigureSimpleImage(Image image, bool preserveAspect, ref bool isDirty)
+        {
+            if (image == null) return;
+
+            if (image.type != Image.Type.Simple)
+            {
+                image.type = Image.Type.Simple;
+                isDirty = true;
+            }
+
+            if (image.preserveAspect != preserveAspect)
+            {
+                image.preserveAspect = preserveAspect;
+                isDirty = true;
+            }
+
+            if (image.color != Color.white)
+            {
+                image.color = Color.white;
+                isDirty = true;
+            }
+        }
+
+        private static void ConfigureSlicedImage(Image image, ref bool isDirty)
+        {
+            if (image == null) return;
+
+            if (image.type != Image.Type.Sliced)
+            {
+                image.type = Image.Type.Sliced;
+                isDirty = true;
+            }
+
+            if (image.preserveAspect)
+            {
+                image.preserveAspect = false;
+                isDirty = true;
+            }
+
+            if (image.color != Color.white)
+            {
+                image.color = Color.white;
+                isDirty = true;
+            }
+        }
+
+        private static void ConfigureFixedVisualRect(RectTransform rect, Vector2 anchor, Vector2 size, Vector2 position, ref bool isDirty)
+        {
+            if (rect == null) return;
+
+            SafeSetAnchor(rect, anchor, anchor, ref isDirty);
+            SafeSetPivot(rect, new Vector2(0.5f, 0.5f), ref isDirty);
+            SafeSetSizeDelta(rect, size, ref isDirty);
+            SafeSetAnchoredPosition(rect, position, ref isDirty);
+        }
+
+        private static void FitSpriteRendererToHeight(SpriteRenderer renderer, float targetHeight, ref bool isDirty)
+        {
+            if (renderer == null || renderer.sprite == null || targetHeight <= 0f) return;
+
+            float spriteHeight = renderer.sprite.bounds.size.y;
+            if (spriteHeight <= 0f) return;
+
+            float scale = targetHeight / spriteHeight;
+            Vector3 targetScale = new Vector3(scale, scale, 1f);
+            if (Vector3.Distance(renderer.transform.localScale, targetScale) > 0.001f)
+            {
+                renderer.transform.localScale = targetScale;
                 isDirty = true;
             }
         }
@@ -436,10 +490,12 @@ namespace CozyLifeSim.Editor
             }
 
             Image bgImg = SetupImage(templateRect, "Bg_Image", ref isDirty);
+            ConfigureSlicedImage(bgImg, ref isDirty);
             RectTransform bgRect = bgImg.GetComponent<RectTransform>();
             StretchToFill(bgRect, ref isDirty);
 
             Image typeIconImg = SetupImage(templateRect, "Type_Icon", ref isDirty);
+            ConfigureSimpleImage(typeIconImg, true, ref isDirty);
             RectTransform typeIconRect = typeIconImg.GetComponent<RectTransform>();
             SafeSetAnchor(typeIconRect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), ref isDirty);
             SafeSetPivot(typeIconRect, new Vector2(0f, 0.5f), ref isDirty);
@@ -464,6 +520,7 @@ namespace CozyLifeSim.Editor
             }
 
             Image stampOverlayImg = SetupImage(templateRect, "Stamp_Overlay", ref isDirty);
+            ConfigureSimpleImage(stampOverlayImg, true, ref isDirty);
             RectTransform stampOverlayRect = stampOverlayImg.GetComponent<RectTransform>();
             SafeSetAnchor(stampOverlayRect, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), ref isDirty);
             SafeSetPivot(stampOverlayRect, new Vector2(1f, 0.5f), ref isDirty);

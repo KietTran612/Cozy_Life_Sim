@@ -97,6 +97,7 @@ namespace CozyLifeSim.UI
             {
                 _portrait.gameObject.SetActive(portrait != null);
                 _portrait.sprite = portrait;
+                ConfigureSimpleArtImage(_portrait);
             }
 
             _dialogueText.text = "";
@@ -209,6 +210,13 @@ namespace CozyLifeSim.UI
             {
                 _dialogueIndicator.transform.DOKill();
             }
+        }
+
+        private static void ConfigureSimpleArtImage(Image image)
+        {
+            if (image == null) return;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
         }
     }
 }

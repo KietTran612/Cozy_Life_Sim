@@ -2,20 +2,44 @@
 
 ## Snapshot
 
-- **Current Phase**: Task 41: Visual Layout Validator & Asset Fitting Planned.
+- **Current Phase**: Task 41: Visual Layout Validator & Asset Fitting in progress.
 - **Last Completed Commit**: `feat: integrate final 3 Vietnamese Heritage assets and complete Task 35` (`7626c44`).
-- **Current Task**: Task 41.1 Visual Validator Foundation planned. Implementation has not started.
-- **Planned Next Feature**: Visual layout validator, explicit asset fitting, runtime dynamic image policy, popup image coverage, and snapshot review.
-- **Recommended Next Task**: Start Task 41.1 from `docs/plans/2026-06-03-visual-layout-validator.md`.
+- **Current Task**: Task 41.2, 41.3, and 41.4 completed. Task 41.5 Snapshot Utility & Final Aggregate is next.
+- **Planned Next Feature**: Implement visual snapshot utility, run final aggregate visual validation, verify idempotency, and update the plan tracker.
+- **Recommended Next Task**: Start Task 41.5 from `docs/plans/2026-06-03-visual-layout-validator.md`.
 
 ## Latest Completed Work
+
+ - **Task 41.2: Home Screen Visual Pass**
+   - Verified that the scene setup successfully generates and scales Ba Ngoai, Quest Board, and Shop Stall in the world space using height-fitting scaling.
+   - Verified that home UI images, panel layouts, HUD icons, and inventory trays conform to the target size/aspect policies.
+   - Confirmed camera orthographic rendering and viewport bounds, with 0 failures under the 3 home clusters.
+   - Performed camera-level visual snapshot verification via Unity MCP `screenshot_game`.
+
+ - **Task 41.3: Popup Visual Pass**
+   - Configured sliced layout framing for Content Panels in `Quest_Popup`, `Shop_Popup`, and `Diary_Input_Popup` to keep wood frames stretchable without enforcing aspect ratio.
+   - Applied simple/preserveAspect type policies to close buttons, quest completed stamps, quest type icons, and shop item icons.
+   - Configured `Dialogue_Popup` bubble as sliced and portrait/typewriter indicator as simple/preserveAspect.
+   - Implemented automated visual checks under `ValidateQuestHudAndPopup`, `ValidateShopPopup`, `ValidateDialoguePopup`, and `ValidateDiaryAndScrapbook` in `CozyLifeSimSceneGameplayValidation.UI.cs`. All checks pass with 0 errors.
+
+ - **Task 41.4: Runtime Dynamic Sprite Policy**
+   - Hardened sprite assignments in runtime UI widgets to apply the target aspect policy immediately after changing images at runtime.
+   - Updated `CropWidget.cs` (crop visual), `AnimalWidget.cs` (animal visual & instantiated hearts), `CozySticker.cs` (sticker visual & shadow), `CozyQuestItemWidget.cs` (sliced background, simple icons/stamps), `ShopItemWidget.cs` (item icons), `CozyDialoguePopup.cs` (portrait), `StickerBookPage.cs` (sliced page background), and `CozyJuiceUtility.cs` (coin fly template).
+   - Re-verified with the scene validation suite (395 passes, 0 failures) and ensured exactly 0 git diffs on consecutive silent setups.
+
+ - **Task 41.1: Visual Validator Foundation**
+   - Added reusable UI image policy helpers (`ConfigureSimpleImage`, `ConfigureSlicedImage`), `RectTransform` size helper (`ConfigureFixedVisualRect`), and world sprite height fitting helper (`FitSpriteRendererToHeight`) in `CozySceneSetupWindow.Helpers.cs`.
+   - Updated existing `ConfigureCloseButton` and `SetupButtonIcon` methods in `CozySceneSetupWindow.Helpers.cs` to leverage `ConfigureSimpleImage`.
+   - Implemented `ValidateVisualLayout` entry point and calling structure for all 8 clusters in `CozyLifeSimSceneGameplayValidation.cs` and `CozyLifeSimSceneGameplayValidation.UI.cs`.
+   - Added class-level scene query helpers (`FindSceneRectTransform`, `FindSceneImage`) and validation helper methods (`ValidateImagePolicy`, `ValidateRectSizeRange`, `ValidateWithinCanvas`, `ValidateNoOverlap`, `ValidateWorldSpriteBounds`) in `CozyLifeSimSceneGameplayValidation.UI.cs`.
+   - Addressed P3 review feedback: added a zero/collapsed size area guard (< 0.001f) in `ValidateNoOverlap` to avoid Infinity/NaN division and report collapsed layouts as validation errors.
+   - Setup 8 skeleton test validation routes that return successful baseline ticks (incrementing active validations to 336 passes).
 
  - **Task 41: Visual Layout Validator & Asset Fitting**
    - Created plan `docs/plans/2026-06-03-visual-layout-validator.md`.
    - Scope covers all image-backed UI/world/runtime-spawned elements, including HUD, sidebar, gameplay panels, sticker book, inventory tray, scrapbook/diary, quest HUD, quest popup, shop popup, dialogue popup, diary input popup, world objects, dynamic widget sprite assignments, explicit size/aspect policy, visual layout validation, and snapshot review.
    - Plan now requires cluster-by-cluster visual tests: home shell, home gameplay widgets, world/camera, quest HUD/popup, shop popup, dialogue popup, diary/scrapbook, then final aggregate visual pass.
    - Task tracker now splits the umbrella plan into Task 41.1 through Task 41.5: foundation, home screen visual pass, popup visual pass, runtime dynamic sprite policy, and final snapshot/aggregate/handoff.
-   - No code/runtime/editor implementation has started yet.
 
  - **Task 40: Address Review Feedback for Task 38**
    - Corrected border policy rulesets for UI panels/buttons (changed wood frame and dialogue bubble borders to 128px, and tab and quest item buttons to 64px) across `CozySceneSetupWindow.Helpers.cs` and `CozyLifeSimSceneGameplayValidation.Textures.cs`.
@@ -35,9 +59,9 @@
 
 ## Latest Verification
 
-- Task 41 plan creation: complete.
-- Unity validation for this docs-only planning update: not run - not relevant to this change.
-- Previous Task 40 verification remains the latest implementation verification: compile/import clean, logic PASS, scene validation PASS, Play Mode runtime PASS, and idempotency verified.
+- Unity compile/import: Complete, compiling cleanly with no errors.
+- `Tools/CozySim/Run Scene Gameplay Loop Validation`: PASS, **395 passed, 0 failed, 1 expected warnings**.
+- Idempotency check: Verified **exactly 0 new changes** on consecutive setup scene generation runs.
 
 ## Current Uncommitted Scope
 
@@ -60,6 +84,12 @@
   - `Assets/CozyLifeSim/Scripts/UI/ProgressionHudWidget.cs`
   - `Assets/CozyLifeSim/Scripts/UI/QuestHudWidget.cs`
   - `Assets/CozyLifeSim/Scripts/UI/QuestPopup.cs`
+  - `Assets/CozyLifeSim/Scripts/UI/AnimalWidget.cs`
+  - `Assets/CozyLifeSim/Scripts/UI/CozyJuiceUtility.cs`
+  - `Assets/CozyLifeSim/Scripts/UI/CozyQuestItemWidget.cs`
+  - `Assets/CozyLifeSim/Scripts/UI/CozySticker.cs`
+  - `Assets/CozyLifeSim/Scripts/UI/ShopItemWidget.cs`
+  - `Assets/CozyLifeSim/Scripts/UI/StickerBookPage.cs`
   - `Assets/CozyLifeSim/Settings/AnimalDatabase.asset`
   - `Assets/CozyLifeSim/Settings/CropDatabase.asset`
   - `Assets/CozyLifeSim/Settings/StickerDatabase.asset`

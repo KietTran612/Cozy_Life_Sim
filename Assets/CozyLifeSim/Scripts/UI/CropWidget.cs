@@ -314,11 +314,13 @@ namespace CozyLifeSim.UI
                         else if (_state.GrowthStage == 1) tint = new Color(0.6f, 0.85f, 0.4f); // Sprout green
 
                         Style.CozyProceduralUI.ApplyFlatFallback(_cropVisual, tint);
+                        ConfigureSimpleArtImage(_cropVisual);
                     }
                     else
                     {
                         _cropVisual.sprite = spriteToUse;
                         _cropVisual.color = Color.white;
+                        ConfigureSimpleArtImage(_cropVisual);
                         var outline = _cropVisual.GetComponent<Outline>();
                         if (outline != null) Destroy(outline);
                         var shadow = _cropVisual.GetComponent<Shadow>();
@@ -404,6 +406,13 @@ namespace CozyLifeSim.UI
             {
                 _harvestButton.onClick.RemoveListener(HarvestCrop);
             }
+        }
+
+        private static void ConfigureSimpleArtImage(Image image)
+        {
+            if (image == null) return;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
         }
     }
 }

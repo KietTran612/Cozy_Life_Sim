@@ -56,6 +56,7 @@ namespace CozyLifeSim.Editor
             ValidateStartupLoadingOverlay(errors, passes);
             ValidateLandscapeLayout(errors, passes);
             ValidateUISpriteAssignments(errors, passes);
+            ValidateVisualLayout(errors, warnings, passes);
             ValidateTextureImporterMemorySettings(errors, passes);
 
             PrintResults(passes, warnings, errors);

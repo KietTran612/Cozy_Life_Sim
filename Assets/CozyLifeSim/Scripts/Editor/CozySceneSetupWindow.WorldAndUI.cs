@@ -30,7 +30,8 @@ namespace CozyLifeSim.Editor
                 grandmaWorldSprite = chickenSprite != null ? chickenSprite : defaultSprite;
             }
 
-            ConfigureWorldClickVisual(npcGrandmaGo, grandmaWorldSprite, Color.white, new Vector3(1f, 1f, 1f), 1, ref isSceneDirty);
+            ConfigureWorldClickVisual(npcGrandmaGo, grandmaWorldSprite, Color.white, Vector3.zero, 1, ref isSceneDirty);
+            FitSpriteRendererToHeight(npcGrandmaGo.GetComponent<SpriteRenderer>(), 3.4f, ref isSceneDirty);
 
             BoxCollider2D grandmaCollider = npcGrandmaGo.GetComponent<BoxCollider2D>();
             if (grandmaCollider == null)
@@ -122,7 +123,8 @@ namespace CozyLifeSim.Editor
                 questBoardGo.transform.position = targetQBoardPos;
                 isSceneDirty = true;
             }
-            ConfigureWorldClickVisual(questBoardGo, heartSprite != null ? heartSprite : defaultSprite, new Color(1f, 0.82f, 0.2f, 1f), new Vector3(1.2f, 1.2f, 1f), 1, ref isSceneDirty);
+            ConfigureWorldClickVisual(questBoardGo, heartSprite != null ? heartSprite : defaultSprite, new Color(1f, 0.82f, 0.2f, 1f), Vector3.zero, 1, ref isSceneDirty);
+            FitSpriteRendererToHeight(questBoardGo.GetComponent<SpriteRenderer>(), 1.5f, ref isSceneDirty);
             BoxCollider2D qCollider = questBoardGo.GetComponent<BoxCollider2D>();
             if (qCollider == null)
             {
@@ -162,7 +164,8 @@ namespace CozyLifeSim.Editor
                 shopStallGo.transform.position = targetSStallPos;
                 isSceneDirty = true;
             }
-            ConfigureWorldClickVisual(shopStallGo, seedSprite != null ? seedSprite : defaultSprite, new Color(0.45f, 1f, 0.58f, 1f), new Vector3(1.3f, 1.3f, 1f), 1, ref isSceneDirty);
+            ConfigureWorldClickVisual(shopStallGo, seedSprite != null ? seedSprite : defaultSprite, new Color(0.45f, 1f, 0.58f, 1f), Vector3.zero, 1, ref isSceneDirty);
+            FitSpriteRendererToHeight(shopStallGo.GetComponent<SpriteRenderer>(), 1.7f, ref isSceneDirty);
             BoxCollider2D sCollider = shopStallGo.GetComponent<BoxCollider2D>();
             if (sCollider == null)
             {
@@ -221,7 +224,7 @@ namespace CozyLifeSim.Editor
                 isDirty = true;
             }
 
-            if (Vector3.Distance(target.transform.localScale, scale) > 0.001f)
+            if (scale != Vector3.zero && Vector3.Distance(target.transform.localScale, scale) > 0.001f)
             {
                 target.transform.localScale = scale;
                 isDirty = true;
@@ -315,6 +318,7 @@ namespace CozyLifeSim.Editor
                 coinIconImg.sprite = coinSprite;
                 isSceneDirty = true;
             }
+            ConfigureSimpleImage(coinIconImg, true, ref isSceneDirty);
 
             TextMeshProUGUI seedsText = SetupText(headerPanel, "Seeds_Text", "5", "", ref isSceneDirty);
             RectTransform seedsRect = seedsText.GetComponent<RectTransform>();
@@ -340,6 +344,7 @@ namespace CozyLifeSim.Editor
                 seedsIconImg.sprite = seedsSprite;
                 isSceneDirty = true;
             }
+            ConfigureSimpleImage(seedsIconImg, true, ref isSceneDirty);
 
             TextMeshProUGUI cropsText = SetupText(headerPanel, "Crops_Text", "0", "", ref isSceneDirty);
             RectTransform cropsRect = cropsText.GetComponent<RectTransform>();
@@ -365,6 +370,7 @@ namespace CozyLifeSim.Editor
                 cropsIconImg.sprite = cropsSprite;
                 isSceneDirty = true;
             }
+            ConfigureSimpleImage(cropsIconImg, true, ref isSceneDirty);
 
             // Right HUD element: Autosave Icon
             RectTransform autosaveIconRect = SetupPanel(headerPanel, "Autosave_Icon", ref isSceneDirty);
@@ -396,16 +402,7 @@ namespace CozyLifeSim.Editor
                 autosaveIconImg.sprite = autosaveSprite;
                 isSceneDirty = true;
             }
-            if (autosaveIconImg.type != Image.Type.Simple)
-            {
-                autosaveIconImg.type = Image.Type.Simple;
-                isSceneDirty = true;
-            }
-            if (autosaveIconImg.color != Color.white)
-            {
-                autosaveIconImg.color = Color.white;
-                isSceneDirty = true;
-            }
+            ConfigureSimpleImage(autosaveIconImg, true, ref isSceneDirty);
         }
 
         private void ConfigureSidebarPanel(
@@ -434,16 +431,7 @@ namespace CozyLifeSim.Editor
                 sidebarImg.sprite = sidebarWoodSprite;
                 isSceneDirty = true;
             }
-            if (sidebarImg.type != Image.Type.Sliced)
-            {
-                sidebarImg.type = Image.Type.Sliced;
-                isSceneDirty = true;
-            }
-            if (sidebarImg.color != Color.white)
-            {
-                sidebarImg.color = Color.white;
-                isSceneDirty = true;
-            }
+            ConfigureSlicedImage(sidebarImg, ref isSceneDirty);
             if (!sidebarImg.raycastTarget)
             {
                 sidebarImg.raycastTarget = true;
@@ -483,8 +471,7 @@ namespace CozyLifeSim.Editor
             {
                 var tabBtnBg = LoadSprite("UI_Tab_Button_Bg");
                 if (questBtnImg.sprite != tabBtnBg) { questBtnImg.sprite = tabBtnBg; isSceneDirty = true; }
-                if (questBtnImg.type != Image.Type.Sliced) { questBtnImg.type = Image.Type.Sliced; isSceneDirty = true; }
-                if (questBtnImg.color != Color.white) { questBtnImg.color = Color.white; isSceneDirty = true; }
+                ConfigureSlicedImage(questBtnImg, ref isSceneDirty);
             }
             SetupButtonIcon(questBtn, "Quest_Icon", LoadSprite("UI_Icon_Quest"), ref isSceneDirty);
 
@@ -495,8 +482,7 @@ namespace CozyLifeSim.Editor
             {
                 var tabBtnBg = LoadSprite("UI_Tab_Button_Bg");
                 if (shopBtnImg.sprite != tabBtnBg) { shopBtnImg.sprite = tabBtnBg; isSceneDirty = true; }
-                if (shopBtnImg.type != Image.Type.Sliced) { shopBtnImg.type = Image.Type.Sliced; isSceneDirty = true; }
-                if (shopBtnImg.color != Color.white) { shopBtnImg.color = Color.white; isSceneDirty = true; }
+                ConfigureSlicedImage(shopBtnImg, ref isSceneDirty);
             }
             SetupButtonIcon(shopBtn, "Shop_Icon", LoadSprite("UI_Icon_Shop"), ref isSceneDirty);
 
@@ -538,10 +524,6 @@ namespace CozyLifeSim.Editor
             if (levelText.alignment != TextAlignmentOptions.Left) { levelText.alignment = TextAlignmentOptions.Left; isSceneDirty = true; }
 
             RectTransform levelStarRect = SetupPanel(levelText.transform, "Level_Star_Icon", ref isSceneDirty);
-            SafeSetAnchor(levelStarRect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), ref isSceneDirty);
-            SafeSetPivot(levelStarRect, new Vector2(1f, 0.5f), ref isSceneDirty);
-            SafeSetSizeDelta(levelStarRect, new Vector2(25f, 25f), ref isSceneDirty);
-            SafeSetAnchoredPosition(levelStarRect, new Vector2(-5f, 0f), ref isSceneDirty);
             Image levelStarImg = levelStarRect.gameObject.GetComponent<Image>();
             if (levelStarImg == null)
             {
@@ -553,6 +535,11 @@ namespace CozyLifeSim.Editor
                 levelStarImg.sprite = starSprite;
                 isSceneDirty = true;
             }
+            ConfigureSimpleImage(levelStarImg, true, ref isSceneDirty);
+            SafeSetAnchor(levelStarRect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), ref isSceneDirty);
+            SafeSetPivot(levelStarRect, new Vector2(1f, 0.5f), ref isSceneDirty);
+            SafeSetSizeDelta(levelStarRect, new Vector2(25f, 25f), ref isSceneDirty);
+            SafeSetAnchoredPosition(levelStarRect, new Vector2(-5f, 0f), ref isSceneDirty);
 
             // ProgressionHUD XP slider bar elements
             RectTransform xpBarContainer = SetupPanel(progressionHud, "XP_Bar_Container", ref isSceneDirty);

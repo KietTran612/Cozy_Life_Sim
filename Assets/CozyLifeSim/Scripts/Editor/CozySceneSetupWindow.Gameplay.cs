@@ -28,6 +28,9 @@ namespace CozyLifeSim.Editor
             }
 
             Image cropVisual = SetupImage(farmPlot, "Crop_Visual", ref isSceneDirty);
+            ConfigureSimpleImage(cropVisual, true, ref isSceneDirty);
+            ConfigureFixedVisualRect(cropVisual.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(150f, 150f), Vector2.zero, ref isSceneDirty);
+
             TextMeshProUGUI timerText = SetupText(farmPlot, "Timer_Text", "EMPTY SOIL", "", ref isSceneDirty);
             Button plantBtn = SetupButton(farmPlot, "Plant_Button", "Plant Seed", ref isSceneDirty);
             Button waterBtn = SetupButton(farmPlot, "Water_Button", "Water", ref isSceneDirty);
@@ -43,10 +46,6 @@ namespace CozyLifeSim.Editor
 
             // Create Water_Status_Icon child
             RectTransform waterStatusIcon = SetupPanel(farmPlot, "Water_Status_Icon", ref isSceneDirty);
-            SafeSetAnchor(waterStatusIcon, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), ref isSceneDirty);
-            SafeSetPivot(waterStatusIcon, new Vector2(0.5f, 0.5f), ref isSceneDirty);
-            SafeSetSizeDelta(waterStatusIcon, new Vector2(30f, 30f), ref isSceneDirty);
-            SafeSetAnchoredPosition(waterStatusIcon, new Vector2(0f, 60f), ref isSceneDirty);
             LayoutElement waterStatusLayout = waterStatusIcon.gameObject.GetComponent<LayoutElement>();
             if (waterStatusLayout == null)
             {
@@ -71,16 +70,8 @@ namespace CozyLifeSim.Editor
                 waterStatusImg.sprite = waterStatusSprite;
                 isSceneDirty = true;
             }
-            if (waterStatusImg.type != Image.Type.Simple)
-            {
-                waterStatusImg.type = Image.Type.Simple;
-                isSceneDirty = true;
-            }
-            if (waterStatusImg.color != Color.white)
-            {
-                waterStatusImg.color = Color.white;
-                isSceneDirty = true;
-            }
+            ConfigureSimpleImage(waterStatusImg, true, ref isSceneDirty);
+            ConfigureFixedVisualRect(waterStatusIcon, new Vector2(0.5f, 0.5f), new Vector2(34f, 34f), new Vector2(0f, 60f), ref isSceneDirty);
 
             // Vertical layout for Farm components
             VerticalLayoutGroup farmLayout = farmPlot.gameObject.GetComponent<VerticalLayoutGroup>();
@@ -107,6 +98,8 @@ namespace CozyLifeSim.Editor
                 wateringCanImg.sprite = expectedWCanSprite;
                 isSceneDirty = true;
             }
+            ConfigureSimpleImage(wateringCanImg, true, ref isSceneDirty);
+            ConfigureFixedVisualRect(wateringCan, new Vector2(0.5f, 0.5f), new Vector2(72f, 72f), Vector2.zero, ref isSceneDirty);
 
             // Auto-wire CropWidget via SerializedObject
             SerializedObject soCrop = new SerializedObject(cropWidget);
@@ -152,6 +145,9 @@ namespace CozyLifeSim.Editor
             }
 
             Image animalVisual = SetupImage(animalPen, "Animal_Visual", ref isSceneDirty);
+            ConfigureSimpleImage(animalVisual, true, ref isSceneDirty);
+            ConfigureFixedVisualRect(animalVisual.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(150f, 150f), Vector2.zero, ref isSceneDirty);
+
             Button feedBtn = SetupButton(animalPen, "Feed_Button", "Pet Animal", ref isSceneDirty);
             RectTransform spawnRoot = SetupPanel(animalPen, "Spawn_Root", ref isSceneDirty);
 
@@ -169,7 +165,6 @@ namespace CozyLifeSim.Editor
 
             // Create Heart template inside Prefabs_Holder for popup animation
             RectTransform heartTemplate = SetupPanel(prefabsHolder, "Heart_Feedback_Template", ref isSceneDirty);
-            SafeSetSizeDelta(heartTemplate, new Vector2(40f, 40f), ref isSceneDirty);
             if (heartTemplate.gameObject.activeSelf)
             {
                 heartTemplate.gameObject.SetActive(false);
@@ -187,6 +182,8 @@ namespace CozyLifeSim.Editor
                 heartImg.sprite = expectedHeartSprite;
                 isSceneDirty = true;
             }
+            ConfigureSimpleImage(heartImg, true, ref isSceneDirty);
+            ConfigureFixedVisualRect(heartTemplate, new Vector2(0.5f, 0.5f), new Vector2(44f, 44f), Vector2.zero, ref isSceneDirty);
 
             // Wire animal widget visual
             Image animalImg = animalVisual.gameObject.GetComponent<Image>();
@@ -198,11 +195,7 @@ namespace CozyLifeSim.Editor
                     animalImg.sprite = expectedAnimalSprite;
                     isSceneDirty = true;
                 }
-                if (animalImg.type != Image.Type.Simple)
-                {
-                    animalImg.type = Image.Type.Simple;
-                    isSceneDirty = true;
-                }
+                ConfigureSimpleImage(animalImg, true, ref isSceneDirty);
             }
 
             // Auto-wire AnimalWidget
@@ -249,37 +242,28 @@ namespace CozyLifeSim.Editor
                 bookPanelImg.sprite = notebookOpenSprite;
                 isSceneDirty = true;
             }
-            if (bookPanelImg.type != Image.Type.Sliced)
-            {
-                bookPanelImg.type = Image.Type.Sliced;
-                isSceneDirty = true;
-            }
-            if (bookPanelImg.color != Color.white)
-            {
-                bookPanelImg.color = Color.white;
-                isSceneDirty = true;
-            }
-
+            ConfigureSlicedImage(bookPanelImg, ref isSceneDirty);
+ 
             Button prevBtn = SetupButton(stickerBookPanel, "Prev_Button", "< Page", ref isSceneDirty);
             Image prevBtnImg = prevBtn.GetComponent<Image>();
             if (prevBtnImg != null)
             {
                 var pageArrowSprite = LoadSprite("UI_Button_Page_Arrow");
                 if (prevBtnImg.sprite != pageArrowSprite) { prevBtnImg.sprite = pageArrowSprite; isSceneDirty = true; }
-                if (prevBtnImg.type != Image.Type.Simple) { prevBtnImg.type = Image.Type.Simple; isSceneDirty = true; }
-                if (prevBtnImg.color != Color.white) { prevBtnImg.color = Color.white; isSceneDirty = true; }
+                ConfigureSimpleImage(prevBtnImg, true, ref isSceneDirty);
+                ConfigureFixedVisualRect(prevBtn.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(48f, 48f), Vector2.zero, ref isSceneDirty);
                 var label = prevBtn.GetComponentInChildren<TextMeshProUGUI>(true);
                 if (label != null && label.gameObject.activeSelf) { label.gameObject.SetActive(false); isSceneDirty = true; }
             }
-
+ 
             Button nextBtn = SetupButton(stickerBookPanel, "Next_Button", "Page >", ref isSceneDirty);
             Image nextBtnImg = nextBtn.GetComponent<Image>();
             if (nextBtnImg != null)
             {
                 var pageArrowSprite = LoadSprite("UI_Button_Page_Arrow");
                 if (nextBtnImg.sprite != pageArrowSprite) { nextBtnImg.sprite = pageArrowSprite; isSceneDirty = true; }
-                if (nextBtnImg.type != Image.Type.Simple) { nextBtnImg.type = Image.Type.Simple; isSceneDirty = true; }
-                if (nextBtnImg.color != Color.white) { nextBtnImg.color = Color.white; isSceneDirty = true; }
+                ConfigureSimpleImage(nextBtnImg, true, ref isSceneDirty);
+                ConfigureFixedVisualRect(nextBtn.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(48f, 48f), Vector2.zero, ref isSceneDirty);
                 var label = nextBtn.GetComponentInChildren<TextMeshProUGUI>(true);
                 if (label != null && label.gameObject.activeSelf) { label.gameObject.SetActive(false); isSceneDirty = true; }
             }
@@ -291,11 +275,6 @@ namespace CozyLifeSim.Editor
 
             // Create Trash_Can child under StickerBook_Panel
             RectTransform trashCanRect = SetupPanel(stickerBookPanel, "Trash_Can", ref isSceneDirty);
-            SafeSetAnchor(trashCanRect, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), ref isSceneDirty);
-            SafeSetPivot(trashCanRect, new Vector2(0.5f, 0f), ref isSceneDirty);
-            SafeSetSizeDelta(trashCanRect, new Vector2(50f, 50f), ref isSceneDirty);
-            SafeSetAnchoredPosition(trashCanRect, new Vector2(0f, 15f), ref isSceneDirty);
-
             Image trashCanImg = trashCanRect.gameObject.GetComponent<Image>();
             if (trashCanImg == null)
             {
@@ -308,16 +287,8 @@ namespace CozyLifeSim.Editor
                 trashCanImg.sprite = trashCanSprite;
                 isSceneDirty = true;
             }
-            if (trashCanImg.type != Image.Type.Simple)
-            {
-                trashCanImg.type = Image.Type.Simple;
-                isSceneDirty = true;
-            }
-            if (trashCanImg.color != Color.white)
-            {
-                trashCanImg.color = Color.white;
-                isSceneDirty = true;
-            }
+            ConfigureSimpleImage(trashCanImg, true, ref isSceneDirty);
+            ConfigureFixedVisualRect(trashCanRect, new Vector2(0.5f, 0f), new Vector2(50f, 50f), new Vector2(0f, 15f), ref isSceneDirty);
 
             LayoutElement trashCanLayout = trashCanRect.gameObject.GetComponent<LayoutElement>();
             if (trashCanLayout == null)
@@ -538,6 +509,8 @@ namespace CozyLifeSim.Editor
                 shadowImg.sprite = defaultSprite;
                 isSceneDirty = true;
             }
+            ConfigureSimpleImage(shadowImg, true, ref isSceneDirty);
+            ConfigureFixedVisualRect(shadowOffset, new Vector2(0.5f, 0.5f), new Vector2(92f, 92f), Vector2.zero, ref isSceneDirty);
 
             Image visualImg = SetupImage(stickerTemplate, "Visual_Image", ref isSceneDirty);
             if (defaultSprite != null && visualImg.sprite != defaultSprite)
@@ -545,6 +518,8 @@ namespace CozyLifeSim.Editor
                 visualImg.sprite = defaultSprite;
                 isSceneDirty = true;
             }
+            ConfigureSimpleImage(visualImg, true, ref isSceneDirty);
+            ConfigureFixedVisualRect(visualImg.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(92f, 92f), Vector2.zero, ref isSceneDirty);
 
             CanvasGroup group = stickerTemplate.gameObject.GetComponent<CanvasGroup>();
             if (group == null)
@@ -597,16 +572,7 @@ namespace CozyLifeSim.Editor
                 diaryNoteImg.sprite = stickyNoteSprite;
                 isSceneDirty = true;
             }
-            if (diaryNoteImg.type != Image.Type.Sliced)
-            {
-                diaryNoteImg.type = Image.Type.Sliced;
-                isSceneDirty = true;
-            }
-            if (diaryNoteImg.color != Color.white)
-            {
-                diaryNoteImg.color = Color.white;
-                isSceneDirty = true;
-            }
+            ConfigureSlicedImage(diaryNoteImg, ref isSceneDirty);
 
             CanvasGroup diaryNoteGroup = diaryNoteTemplate.gameObject.GetComponent<CanvasGroup>();
             if (diaryNoteGroup == null)

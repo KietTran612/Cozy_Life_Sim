@@ -81,6 +81,8 @@ namespace CozyLifeSim.UI
             Image image = template.AddComponent<Image>();
             image.color = new Color(1f, 0.82f, 0.2f, 1f);
             Style.CozyProceduralUI.ApplyFlatFallback(image, new Color(1f, 0.82f, 0.2f, 1f));
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
 
             template.SetActive(false);
             _activeTemplate = template;

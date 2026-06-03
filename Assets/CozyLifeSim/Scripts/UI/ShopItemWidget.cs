@@ -45,6 +45,7 @@ namespace CozyLifeSim.UI
             {
                 _itemIcon.sprite = icon;
                 _itemIcon.gameObject.SetActive(icon != null);
+                ConfigureSimpleArtImage(_itemIcon);
             }
             if (_priceText != null) _priceText.text = $"{price} Coins";
             if (_actionButtonText != null) _actionButtonText.text = buttonLabel;
@@ -66,6 +67,13 @@ namespace CozyLifeSim.UI
         private void OnButtonClicked()
         {
             _onActionCallback?.Invoke();
+        }
+
+        private static void ConfigureSimpleArtImage(Image image)
+        {
+            if (image == null) return;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
         }
     }
 }

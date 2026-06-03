@@ -3,8 +3,8 @@
 ## Snapshot
 
 - **Current Phase**: Phase 3.7 Landscape-Only Startup, Camera & Layout Hardening.
-- **Last Completed Commit**: `feat: polish runtime vertical slice` (`d418ae0`).
-- **Current Task**: Task 37 planned; implementation pending user approval.
+- **Last Completed Commit**: `feat: generate and import 17 secondary Vietnamese Heritage UI and effect assets` (`3265ccb`).
+- **Current Task**: Task 37 planned (Task 35 has 34/37 assets generated, remaining 3 will fall back safely).
 - **Planned Next Feature**: Direct boot into `Main.unity` with in-scene startup loading overlay, hardened orthographic camera, landscape-only player/build settings, responsive landscape layout, and validation.
 - **Recommended Next Task**: Implement Task 37 from `docs/plans/2026-06-02-landscape-startup-camera-layout-hardening.md`.
 
@@ -48,7 +48,7 @@
 
 ## Current Uncommitted Scope
 
-- Modified plans/docs: `docs/plans/task.md`, `docs/plans/current-handoff.md`, `docs/plans/index.md`.
+- Modified plans/docs: `docs/plans/current-handoff.md`.
 - New implementation plan: `docs/plans/2026-06-02-landscape-startup-camera-layout-hardening.md`.
 - Existing `.agent/scratch/*` files remain out of scope.
 

@@ -2,13 +2,20 @@
 
 ## Snapshot
 
-- **Current Phase**: Task 40: Address Review Feedback for Task 38 Completed.
+- **Current Phase**: Task 41: Visual Layout Validator & Asset Fitting Planned.
 - **Last Completed Commit**: `feat: integrate final 3 Vietnamese Heritage assets and complete Task 35` (`7626c44`).
-- **Current Task**: Task 40 completed. All post-refactoring and Task 38 review feedback issues resolved.
-- **Planned Next Feature**: Next requested feature or phase from project guidelines.
-- **Recommended Next Task**: Check with USER for the next feature or phase to execute.
+- **Current Task**: Task 41.1 Visual Validator Foundation planned. Implementation has not started.
+- **Planned Next Feature**: Visual layout validator, explicit asset fitting, runtime dynamic image policy, popup image coverage, and snapshot review.
+- **Recommended Next Task**: Start Task 41.1 from `docs/plans/2026-06-03-visual-layout-validator.md`.
 
 ## Latest Completed Work
+
+ - **Task 41: Visual Layout Validator & Asset Fitting**
+   - Created plan `docs/plans/2026-06-03-visual-layout-validator.md`.
+   - Scope covers all image-backed UI/world/runtime-spawned elements, including HUD, sidebar, gameplay panels, sticker book, inventory tray, scrapbook/diary, quest HUD, quest popup, shop popup, dialogue popup, diary input popup, world objects, dynamic widget sprite assignments, explicit size/aspect policy, visual layout validation, and snapshot review.
+   - Plan now requires cluster-by-cluster visual tests: home shell, home gameplay widgets, world/camera, quest HUD/popup, shop popup, dialogue popup, diary/scrapbook, then final aggregate visual pass.
+   - Task tracker now splits the umbrella plan into Task 41.1 through Task 41.5: foundation, home screen visual pass, popup visual pass, runtime dynamic sprite policy, and final snapshot/aggregate/handoff.
+   - No code/runtime/editor implementation has started yet.
 
  - **Task 40: Address Review Feedback for Task 38**
    - Corrected border policy rulesets for UI panels/buttons (changed wood frame and dialogue bubble borders to 128px, and tab and quest item buttons to 64px) across `CozySceneSetupWindow.Helpers.cs` and `CozyLifeSimSceneGameplayValidation.Textures.cs`.
@@ -28,14 +35,14 @@
 
 ## Latest Verification
 
-- Unity compile/import: Complete, compiling cleanly with no errors or warnings.
-- `Tools/CozySim/Run Logic Verification Tests`: PASS, **31 passed, 0 failed, 1 expected warnings**.
-- Scene wiring validation: PASS, **328 checks passed**.
-- Play Mode runtime validation: PASS, **22 passed, 0 failed**.
-- Idempotency check: Verified **exactly 0 new changes** on consecutive setup scene generation runs.
+- Task 41 plan creation: complete.
+- Unity validation for this docs-only planning update: not run - not relevant to this change.
+- Previous Task 40 verification remains the latest implementation verification: compile/import clean, logic PASS, scene validation PASS, Play Mode runtime PASS, and idempotency verified.
 
 ## Current Uncommitted Scope
 
+- Modified project instructions:
+  - `AGENTS.md`
 - Modified code files:
   - `Assets/CozyLifeSim/Scenes/Main.unity`
   - `Assets/CozyLifeSim/Scripts/Editor/CozyAssetImporterUtility.cs`
@@ -70,8 +77,10 @@
   - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.WorldAndUI.cs` (+ `.meta`)
   - `Assets/CozyLifeSim/Scripts/UI/CozyQuestItemWidget.cs` (+ `.meta`)
 - Modified plans:
+  - `docs/plans/2026-06-03-visual-layout-validator.md`
   - `docs/plans/task.md`
   - `docs/plans/current-handoff.md`
+  - `docs/plans/index.md`
 
 ## Next-Agent Read Order
 

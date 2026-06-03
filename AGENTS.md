@@ -35,6 +35,20 @@ Existing Unity `.meta` files may be edited when necessary, but do not change the
 
 After completing any task that changes or adds scripts, wait for Unity to finish compiling, check the Console/Editor log for compiler errors, and fix any errors before marking the task complete.
 
+## Unity MCP Usage
+
+When Unity Editor state, Play Mode, scene setup, Console logs, validation runners, or screenshots are needed, prefer Unity MCP when it is available instead of guessing from files alone.
+
+Use Unity MCP for:
+
+- checking compile/import status and Console/Editor logs;
+- running targeted validation routes;
+- entering or exiting Play Mode when runtime verification is needed;
+- invoking scene setup only when the task requires scene regeneration;
+- capturing camera/game snapshots for visual review.
+
+Do not use Unity MCP for simple file reads, code search, docs-only changes, or git inspection. If Unity MCP is unavailable, note that clearly and continue with the best local fallback. Any temporary MCP helper scripts should stay under `.agent/scratch/` or `C:\tmp` and must not be committed unless explicitly promoted by the user.
+
 ## Verification Scope Policy
 
 Do not run the full validation suite by default. Choose the smallest verification scope that proves the changed behavior.

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -49,6 +50,10 @@ namespace CozyLifeSim.Editor
             ValidateStickerLoop(errors, warnings, passes);
             ValidatePopupAndNavigationDocks(errors, passes);
             ValidateScrapbookAndDialogues(errors, passes);
+            ValidateBuildSceneAndOrientation(errors, passes);
+            ValidateMainCamera(errors, passes);
+            ValidateStartupLoadingOverlay(errors, passes);
+            ValidateLandscapeLayout(errors, passes);
 
             PrintResults(passes, warnings, errors);
         }
@@ -870,6 +875,196 @@ namespace CozyLifeSim.Editor
                         }
                     }
                 }
+            }
+        }
+
+        private static void ValidateBuildSceneAndOrientation(List<string> errors, List<string> passed)
+        {
+            var scenes = EditorBuildSettings.scenes;
+            if (scenes.Length > 0 && scenes[0].path == MainScenePath && scenes[0].enabled)
+            {
+                passed.Add("Main.unity is the enabled build entry scene at index 0.");
+            }
+            else
+            {
+                errors.Add("Main.unity must be the first enabled scene in EditorBuildSettings (index 0).");
+            }
+
+            if (PlayerSettings.defaultInterfaceOrientation == UIOrientation.LandscapeLeft)
+            {
+                passed.Add("Default interface orientation is LandscapeLeft.");
+            }
+            else
+            {
+                errors.Add($"Default interface orientation must be LandscapeLeft. Actual: {PlayerSettings.defaultInterfaceOrientation}");
+            }
+
+            if (!PlayerSettings.allowedAutorotateToPortrait && !PlayerSettings.allowedAutorotateToPortraitUpsideDown)
+            {
+                passed.Add("Portrait autorotation is disabled.");
+            }
+            else
+            {
+                errors.Add("Portrait and portrait upside-down autorotation must be disabled.");
+            }
+        }
+
+        private static void ValidateMainCamera(List<string> errors, List<string> passed)
+        {
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                errors.Add("Scene must have a tagged Main Camera.");
+                return;
+            }
+
+            if (camera.orthographic)
+            {
+                passed.Add("Main Camera is orthographic.");
+            }
+            else
+            {
+                errors.Add("Main Camera must be orthographic for 2D landscape UI/world presentation.");
+            }
+
+            if (Mathf.Approximately(camera.orthographicSize, 5f))
+            {
+                passed.Add("Main Camera orthographic size is 5.");
+            }
+            else
+            {
+                errors.Add($"Main Camera orthographic size must be 5. Actual: {camera.orthographicSize}");
+            }
+
+            if (camera.transform.position == new Vector3(0f, 0f, -10f) && camera.transform.rotation == Quaternion.identity)
+            {
+                passed.Add("Main Camera transform is deterministic.");
+            }
+            else
+            {
+                errors.Add("Main Camera must be positioned at (0, 0, -10) with identity rotation.");
+            }
+
+            if (camera.clearFlags == CameraClearFlags.SolidColor)
+            {
+                passed.Add("Main Camera clears to solid color.");
+            }
+            else
+            {
+                errors.Add("Main Camera clear flags must be SolidColor.");
+            }
+
+            if (Mathf.Approximately(camera.nearClipPlane, 0.3f))
+            {
+                passed.Add("Main Camera near clip plane is 0.3.");
+            }
+            else
+            {
+                errors.Add($"Main Camera near clip plane must be 0.3. Actual: {camera.nearClipPlane}");
+            }
+
+            if (Mathf.Approximately(camera.farClipPlane, 1000f))
+            {
+                passed.Add("Main Camera far clip plane is 1000.");
+            }
+            else
+            {
+                errors.Add($"Main Camera far clip plane must be 1000. Actual: {camera.farClipPlane}");
+            }
+
+            Color expectedBg = new Color(0.18f, 0.18f, 0.22f);
+            if (camera.backgroundColor == expectedBg)
+            {
+                passed.Add("Main Camera background color is matching standard theme.");
+            }
+            else
+            {
+                errors.Add($"Main Camera background color must be {expectedBg}. Actual: {camera.backgroundColor}");
+            }
+
+            if (camera.rect == new Rect(0f, 0f, 1f, 1f))
+            {
+                passed.Add("Main Camera viewport rect is full screen.");
+            }
+            else
+            {
+                errors.Add($"Main Camera viewport rect must be (0,0,1,1). Actual: {camera.rect}");
+            }
+
+            if (camera.GetComponent<AudioListener>() != null || Object.FindObjectsByType<AudioListener>(FindObjectsSortMode.None).Length > 0)
+            {
+                passed.Add("Main Camera has AudioListener.");
+            }
+            else
+            {
+                errors.Add("Main Camera must have AudioListener (or one must exist in the scene).");
+            }
+        }
+
+        private static void ValidateStartupLoadingOverlay(List<string> errors, List<string> passed)
+        {
+            var overlay = FindSceneComponent<CozyStartupLoadingOverlay>("Startup_Loading_Overlay");
+            if (overlay == null)
+            {
+                errors.Add("Startup_Loading_Overlay must exist under Popup_Root and have CozyStartupLoadingOverlay.");
+                return;
+            }
+
+            passed.Add("Startup loading overlay has CozyStartupLoadingOverlay.");
+
+            var canvasGroup = overlay.GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+            {
+                passed.Add("Startup loading overlay has CanvasGroup.");
+            }
+            else
+            {
+                errors.Add("Startup_Loading_Overlay must have CanvasGroup for fade/input blocking.");
+            }
+
+            SerializedObject soOverlay = new SerializedObject(overlay);
+            ValidateObjectReference(soOverlay, "canvasGroup", "CozyStartupLoadingOverlay canvas group", errors, passed);
+            ValidateObjectReference(soOverlay, "messageText", "CozyStartupLoadingOverlay message text", errors, passed);
+        }
+
+        private static void ValidateLandscapeLayout(List<string> errors, List<string> passed)
+        {
+            var canvas = FindSceneComponent<Canvas>("Canvas");
+            var scaler = canvas != null ? canvas.GetComponent<CanvasScaler>() : null;
+            if (scaler == null)
+            {
+                errors.Add("Root Canvas must have CanvasScaler.");
+                return;
+            }
+
+            if (scaler.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize &&
+                scaler.referenceResolution == new Vector2(1920f, 1080f) &&
+                scaler.screenMatchMode == CanvasScaler.ScreenMatchMode.MatchWidthOrHeight)
+            {
+                passed.Add("CanvasScaler is configured for landscape reference resolution.");
+            }
+            else
+            {
+                errors.Add("CanvasScaler must use ScaleWithScreenSize, 1920x1080, MatchWidthOrHeight.");
+            }
+
+            var controller = FindSceneComponent<CozyLandscapeLayoutController>("Landscape_Layout_Controller");
+            if (controller != null)
+            {
+                passed.Add("Landscape layout controller exists.");
+                SerializedObject soLayout = new SerializedObject(controller);
+                ValidateObjectReference(soLayout, "header", "Landscape layout header", errors, passed);
+                ValidateObjectReference(soLayout, "gameplayArea", "Landscape layout gameplay area", errors, passed);
+                ValidateObjectReference(soLayout, "farmPlot", "Landscape layout farm plot", errors, passed);
+                ValidateObjectReference(soLayout, "animalPen", "Landscape layout animal pen", errors, passed);
+                ValidateObjectReference(soLayout, "stickerBookPanel", "Landscape layout sticker book panel", errors, passed);
+                ValidateObjectReference(soLayout, "inventoryTray", "Landscape layout inventory tray", errors, passed);
+                ValidateObjectReference(soLayout, "sidebar", "Landscape layout sidebar", errors, passed);
+                ValidateObjectReference(soLayout, "popupRoot", "Landscape layout popup root", errors, passed);
+            }
+            else
+            {
+                errors.Add("Scene must include CozyLandscapeLayoutController.");
             }
         }
     }

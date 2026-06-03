@@ -29,13 +29,12 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Phase 2.3 & 2.4 Cozy Heritage, Idempotency & Polish [COMPLETED]: [2026-06-01-cozy-heritage-and-polish-plan.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-cozy-heritage-and-polish-plan.md)
 - Phase 3.1 UI/UX Juice & Animations [PROPOSED]: [2026-06-01-ui-ux-juice-animations.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-ui-ux-juice-animations.md)
 - Isolate Task 31 & Resolve Review [COMPLETED]: [2026-06-01-resolve-review-and-isolate-task31.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-resolve-review-and-isolate-task31.md)
-
 - Phase 3.2 Vietnamese Heritage Asset Sprite Integration [PROPOSED]: [2026-06-01-vietnamese-heritage-assets-generation.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-vietnamese-heritage-assets-generation.md)
 - Phase 3.3 Expanded Quests & Dialogue NPC System [PROPOSED]: [2026-06-01-quest-dialogue-npc-system.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-quest-dialogue-npc-system.md)
 - Phase 3.4 Scrapbook Polish & Custom Diary Notes [PROPOSED]: [2026-06-01-scrapbook-customization-diary-notes.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-01-scrapbook-customization-diary-notes.md)
 - Phase 3.6 Runtime Playtest & Vertical Slice Polish [COMPLETED]: [2026-06-02-runtime-playtest-vertical-slice-polish.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-02-runtime-playtest-vertical-slice-polish.md)
 - Runtime Playtest Checklist: [2026-06-02-runtime-playtest-checklist.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-02-runtime-playtest-checklist.md)
-- Phase 3.7 Landscape-Only Startup, Camera & Layout Hardening [PROPOSED]: [2026-06-02-landscape-startup-camera-layout-hardening.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-02-landscape-startup-camera-layout-hardening.md)
+- Phase 3.7 Landscape-Only Startup, Camera & Layout Hardening [COMPLETED]: [2026-06-02-landscape-startup-camera-layout-hardening.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-02-landscape-startup-camera-layout-hardening.md)
 
 ## Database Editors
 
@@ -47,5 +46,5 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 
 ## Suggested Next Plan
 
-Task 37 Landscape-Only Startup, Camera & Layout Hardening is the next planned feature work. The project will boot directly into `Main.unity`; no main menu, new/continue/reset flow, separate loading scene, or portrait support is planned for this task.
+All Phase 3 features are completed. Check with the USER for the next requested roadmap phase or features.
 Work checklist and implementation tasks track live at `docs/plans/task.md`.

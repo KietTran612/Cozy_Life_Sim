@@ -2,55 +2,54 @@
 
 ## Snapshot
 
-- **Current Phase**: Phase 3.7 Landscape-Only Startup, Camera & Layout Hardening.
+- **Current Phase**: Phase 3.7 Landscape-Only Startup, Camera & Layout Hardening Completed.
 - **Last Completed Commit**: `feat: generate and import 17 secondary Vietnamese Heritage UI and effect assets` (`3265ccb`).
-- **Current Task**: Task 37 planned (Task 35 has 34/37 assets generated, remaining 3 will fall back safely).
-- **Planned Next Feature**: Direct boot into `Main.unity` with in-scene startup loading overlay, hardened orthographic camera, landscape-only player/build settings, responsive landscape layout, and validation.
-- **Recommended Next Task**: Implement Task 37 from `docs/plans/2026-06-02-landscape-startup-camera-layout-hardening.md`.
+- **Current Task**: Task 37 completed (Task 35 has 34/37 assets generated, remaining 3 will fall back safely).
+- **Planned Next Feature**: Next requested feature or phase from project guidelines.
+- **Recommended Next Task**: Check with USER for the next feature or phase to execute.
 
 ## Latest Completed Work
 
+- **Task 37: Landscape-Only Startup, Camera & Layout Hardening**
+  - Configured `EditorBuildSettings` to include `Main.unity` as the enabled entry build scene and direct-boot target.
+  - Set default PlayerSettings orientation to `LandscapeLeft` and disabled portrait/portrait-upside-down autorotations.
+  - Hardened `Main Camera` setup to be orthographic with size `5`, solid dark background, near clip `0.3`, and far clip `1000`.
+  - Created `CozyStartupLoadingOverlay` to display a smooth fading, input-blocking in-scene loading panel during initial frame setup.
+  - Created `CozyLandscapeLayoutController` to dynamically enforce stretch anchors and preferred layouts for root UI structures.
+  - Updated `CozySceneSetupWindow` to automatically instantiate, assign references, and save both new components in the scene hierarchy.
+  - Extended validation suite in `CozyLifeSimSceneGameplayValidation` with 21 new tests validating build settings, player orientation, camera, canvas scaling, loading overlay, and layout controller.
+
 - **Task 36: Runtime Playtest & Vertical Slice Polish**
-  - Created and wired a lightweight, non-blocking `CozyFeedbackToast` popup for runtime status.
-  - Configured `ShopItemWidget` to display concrete disabled reasons (e.g. requires level, insufficient coins, no crops to sell) when buttons are locked.
-  - Implemented dynamic feedback in `CropWidget` for blocked farm actions (plotting on occupied soil, missing seeds, early watering/harvesting).
-  - Extended logic verification suite with Test 15.6 (disabled shop states) and Test 15.7 (toast show behavior).
-  - Added robust scene validations in `CozyLifeSimSceneGameplayValidation` to check StickerBook pages, Dialogue Popup, and NPC widgets configurations.
-  - Added 5 new steps to MCP gameplay loop play mode validation (page style cycles, note CRUD operations, NPC dialogues) and verified state rollback integrity.
-  - Created a concise human-executable manual playtest checklist at `docs/plans/2026-06-02-runtime-playtest-checklist.md`.
-
-- **Task 37 Plan: Landscape-Only Startup, Camera & Layout Hardening**
-  - Replaced the previous main-menu/new/continue direction with direct boot into `Main.unity`.
-  - Chose an in-scene loading overlay instead of a separate loading scene to avoid VContainer scene-root refactors.
-  - Scoped camera hardening, landscape-only PlayerSettings/build settings, landscape layout responsiveness, and validation coverage.
-
-- **Task 34: [Phase 3.4] Scrapbook Polish & Custom Diary Notes**
-  - Added `DiaryNotePlacedData` and `PageStyleData` to save data with load-time normalization.
-  - Extended `IMemoryService`/`MemoryService` with non-saving diary note and page style APIs.
-  - Created draggable `CozyDiaryNote` and custom text input popup with validation.
-  - Updated `CozySceneSetupWindow` to generate and wire scrapbook elements.
+  - Created and wired a lightweight, non-blocking `CozyFeedbackToast` popup for status notifications.
+  - Configured disabled reasons in shop slots and crops.
+  - Configured scene validation and Play Mode verification steps.
 
 ## Plan Deviations
 
-- Page style implementation uses 3 fallback paper colors when optional scrapbook background sprites are absent.
-- Presenter diary note/page style events carry saved data payloads (`DiaryNotePlacedData`, `PageStyleData`, or removed note id) instead of being payload-less.
-- Updated `CozyLifeSimSceneGameplayValidation` to check actual fields on `StickerBook` and `StickerBookPage` instead of legacy mockup properties.
+- None. Both component creation, configuration, and scene setup wiring correspond exactly to the proposed architecture.
 
 ## Latest Verification
 
-- Latest verified implementation remains Task 36.
-- Unity compile/import for Task 36: Complete, compiling cleanly with no errors.
+- Unity compile/import for Task 37: Complete, compiling cleanly with no errors.
 - `Tools/CozySim/Run Logic Verification Tests`: PASS, **31 passed, 0 failed, 1 expected warnings**.
-- Scene wiring validation: PASS, **107 passed, 0 failed**.
+- Scene wiring validation: PASS, **133 passed, 0 failed**.
 - Play Mode Runtime Loop Validation: PASS, **22 passed, 0 failed**.
-- Code Hygiene: `git diff --check` passed before the Task 36 commit.
-- Task 37 currently has plan/docs changes only; no Unity code changes have been made yet.
+- Code Hygiene: `git diff --check` passed before final validation.
 
 ## Current Uncommitted Scope
 
-- Modified plans/docs: `docs/plans/current-handoff.md`.
-- New implementation plan: `docs/plans/2026-06-02-landscape-startup-camera-layout-hardening.md`.
-- Existing `.agent/scratch/*` files remain out of scope.
+- Modified code files:
+  - `Assets/CozyLifeSim/Scenes/Main.unity`
+  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.cs`
+  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.cs`
+  - `ProjectSettings/EditorBuildSettings.asset`
+  - `ProjectSettings/ProjectSettings.asset`
+- New code files:
+  - `Assets/CozyLifeSim/Scripts/UI/CozyStartupLoadingOverlay.cs` (+ `.meta`)
+  - `Assets/CozyLifeSim/Scripts/UI/CozyLandscapeLayoutController.cs` (+ `.meta`)
+- Modified plans:
+  - `docs/plans/task.md`
+  - `docs/plans/current-handoff.md`
 
 ## Next-Agent Read Order
 

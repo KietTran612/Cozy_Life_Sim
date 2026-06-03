@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using System.Linq;
 using CozyLifeSim.UI;
 using CozyLifeSim.UI.Style;
 
@@ -89,29 +90,18 @@ namespace CozyLifeSim.Editor
                 }
             }
 
+            ConfigureBuildAndPlayerSettings();
+
             bool isSceneDirty = false;
 
             // 0. Setup Main Camera
             Camera camera = Camera.main;
             if (camera == null)
             {
-                GameObject camGo = GameObject.Find("Main Camera");
-                if (camGo == null)
-                {
-                    camGo = new GameObject("Main Camera");
-                    camera = camGo.AddComponent<Camera>();
-                    camGo.tag = "MainCamera";
-                    isSceneDirty = true;
-                }
-                else
-                {
-                    camera = camGo.GetComponent<Camera>();
-                    if (camera == null)
-                    {
-                        camera = camGo.AddComponent<Camera>();
-                        isSceneDirty = true;
-                    }
-                }
+                GameObject camGo = GameObject.Find("Main Camera") ?? new GameObject("Main Camera");
+                camGo.tag = "MainCamera";
+                camera = camGo.GetComponent<Camera>() ?? camGo.AddComponent<Camera>();
+                isSceneDirty = true;
             }
 
             if (camera != null)
@@ -127,6 +117,26 @@ namespace CozyLifeSim.Editor
                     camera.transform.rotation = Quaternion.identity;
                     isSceneDirty = true;
                 }
+                if (!camera.orthographic)
+                {
+                    camera.orthographic = true;
+                    isSceneDirty = true;
+                }
+                if (!Mathf.Approximately(camera.orthographicSize, 5f))
+                {
+                    camera.orthographicSize = 5f;
+                    isSceneDirty = true;
+                }
+                if (!Mathf.Approximately(camera.nearClipPlane, 0.3f))
+                {
+                    camera.nearClipPlane = 0.3f;
+                    isSceneDirty = true;
+                }
+                if (!Mathf.Approximately(camera.farClipPlane, 1000f))
+                {
+                    camera.farClipPlane = 1000f;
+                    isSceneDirty = true;
+                }
                 if (camera.clearFlags != CameraClearFlags.SolidColor)
                 {
                     camera.clearFlags = CameraClearFlags.SolidColor;
@@ -136,6 +146,17 @@ namespace CozyLifeSim.Editor
                 if (camera.backgroundColor != targetCamBg)
                 {
                     camera.backgroundColor = targetCamBg;
+                    isSceneDirty = true;
+                }
+                if (camera.rect != new Rect(0f, 0f, 1f, 1f))
+                {
+                    camera.rect = new Rect(0f, 0f, 1f, 1f);
+                    isSceneDirty = true;
+                }
+
+                if (camera.GetComponent<AudioListener>() == null && FindObjectsByType<AudioListener>(FindObjectsSortMode.None).Length == 0)
+                {
+                    camera.gameObject.AddComponent<AudioListener>();
                     isSceneDirty = true;
                 }
             }
@@ -1453,6 +1474,8 @@ namespace CozyLifeSim.Editor
             RectTransform popupRoot = SetupPanel(canvas.transform, "Popup_Root", ref isSceneDirty);
             StretchToFill(popupRoot, ref isSceneDirty);
 
+            ConfigureStartupLoadingOverlay(popupRoot, ref isSceneDirty);
+
             // E. Setup Feedback Toast under Popup_Root
             RectTransform feedbackToastPanel = SetupPanel(popupRoot, "FeedbackToast", ref isSceneDirty);
             StretchToFill(feedbackToastPanel, ref isSceneDirty);
@@ -1947,6 +1970,19 @@ namespace CozyLifeSim.Editor
                 isSceneDirty = true;
             }
 
+            // Configure CozyLandscapeLayoutController
+            ConfigureLandscapeLayoutController(
+                uiRoot,
+                headerPanel,
+                gameplayArea,
+                farmPlot,
+                animalPen,
+                stickerBookPanel,
+                inventoryTray,
+                sidebarPanel,
+                popupRoot,
+                ref isSceneDirty);
+
             // Log and Save completion
             if (isSceneDirty)
             {
@@ -2354,6 +2390,148 @@ namespace CozyLifeSim.Editor
             {
                 prop.stringValue = value;
                 isDirty = true;
+            }
+        }
+
+        private const string MainScenePath = "Assets/CozyLifeSim/Scenes/Main.unity";
+
+        private static void ConfigureBuildAndPlayerSettings()
+        {
+            var scenes = EditorBuildSettings.scenes.ToList();
+            var existingIndex = scenes.FindIndex(scene => scene.path == MainScenePath);
+
+            if (existingIndex >= 0)
+            {
+                var scene = scenes[existingIndex];
+                if (existingIndex != 0 || !scene.enabled)
+                {
+                    scenes.RemoveAt(existingIndex);
+                    scenes.Insert(0, new EditorBuildSettingsScene(MainScenePath, true));
+                    EditorBuildSettings.scenes = scenes.ToArray();
+                }
+            }
+            else
+            {
+                scenes.Insert(0, new EditorBuildSettingsScene(MainScenePath, true));
+                EditorBuildSettings.scenes = scenes.ToArray();
+            }
+
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
+            PlayerSettings.allowedAutorotateToPortrait = false;
+            PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
+            PlayerSettings.allowedAutorotateToLandscapeLeft = true;
+            PlayerSettings.allowedAutorotateToLandscapeRight = true;
+        }
+
+        private void ConfigureStartupLoadingOverlay(Transform popupRoot, ref bool isSceneDirty)
+        {
+            RectTransform overlayRect = SetupPanel(popupRoot, "Startup_Loading_Overlay", ref isSceneDirty);
+            StretchToFill(overlayRect, ref isSceneDirty);
+            overlayRect.transform.SetAsLastSibling();
+
+            var group = overlayRect.GetComponent<CanvasGroup>();
+            if (group == null)
+            {
+                group = overlayRect.gameObject.AddComponent<CanvasGroup>();
+                isSceneDirty = true;
+            }
+            if (!Mathf.Approximately(group.alpha, 1f))
+            {
+                group.alpha = 1f;
+                isSceneDirty = true;
+            }
+            if (!group.interactable)
+            {
+                group.interactable = true;
+                isSceneDirty = true;
+            }
+            if (!group.blocksRaycasts)
+            {
+                group.blocksRaycasts = true;
+                isSceneDirty = true;
+            }
+
+            Image backdrop = SetupImage(overlayRect, "Loading_Backdrop", ref isSceneDirty);
+            StretchToFill(backdrop.GetComponent<RectTransform>(), ref isSceneDirty);
+            var backdropColor = new Color(0.08f, 0.08f, 0.10f, 0.92f);
+            if (backdrop.color != backdropColor)
+            {
+                backdrop.color = backdropColor;
+                isSceneDirty = true;
+            }
+
+            TextMeshProUGUI message = SetupText(overlayRect, "Loading_Message", "Dang vao nong trai...", "Header_Text", ref isSceneDirty);
+            RectTransform messageRect = message.GetComponent<RectTransform>();
+            SafeSetAnchor(messageRect, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), ref isSceneDirty);
+            SafeSetSizeDelta(messageRect, new Vector2(640f, 96f), ref isSceneDirty);
+            SafeSetAnchoredPosition(messageRect, Vector2.zero, ref isSceneDirty);
+            if (!Mathf.Approximately(message.fontSize, 32f))
+            {
+                message.fontSize = 32f;
+                isSceneDirty = true;
+            }
+            if (message.color != Color.white)
+            {
+                message.color = Color.white;
+                isSceneDirty = true;
+            }
+
+            var component = overlayRect.GetComponent<CozyStartupLoadingOverlay>();
+            if (component == null)
+            {
+                component = overlayRect.gameObject.AddComponent<CozyStartupLoadingOverlay>();
+                isSceneDirty = true;
+            }
+
+            SerializedObject soOverlay = new SerializedObject(component);
+            bool overlayDirty = false;
+            SafeSetObjectReference(soOverlay.FindProperty("canvasGroup"), group, ref overlayDirty);
+            SafeSetObjectReference(soOverlay.FindProperty("messageText"), message, ref overlayDirty);
+            SafeSetFloat(soOverlay.FindProperty("minVisibleSeconds"), 0.35f, ref overlayDirty);
+            SafeSetFloat(soOverlay.FindProperty("fadeOutSeconds"), 0.2f, ref overlayDirty);
+            if (overlayDirty)
+            {
+                soOverlay.ApplyModifiedProperties();
+                isSceneDirty = true;
+            }
+        }
+
+        private void ConfigureLandscapeLayoutController(
+            RectTransform uiRoot,
+            RectTransform headerPanel,
+            RectTransform gameplayArea,
+            RectTransform farmPlot,
+            RectTransform animalPen,
+            RectTransform stickerBookPanel,
+            RectTransform inventoryTray,
+            RectTransform sidebarPanel,
+            RectTransform popupRoot,
+            ref bool isSceneDirty)
+        {
+            RectTransform controllerRect = SetupPanel(uiRoot, "Landscape_Layout_Controller", ref isSceneDirty);
+            StretchToFill(controllerRect, ref isSceneDirty);
+
+            var controller = controllerRect.GetComponent<CozyLandscapeLayoutController>();
+            if (controller == null)
+            {
+                controller = controllerRect.gameObject.AddComponent<CozyLandscapeLayoutController>();
+                isSceneDirty = true;
+            }
+
+            SerializedObject soLayout = new SerializedObject(controller);
+            bool layoutDirty = false;
+            SafeSetObjectReference(soLayout.FindProperty("header"), headerPanel, ref layoutDirty);
+            SafeSetObjectReference(soLayout.FindProperty("gameplayArea"), gameplayArea, ref layoutDirty);
+            SafeSetObjectReference(soLayout.FindProperty("farmPlot"), farmPlot, ref layoutDirty);
+            SafeSetObjectReference(soLayout.FindProperty("animalPen"), animalPen, ref layoutDirty);
+            SafeSetObjectReference(soLayout.FindProperty("stickerBookPanel"), stickerBookPanel, ref layoutDirty);
+            SafeSetObjectReference(soLayout.FindProperty("inventoryTray"), inventoryTray, ref layoutDirty);
+            SafeSetObjectReference(soLayout.FindProperty("sidebar"), sidebarPanel, ref layoutDirty);
+            SafeSetObjectReference(soLayout.FindProperty("popupRoot"), popupRoot, ref layoutDirty);
+            if (layoutDirty)
+            {
+                soLayout.ApplyModifiedProperties();
+                isSceneDirty = true;
             }
         }
     }

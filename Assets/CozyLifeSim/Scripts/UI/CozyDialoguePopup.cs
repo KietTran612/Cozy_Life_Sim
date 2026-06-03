@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using VContainer;
 using CozyLifeSim.Core;
 using TMPro;
+using DG.Tweening;
 
 namespace CozyLifeSim.UI
 {
@@ -25,6 +26,7 @@ namespace CozyLifeSim.UI
         [SerializeField] private TextMeshProUGUI _nameText;
         [SerializeField] private TextMeshProUGUI _dialogueText;
         [SerializeField] private Button _nextButton;
+        [SerializeField] private Image _dialogueIndicator;
 
         [SerializeField] private List<QuestDialogueMapping> _questDialogues = new List<QuestDialogueMapping>();
 
@@ -63,6 +65,12 @@ namespace CozyLifeSim.UI
             {
                 _contentPanel.gameObject.SetActive(false);
             }
+
+            if (_dialogueIndicator != null)
+            {
+                _dialogueIndicator.transform.DOScale(1.2f, 0.5f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
+                _dialogueIndicator.gameObject.SetActive(false);
+            }
         }
 
         private void HandleQuestCompleted(QuestData quest)
@@ -92,6 +100,10 @@ namespace CozyLifeSim.UI
             }
 
             _dialogueText.text = "";
+            if (_dialogueIndicator != null)
+            {
+                _dialogueIndicator.gameObject.SetActive(false);
+            }
 
             // Reentrancy Version Guard: tang so phien ban de vo hieu hoa cac luong chay cu immediately
             int version = ++_currentDialogueVersion;
@@ -125,6 +137,10 @@ namespace CozyLifeSim.UI
                 {
                     _dialogueText.text = text;
                     _isTyping = false;
+                    if (_dialogueIndicator != null)
+                    {
+                        _dialogueIndicator.gameObject.SetActive(true);
+                    }
                 }
             }
             catch (System.OperationCanceledException)
@@ -157,6 +173,10 @@ namespace CozyLifeSim.UI
                 }
                 _dialogueText.text = _fullText;
                 _isTyping = false;
+                if (_dialogueIndicator != null)
+                {
+                    _dialogueIndicator.gameObject.SetActive(true);
+                }
             }
             else
             {
@@ -183,6 +203,11 @@ namespace CozyLifeSim.UI
             {
                 _dialogueCts.Cancel();
                 _dialogueCts = null;
+            }
+
+            if (_dialogueIndicator != null)
+            {
+                _dialogueIndicator.transform.DOKill();
             }
         }
     }

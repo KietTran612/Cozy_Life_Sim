@@ -25,6 +25,7 @@ namespace CozyLifeSim.UI
         [SerializeField] private RectTransform _wateringCan;
         [SerializeField] private Button _plantButton;
         [SerializeField] private Button _harvestButton;
+        [SerializeField] private Image _waterStatusIcon;
 
         [Header("Stage Sprites")]
         [SerializeField] private Sprite _seedSprite;
@@ -361,6 +362,11 @@ namespace CozyLifeSim.UI
             {
                 _waterButton.gameObject.SetActive(_state.GrowthStage >= 0);
                 _waterButton.interactable = !_isWatering && !_state.IsWatered && _state.GrowthStage < 3;
+            }
+
+            if (_waterStatusIcon != null)
+            {
+                _waterStatusIcon.gameObject.SetActive(_state.GrowthStage >= 0 && _state.GrowthStage < 3 && _state.IsWatered);
             }
         }
 

@@ -12,6 +12,7 @@ namespace CozyLifeSim.UI
     {
         [SerializeField] private TextMeshProUGUI _levelText;
         [SerializeField] private Image _xpProgressBar;
+        [SerializeField] private Image _levelStarImage;
 
         private IProgressionService _progressionService;
         private Tween _fillTween;

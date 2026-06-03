@@ -26,30 +26,30 @@ MonoBehaviour:
   - CropId: 2
     Name: Cay Mia Ngot
     StageDurationSeconds: 8
-    SeedSprite: {fileID: 21300000, guid: 4204d19315e5f3e419ed23f56fd3fd93, type: 3}
-    SproutSprite: {fileID: 21300000, guid: f0645d66de07843409c8a81e5ef39311, type: 3}
-    MatureSprite: {fileID: 21300000, guid: 7a9df620d0fdfcb4ba3cbd6c5dbdee78, type: 3}
-    HarvestSprite: {fileID: 21300000, guid: 7a9df620d0fdfcb4ba3cbd6c5dbdee78, type: 3}
+    SeedSprite: {fileID: 342537316836463428, guid: 4204d19315e5f3e419ed23f56fd3fd93, type: 3}
+    SproutSprite: {fileID: -8828337096541478601, guid: f0645d66de07843409c8a81e5ef39311, type: 3}
+    MatureSprite: {fileID: -3398473735758050213, guid: 7a9df620d0fdfcb4ba3cbd6c5dbdee78, type: 3}
+    HarvestSprite: {fileID: -3398473735758050213, guid: 7a9df620d0fdfcb4ba3cbd6c5dbdee78, type: 3}
     BuyPrice: 15
     SellPrice: 35
     RequiredLevel: 1
   - CropId: 3
     Name: Lua Nuoc
     StageDurationSeconds: 15
-    SeedSprite: {fileID: 21300000, guid: 255d215329fe08b4abbdf7418073c833, type: 3}
-    SproutSprite: {fileID: 21300000, guid: 8a3cb9b114075b1478a2dae07bc2ed1d, type: 3}
-    MatureSprite: {fileID: 21300000, guid: 6c3ec81e7b2eed640a386715d5cc4385, type: 3}
-    HarvestSprite: {fileID: 21300000, guid: 6c3ec81e7b2eed640a386715d5cc4385, type: 3}
+    SeedSprite: {fileID: 8896188254461670820, guid: 255d215329fe08b4abbdf7418073c833, type: 3}
+    SproutSprite: {fileID: 8647842753867341949, guid: 8a3cb9b114075b1478a2dae07bc2ed1d, type: 3}
+    MatureSprite: {fileID: -704540689162420039, guid: 6c3ec81e7b2eed640a386715d5cc4385, type: 3}
+    HarvestSprite: {fileID: -704540689162420039, guid: 6c3ec81e7b2eed640a386715d5cc4385, type: 3}
     BuyPrice: 25
     SellPrice: 60
     RequiredLevel: 2
   - CropId: 4
     Name: Hoa Sen
     StageDurationSeconds: 25
-    SeedSprite: {fileID: 21300000, guid: 074514562f284d24fac7141f49f1fada, type: 3}
-    SproutSprite: {fileID: 21300000, guid: fc51a2af0f282ff499ce5e07bbbade26, type: 3}
-    MatureSprite: {fileID: 21300000, guid: b54f9011f2829764db688315c100a04f, type: 3}
-    HarvestSprite: {fileID: 21300000, guid: b54f9011f2829764db688315c100a04f, type: 3}
+    SeedSprite: {fileID: 7152754283695197864, guid: 074514562f284d24fac7141f49f1fada, type: 3}
+    SproutSprite: {fileID: 200962521006448121, guid: fc51a2af0f282ff499ce5e07bbbade26, type: 3}
+    MatureSprite: {fileID: -526630967127749592, guid: b54f9011f2829764db688315c100a04f, type: 3}
+    HarvestSprite: {fileID: -526630967127749592, guid: b54f9011f2829764db688315c100a04f, type: 3}
     BuyPrice: 50
     SellPrice: 120
     RequiredLevel: 3

@@ -13,6 +13,8 @@ Do not use `docs/superpowers/plans/` for this project unless the user explicitly
 
 The `.agent/` directory belongs to the Antigravity Superpowers profile. Do not modify `.agent/` unless the user explicitly asks to change the Antigravity profile.
 
+Exception: agents may create, update, and delete temporary helper files under `.agent/scratch/` when those files are used as disposable task scratch space, such as Python scripts for Unity validation or log inspection. Do not treat `.agent/scratch/` files as deliverable source files unless the user explicitly asks to promote them into the project workflow.
+
 ## Task Tracker Format
 
 When updating `<project-root>/docs/plans/task.md`, keep it as a concise task tracker. Do not move long implementation details or session logs into this file.

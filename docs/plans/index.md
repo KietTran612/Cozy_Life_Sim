@@ -35,8 +35,11 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Phase 3.6 Runtime Playtest & Vertical Slice Polish [COMPLETED]: [2026-06-02-runtime-playtest-vertical-slice-polish.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-02-runtime-playtest-vertical-slice-polish.md)
 - Runtime Playtest Checklist: [2026-06-02-runtime-playtest-checklist.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-02-runtime-playtest-checklist.md)
 - Phase 3.7 Landscape-Only Startup, Camera & Layout Hardening [COMPLETED]: [2026-06-02-landscape-startup-camera-layout-hardening.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-02-landscape-startup-camera-layout-hardening.md)
+- Wire Vietnamese Heritage UI Assets [PROPOSED]: [2026-06-03-wire-heritage-ui-assets.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-03-wire-heritage-ui-assets.md)
+- Editor Code Refactoring Plan [PROPOSED]: [2026-06-03-editor-code-refactoring-plan.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-03-editor-code-refactoring-plan.md)
 
 ## Database Editors
+
 
 - Quest database/editor: `2026-05-28-quest-database-editor.md`
 - Crop database/editor: `2026-05-28-crop-database-editor.md`

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using VContainer;
 using VContainer.Unity;
@@ -12,6 +13,10 @@ namespace CozyLifeSim.UI
         [SerializeField] private TextMeshProUGUI _coinsText;
         [SerializeField] private TextMeshProUGUI _seedsText;
         [SerializeField] private TextMeshProUGUI _cropsText;
+        [SerializeField] private Image _autosaveIcon;
+        [SerializeField] private Image _coinIcon;
+        [SerializeField] private Image _seedsIcon;
+        [SerializeField] private Image _cropsIcon;
 
         private IInventoryService _inventoryService;
         private bool _isSubscribed;

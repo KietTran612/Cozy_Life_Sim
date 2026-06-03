@@ -10,11 +10,18 @@ namespace CozyLifeSim.UI
     public class QuestPopup : CozyPopup
     {
         [Header("Quest Specifics")]
-        [SerializeField] private TextMeshProUGUI _questItemTemplate;
+        [SerializeField] private CozyQuestItemWidget _questItemTemplate;
+
+        [Header("Quest UI Sprites")]
+        [SerializeField] private Sprite _itemBgSprite;
+        [SerializeField] private Sprite _questWaterIcon;
+        [SerializeField] private Sprite _questHarvestIcon;
+        [SerializeField] private Sprite _questPetIcon;
+        [SerializeField] private Sprite _questCompletedStamp;
 
         private IQuestService _questService;
         private bool _isSubscribed;
-        private readonly List<TextMeshProUGUI> _spawnedTexts = new List<TextMeshProUGUI>();
+        private readonly List<CozyQuestItemWidget> _spawnedWidgets = new List<CozyQuestItemWidget>();
 
         [Inject]
         public void Construct(IQuestService questService)
@@ -81,37 +88,38 @@ namespace CozyLifeSim.UI
 
             var activeQuests = _questService.ActiveQuests;
 
-            // Spawn enough texts for all active quests
-            while (_spawnedTexts.Count < activeQuests.Count)
+            // Spawn enough widgets for all active quests
+            while (_spawnedWidgets.Count < activeQuests.Count)
             {
-                var newText = Instantiate(_questItemTemplate, _questItemTemplate.transform.parent);
-                newText.gameObject.SetActive(true);
-                _spawnedTexts.Add(newText);
+                var newWidget = Instantiate(_questItemTemplate, _questItemTemplate.transform.parent);
+                newWidget.gameObject.SetActive(true);
+                _spawnedWidgets.Add(newWidget);
             }
 
-            // Update text labels and colors
-            for (int i = 0; i < _spawnedTexts.Count; i++)
+            // Update widgets
+            for (int i = 0; i < _spawnedWidgets.Count; i++)
             {
                 if (i < activeQuests.Count)
                 {
                     var quest = activeQuests[i];
-                    _spawnedTexts[i].gameObject.SetActive(true);
-
-                    if (quest.IsCompleted)
-                    {
-                        _spawnedTexts[i].text = $"<s>- {quest.Title} (Completed!)</s>";
-                        _spawnedTexts[i].color = Color.gray;
-                    }
-                    else
-                    {
-                        _spawnedTexts[i].text = $"- {quest.Title}: {quest.CurrentCount}/{quest.TargetCount}";
-                        _spawnedTexts[i].color = Color.white;
-                    }
+                    _spawnedWidgets[i].gameObject.SetActive(true);
+                    _spawnedWidgets[i].Setup(quest, _itemBgSprite, GetTypeIcon(quest.Type), _questCompletedStamp);
                 }
                 else
                 {
-                    _spawnedTexts[i].gameObject.SetActive(false);
+                    _spawnedWidgets[i].gameObject.SetActive(false);
                 }
+            }
+        }
+
+        private Sprite GetTypeIcon(QuestType type)
+        {
+            switch (type)
+            {
+                case QuestType.WaterCrops: return _questWaterIcon;
+                case QuestType.HarvestCrops: return _questHarvestIcon;
+                case QuestType.PetAnimal: return _questPetIcon;
+                default: return null;
             }
         }
 

@@ -33,31 +33,31 @@ MonoBehaviour:
     RequiredLevel: 1
   - StickerId: 4
     Name: Xe Banh Mi
-    Sprite: {fileID: 21300000, guid: f1739f9664d07d54c842ec885a6293c1, type: 3}
-    ShadowSprite: {fileID: 21300000, guid: f1739f9664d07d54c842ec885a6293c1, type: 3}
+    Sprite: {fileID: -1083678298108531709, guid: f1739f9664d07d54c842ec885a6293c1, type: 3}
+    ShadowSprite: {fileID: -1083678298108531709, guid: f1739f9664d07d54c842ec885a6293c1, type: 3}
     BuyPrice: 60
     RequiredLevel: 1
   - StickerId: 5
     Name: Ly Nuoc Mia
-    Sprite: {fileID: 21300000, guid: eff863cecc04e0f43bd6e508ea7f10b9, type: 3}
-    ShadowSprite: {fileID: 21300000, guid: eff863cecc04e0f43bd6e508ea7f10b9, type: 3}
+    Sprite: {fileID: 2641632421525481443, guid: eff863cecc04e0f43bd6e508ea7f10b9, type: 3}
+    ShadowSprite: {fileID: 2641632421525481443, guid: eff863cecc04e0f43bd6e508ea7f10b9, type: 3}
     BuyPrice: 40
     RequiredLevel: 1
   - StickerId: 6
     Name: Chiec Non La
-    Sprite: {fileID: 21300000, guid: 584927ce0b71b0b43964986597f8de47, type: 3}
-    ShadowSprite: {fileID: 21300000, guid: 584927ce0b71b0b43964986597f8de47, type: 3}
+    Sprite: {fileID: -1554161026643025466, guid: 584927ce0b71b0b43964986597f8de47, type: 3}
+    ShadowSprite: {fileID: -1554161026643025466, guid: 584927ce0b71b0b43964986597f8de47, type: 3}
     BuyPrice: 50
     RequiredLevel: 2
   - StickerId: 7
     Name: Chiec Xich Lo
-    Sprite: {fileID: 21300000, guid: 2f0bd903e3f996e4d94e04f081d00b0f, type: 3}
-    ShadowSprite: {fileID: 21300000, guid: 2f0bd903e3f996e4d94e04f081d00b0f, type: 3}
+    Sprite: {fileID: 2945877431060692522, guid: 2f0bd903e3f996e4d94e04f081d00b0f, type: 3}
+    ShadowSprite: {fileID: 2945877431060692522, guid: 2f0bd903e3f996e4d94e04f081d00b0f, type: 3}
     BuyPrice: 120
     RequiredLevel: 3
   - StickerId: 8
     Name: Long Den Trung Thu
-    Sprite: {fileID: 21300000, guid: 55a2dfdde50b8f249b7b481210a017f8, type: 3}
-    ShadowSprite: {fileID: 21300000, guid: 55a2dfdde50b8f249b7b481210a017f8, type: 3}
+    Sprite: {fileID: -3642035102042478462, guid: 55a2dfdde50b8f249b7b481210a017f8, type: 3}
+    ShadowSprite: {fileID: -3642035102042478462, guid: 55a2dfdde50b8f249b7b481210a017f8, type: 3}
     BuyPrice: 80
     RequiredLevel: 2

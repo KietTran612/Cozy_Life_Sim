@@ -39,61 +39,53 @@ namespace CozyLifeSim.Editor
 
         public static void ConfigureAsSpriteWithBorder(string assetPath, Vector4 border, int maxTextureSize = 1024, bool autoTrim = true)
         {
-            AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
-
             TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
             if (importer == null) return;
 
-            // Save original compression to restore later
-            TextureImporterCompression originalCompression = importer.textureCompression;
+            // Load texture directly from disk to scan original pixels
+            int originalWidth = 1024;
+            int originalHeight = 1024;
+            Rect spriteRect = new Rect(0, 0, originalWidth, originalHeight);
 
-            // Pass 1: Make it readable, uncompressed, and full resolution (1024) to read pixels
-            importer.isReadable = true;
-            importer.textureCompression = TextureImporterCompression.Uncompressed;
-            
-            TextureImporterPlatformSettings defaultSettings = importer.GetDefaultPlatformTextureSettings();
-            int originalPlatformMaxSize = defaultSettings.maxTextureSize;
-            defaultSettings.maxTextureSize = 1024;
-            importer.SetPlatformTextureSettings(defaultSettings);
-            
-            importer.SaveAndReimport();
-
-            // Load texture to scan pixels
-            Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
-            Rect spriteRect = new Rect(0, 0, 1024, 1024);
-            if (tex != null)
+            if (System.IO.File.Exists(assetPath))
             {
-                int width = tex.width;
-                int height = tex.height;
-                spriteRect = new Rect(0, 0, width, height);
-
-                if (autoTrim)
+                byte[] bytes = System.IO.File.ReadAllBytes(assetPath);
+                Texture2D tempTex = new Texture2D(2, 2);
+                if (tempTex.LoadImage(bytes))
                 {
-                    Color32[] pixels = tex.GetPixels32();
-                    int minX = width;
-                    int maxX = -1;
-                    int minY = height;
-                    int maxY = -1;
+                    originalWidth = tempTex.width;
+                    originalHeight = tempTex.height;
+                    spriteRect = new Rect(0, 0, originalWidth, originalHeight);
 
-                    for (int y = 0; y < height; y++)
+                    if (autoTrim)
                     {
-                        for (int x = 0; x < width; x++)
+                        Color32[] pixels = tempTex.GetPixels32();
+                        int minX = originalWidth;
+                        int maxX = -1;
+                        int minY = originalHeight;
+                        int maxY = -1;
+
+                        for (int y = 0; y < originalHeight; y++)
                         {
-                            if (pixels[y * width + x].a > 0)
+                            for (int x = 0; x < originalWidth; x++)
                             {
-                                if (x < minX) minX = x;
-                                if (x > maxX) maxX = x;
-                                if (y < minY) minY = y;
-                                if (y > maxY) maxY = y;
+                                if (pixels[y * originalWidth + x].a > 0)
+                                {
+                                    if (x < minX) minX = x;
+                                    if (x > maxX) maxX = x;
+                                    if (y < minY) minY = y;
+                                    if (y > maxY) maxY = y;
+                                }
                             }
                         }
-                    }
 
-                    if (maxX != -1)
-                    {
-                        spriteRect = new Rect(minX, minY, maxX - minX + 1, maxY - minY + 1);
+                        if (maxX != -1)
+                        {
+                            spriteRect = new Rect(minX, minY, maxX - minX + 1, maxY - minY + 1);
+                        }
                     }
                 }
+                UnityEngine.Object.DestroyImmediate(tempTex);
             }
 
             // Clamp borders
@@ -104,10 +96,11 @@ namespace CozyLifeSim.Editor
                 safeBorder = Vector4.zero;
             }
 
-            // Pass 2: Set settings, mode, and reimport
+            // Set final settings
             importer.textureType = TextureImporterType.Sprite;
 
-            if (autoTrim && tex != null && (spriteRect.x > 0 || spriteRect.y > 0 || spriteRect.width < tex.width || spriteRect.height < tex.height))
+            bool isTrimmed = autoTrim && (spriteRect.x > 0 || spriteRect.y > 0 || spriteRect.width < originalWidth || spriteRect.height < originalHeight);
+            if (isTrimmed)
             {
                 importer.spriteImportMode = SpriteImportMode.Multiple;
 
@@ -128,9 +121,9 @@ namespace CozyLifeSim.Editor
 
             importer.alphaIsTransparency = true;
             importer.isReadable = false;
-            importer.textureCompression = originalCompression;
 
-            // Restore target max size
+            // Set target max size
+            TextureImporterPlatformSettings defaultSettings = importer.GetDefaultPlatformTextureSettings();
             defaultSettings.maxTextureSize = maxTextureSize;
             importer.SetPlatformTextureSettings(defaultSettings);
 

@@ -242,6 +242,54 @@ namespace CozyLifeSim.Editor
             SafeSetSizeDelta(headerPanel, Vector2.zero, ref isSceneDirty);
             SafeSetAnchoredPosition(headerPanel, Vector2.zero, ref isSceneDirty);
 
+            // Configure HorizontalLayoutGroup to cleanly align elements and prevent layout fight
+            HorizontalLayoutGroup headerLayout = headerPanel.gameObject.GetComponent<HorizontalLayoutGroup>();
+            if (headerLayout == null)
+            {
+                headerLayout = headerPanel.gameObject.AddComponent<HorizontalLayoutGroup>();
+                isSceneDirty = true;
+            }
+            if (headerLayout.childAlignment != TextAnchor.MiddleLeft)
+            {
+                headerLayout.childAlignment = TextAnchor.MiddleLeft;
+                isSceneDirty = true;
+            }
+            if (headerLayout.padding.left != 50)
+            {
+                headerLayout.padding.left = 50;
+                isSceneDirty = true;
+            }
+            if (headerLayout.padding.right != 50)
+            {
+                headerLayout.padding.right = 50;
+                isSceneDirty = true;
+            }
+            if (!Mathf.Approximately(headerLayout.spacing, 50f))
+            {
+                headerLayout.spacing = 50f;
+                isSceneDirty = true;
+            }
+            if (headerLayout.childControlWidth != false)
+            {
+                headerLayout.childControlWidth = false;
+                isSceneDirty = true;
+            }
+            if (headerLayout.childControlHeight != false)
+            {
+                headerLayout.childControlHeight = false;
+                isSceneDirty = true;
+            }
+            if (headerLayout.childForceExpandWidth != false)
+            {
+                headerLayout.childForceExpandWidth = false;
+                isSceneDirty = true;
+            }
+            if (headerLayout.childForceExpandHeight != false)
+            {
+                headerLayout.childForceExpandHeight = false;
+                isSceneDirty = true;
+            }
+
             // Left HUD elements: Player status text displays (Coins, Seeds, Crops)
             TextMeshProUGUI coinsText = SetupText(headerPanel, "Coins_Text", "100", "", ref isSceneDirty);
             RectTransform coinsRect = coinsText.GetComponent<RectTransform>();

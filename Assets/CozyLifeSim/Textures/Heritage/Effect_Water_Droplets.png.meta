@@ -126,10 +126,10 @@ TextureImporter:
       name: Effect_Water_Droplets
       rect:
         serializedVersion: 2
-        x: 173
-        y: 91
-        width: 703
-        height: 797
+        x: 213
+        y: 111
+        width: 860
+        height: 976
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

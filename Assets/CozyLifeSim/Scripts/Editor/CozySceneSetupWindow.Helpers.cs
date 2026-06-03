@@ -587,11 +587,11 @@ namespace CozyLifeSim.Editor
 
         private Vector4 GetExpectedBorder(string fileName)
         {
-            if (fileName == "UI_Panel_Frame_Wood.png") return new Vector4(64, 64, 64, 64);
-            if (fileName == "UI_Dialogue_Bubble.png") return new Vector4(64, 64, 64, 64);
+            if (fileName == "UI_Panel_Frame_Wood.png") return new Vector4(128, 128, 128, 128);
+            if (fileName == "UI_Dialogue_Bubble.png") return new Vector4(128, 128, 128, 128);
             if (fileName == "UI_Scrapbook_Notebook_Open.png") return new Vector4(128, 128, 128, 128);
-            if (fileName == "UI_Tab_Button_Bg.png") return new Vector4(32, 32, 32, 32);
-            if (fileName == "UI_Quest_Item_Bg.png") return new Vector4(32, 32, 32, 32);
+            if (fileName == "UI_Tab_Button_Bg.png") return new Vector4(64, 64, 64, 64);
+            if (fileName == "UI_Quest_Item_Bg.png") return new Vector4(64, 64, 64, 64);
             if (fileName == "Scrapbook_StickyNote_Yellow.png") return new Vector4(64, 64, 64, 64);
             if (fileName == "UI_Banner_LevelUp.png") return new Vector4(64, 64, 64, 64);
             return Vector4.zero;

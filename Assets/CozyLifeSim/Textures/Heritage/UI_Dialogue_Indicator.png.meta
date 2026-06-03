@@ -126,10 +126,10 @@ TextureImporter:
       name: UI_Dialogue_Indicator
       rect:
         serializedVersion: 2
-        x: 123
-        y: 178
-        width: 771
-        height: 677
+        x: 151
+        y: 219
+        width: 943
+        height: 827
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

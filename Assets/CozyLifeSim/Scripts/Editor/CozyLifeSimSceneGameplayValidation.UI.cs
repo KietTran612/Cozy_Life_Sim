@@ -741,6 +741,85 @@ namespace CozyLifeSim.Editor
                 CheckSerializedSprite(petIconProp, "UI_Icon_QuestType_Pet", "_questPetIcon");
                 CheckSerializedSprite(completedStampProp, "UI_Quest_Stamp_Completed", "_questCompletedStamp");
             }
+
+            // Validate InventoryHudWidget serialized fields
+            var inventoryHud = FindSceneComponent<InventoryHudWidget>("Header_Panel");
+            if (inventoryHud != null)
+            {
+                var so = new SerializedObject(inventoryHud);
+                void CheckImageField(string fieldName, string expectedSpriteName, Image.Type expectedType)
+                {
+                    var imgProp = so.FindProperty(fieldName);
+                    if (imgProp == null || imgProp.objectReferenceValue == null)
+                    {
+                        errors.Add($"InventoryHudWidget field '{fieldName}' is not assigned.");
+                        return;
+                    }
+                    var img = imgProp.objectReferenceValue as Image;
+                    if (img == null)
+                    {
+                        errors.Add($"InventoryHudWidget field '{fieldName}' is not an Image.");
+                        return;
+                    }
+                    if (img.sprite == null)
+                    {
+                        errors.Add($"InventoryHudWidget field '{fieldName}' Image has no sprite assigned.");
+                    }
+                    else if (img.sprite.name != expectedSpriteName)
+                    {
+                        errors.Add($"InventoryHudWidget field '{fieldName}' Image sprite is '{img.sprite.name}', expected '{expectedSpriteName}'.");
+                    }
+                    else if (img.type != expectedType)
+                    {
+                        errors.Add($"InventoryHudWidget field '{fieldName}' Image type is '{img.type}', expected '{expectedType}'.");
+                    }
+                    else
+                    {
+                        passed.Add($"InventoryHudWidget field '{fieldName}' is correctly assigned '{expectedSpriteName}' ({expectedType}).");
+                    }
+                }
+
+                CheckImageField("_autosaveIcon", "UI_Icon_Autosave", Image.Type.Simple);
+                CheckImageField("_coinIcon", "System_Coin_Vietnamese", Image.Type.Simple);
+                CheckImageField("_seedsIcon", "System_Icon_Seeds", Image.Type.Simple);
+                CheckImageField("_cropsIcon", "System_Icon_Crops", Image.Type.Simple);
+            }
+
+            // Validate ProgressionHudWidget serialized fields
+            var progressionHud = FindSceneComponent<ProgressionHudWidget>("Progression_HUD");
+            if (progressionHud != null)
+            {
+                var so = new SerializedObject(progressionHud);
+                var imgProp = so.FindProperty("_levelStarImage");
+                if (imgProp == null || imgProp.objectReferenceValue == null)
+                {
+                    errors.Add("ProgressionHudWidget field '_levelStarImage' is not assigned.");
+                }
+                else
+                {
+                    var img = imgProp.objectReferenceValue as Image;
+                    if (img == null)
+                    {
+                        errors.Add("ProgressionHudWidget field '_levelStarImage' is not an Image.");
+                    }
+                    else if (img.sprite == null)
+                    {
+                        errors.Add("ProgressionHudWidget field '_levelStarImage' Image has no sprite assigned.");
+                    }
+                    else if (img.sprite.name != "System_Icon_Level_Star")
+                    {
+                        errors.Add($"ProgressionHudWidget field '_levelStarImage' Image sprite is '{img.sprite.name}', expected 'System_Icon_Level_Star'.");
+                    }
+                    else if (img.type != Image.Type.Simple)
+                    {
+                        errors.Add($"ProgressionHudWidget field '_levelStarImage' Image type is '{img.type}', expected 'Simple'.");
+                    }
+                    else
+                    {
+                        passed.Add("ProgressionHudWidget field '_levelStarImage' is correctly assigned 'System_Icon_Level_Star' (Simple).");
+                    }
+                }
+            }
         }
     }
 }

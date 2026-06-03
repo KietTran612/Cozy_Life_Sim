@@ -73,8 +73,17 @@ namespace CozyLifeSim.Editor
                 qContentImg = qContentPanel.gameObject.AddComponent<Image>();
                 isSceneDirty = true;
             }
-            qContentImg.sprite = LoadSprite("UI_Panel_Frame_Wood");
-            qContentImg.type = Image.Type.Sliced;
+            var targetQContentSprite = LoadSprite("UI_Panel_Frame_Wood");
+            if (qContentImg.sprite != targetQContentSprite)
+            {
+                qContentImg.sprite = targetQContentSprite;
+                isSceneDirty = true;
+            }
+            if (qContentImg.type != Image.Type.Sliced)
+            {
+                qContentImg.type = Image.Type.Sliced;
+                isSceneDirty = true;
+            }
             if (qContentImg.color != Color.white)
             {
                 qContentImg.color = Color.white;
@@ -212,8 +221,17 @@ namespace CozyLifeSim.Editor
                 sContentImg = sContentPanel.gameObject.AddComponent<Image>();
                 isSceneDirty = true;
             }
-            sContentImg.sprite = LoadSprite("UI_Panel_Frame_Wood");
-            sContentImg.type = Image.Type.Sliced;
+            var targetSContentSprite = LoadSprite("UI_Panel_Frame_Wood");
+            if (sContentImg.sprite != targetSContentSprite)
+            {
+                sContentImg.sprite = targetSContentSprite;
+                isSceneDirty = true;
+            }
+            if (sContentImg.type != Image.Type.Sliced)
+            {
+                sContentImg.type = Image.Type.Sliced;
+                isSceneDirty = true;
+            }
             if (sContentImg.color != Color.white)
             {
                 sContentImg.color = Color.white;
@@ -497,8 +515,17 @@ namespace CozyLifeSim.Editor
                 diaryContentImg = diaryContentPanel.gameObject.AddComponent<Image>();
                 isSceneDirty = true;
             }
-            diaryContentImg.sprite = LoadSprite("UI_Panel_Frame_Wood");
-            diaryContentImg.type = Image.Type.Sliced;
+            var targetDiaryContentSprite = LoadSprite("UI_Panel_Frame_Wood");
+            if (diaryContentImg.sprite != targetDiaryContentSprite)
+            {
+                diaryContentImg.sprite = targetDiaryContentSprite;
+                isSceneDirty = true;
+            }
+            if (diaryContentImg.type != Image.Type.Sliced)
+            {
+                diaryContentImg.type = Image.Type.Sliced;
+                isSceneDirty = true;
+            }
             if (diaryContentImg.color != Color.white)
             {
                 diaryContentImg.color = Color.white;
@@ -638,8 +665,17 @@ namespace CozyLifeSim.Editor
                 dContentImg = dContentPanel.gameObject.AddComponent<Image>();
                 isSceneDirty = true;
             }
-            dContentImg.sprite = LoadSprite("UI_Dialogue_Bubble");
-            dContentImg.type = Image.Type.Sliced;
+            var targetDContentSprite = LoadSprite("UI_Dialogue_Bubble");
+            if (dContentImg.sprite != targetDContentSprite)
+            {
+                dContentImg.sprite = targetDContentSprite;
+                isSceneDirty = true;
+            }
+            if (dContentImg.type != Image.Type.Sliced)
+            {
+                dContentImg.type = Image.Type.Sliced;
+                isSceneDirty = true;
+            }
             if (dContentImg.color != Color.white)
             {
                 dContentImg.color = Color.white;

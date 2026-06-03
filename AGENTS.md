@@ -13,7 +13,7 @@ Do not use `docs/superpowers/plans/` for this project unless the user explicitly
 
 The `.agent/` directory belongs to the Antigravity Superpowers profile. Do not modify `.agent/` unless the user explicitly asks to change the Antigravity profile.
 
-Exception: agents may create, update, and delete temporary helper files under `.agent/scratch/` when those files are used as disposable task scratch space, such as Python scripts for Unity validation or log inspection. Do not treat `.agent/scratch/` files as deliverable source files unless the user explicitly asks to promote them into the project workflow.
+Exception: agents may create, update, and delete temporary helper files under `.agent/scratch/` when those files are used as disposable task scratch space, such as Python scripts for Unity validation or log inspection. Do not treat `.agent/scratch/` files as deliverable source files or include them in commits unless the user explicitly asks to promote them into the project workflow.
 
 ## Task Tracker Format
 
@@ -34,6 +34,24 @@ Do not manually create Unity `.meta` files. If a new Unity-tracked file or folde
 Existing Unity `.meta` files may be edited when necessary, but do not change their `guid` or any serialized identifiers in a way that could break Unity references.
 
 After completing any task that changes or adds scripts, wait for Unity to finish compiling, check the Console/Editor log for compiler errors, and fix any errors before marking the task complete.
+
+## Verification Scope Policy
+
+Do not run the full validation suite by default. Choose the smallest verification scope that proves the changed behavior.
+
+- Docs-only changes: no Unity validation required.
+- Non-Unity helper or scratch changes: no Unity validation unless they affect Unity execution.
+- Unity script changes: wait for Unity compile/import, then check the Console/Editor log for compiler errors.
+- Core service, data model, persistence, inventory, economy, quest, or presenter logic changes: run compile/log checks plus `Tools/CozySim/Run Logic Verification Tests`.
+- Scene setup, serialized wiring, texture importer, asset import, UI hierarchy, or layout changes: run compile/log checks plus `Tools/CozySim/Run Scene Gameplay Loop Validation`.
+- Run scene setup idempotency checks only when the task changes scene setup, importer configuration, serialized scene output, or layout code that can dirty `Main.unity`.
+- Runtime gameplay, Play Mode interaction, persistence lifecycle, DI lifecycle, animation/tween behavior, or widget behavior changes: run compile/log checks plus the relevant Play Mode validation.
+- Treat "full validation suite" as running multiple broad validation routes together, such as logic verification, scene gameplay validation, Play Mode runtime validation, and idempotency checks.
+- Before running the full validation suite, ask the user for approval and wait for explicit acceptance. If the user does not approve full validation, run only the smallest targeted validation relevant to the changed scope.
+- Full validation may be proposed for broad cross-system changes, release/final milestone validation, before a user-requested commit when the changed scope touches multiple systems, or when the user explicitly asks for full validation, but it still requires explicit user acceptance before running.
+- If unsure, start with the narrowest relevant validation. Escalate to broader validation only when the targeted check fails in a way that suggests broader impact, the change crosses a listed boundary, or the user approves broader validation.
+
+When a validation is intentionally skipped, record it as `not run - not relevant to this change` in the handoff instead of treating it as missing work.
 
 ## Active Context & Handover Guidelines
 

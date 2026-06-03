@@ -48,4 +48,6 @@
 | **Task 37: [Phase 3.7] Landscape-Only Startup, Camera & Layout Hardening** | [x] | Boot directly into Main.unity with in-scene startup overlay, hardened orthographic camera, landscape-only player/build settings, responsive landscape layout controller, and validation coverage. |
 | **Task 38: Wire Vietnamese Heritage UI Assets** | [x] | Wired all Vietnamese Heritage UI assets, configured 9-slicing/max texture sizes, resolved duplicate labels by checking inactive children, added LayoutElement ignoreLayout to Autosave/WaterStatus icons, and achieved 100% idempotent scene generation. |
 | **Task 39: Split Long Editor Scripts into Partial Classes** | [x] | Refactored CozySceneSetupWindow and CozyLifeSimSceneGameplayValidation into modular partial files under CozyLifeSim.Editor namespace. Verified with 31 logic, 323 scene, and 22 Play Mode validation tests passing successfully. |
+| **Task 40: Address Review Feedback for Task 38** | [x] | Fixed border policy values, expanded scene validation to cover Autosave and Level Star icons, ensured isSceneDirty is set on popup changes, fixed diary note popup wiring, optimized texture importer to load PNG bytes directly to resolve resolution scaling mismatches, and verified 100% idempotence. |
+
 

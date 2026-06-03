@@ -474,7 +474,7 @@ namespace CozyLifeSim.Editor
             StickerBookPage bookPage0,
             StickerBookPage bookPage1,
             StickerBook stickerBook,
-            RectTransform diaryInputPopup,
+            CozyDiaryInputPopup diaryInputPopup,
             ref bool isSceneDirty)
         {
             // 9. Setup Inventory Tray

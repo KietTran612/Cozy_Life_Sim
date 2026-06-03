@@ -356,7 +356,7 @@ namespace CozyLifeSim.Editor
             ConfigureNPCGrandma(chickenSprite, defaultSprite, ref isSceneDirty);
 
             // 14. Setup Inventory Tray & auto-wire templates
-            ConfigureInventoryTray(uiRoot, prefabsHolder, defaultSprite, bookPage0, bookPage1, stickerBook, diaryInputPopupPanel, ref isSceneDirty);
+            ConfigureInventoryTray(uiRoot, prefabsHolder, defaultSprite, bookPage0, bookPage1, stickerBook, diaryInputPopup, ref isSceneDirty);
 
             // Log and Save completion
             if (isSceneDirty)

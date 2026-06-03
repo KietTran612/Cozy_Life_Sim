@@ -405,7 +405,7 @@ namespace CozyLifeSim.Editor
             }
         }
 
-        private static void ConfigureSimpleImage(Image image, bool preserveAspect, ref bool isDirty)
+        private static void ConfigureSimpleImage(Image image, bool preserveAspect, ref bool isDirty, bool forceColorWhite = true)
         {
             if (image == null) return;
 
@@ -421,7 +421,7 @@ namespace CozyLifeSim.Editor
                 isDirty = true;
             }
 
-            if (image.color != Color.white)
+            if (forceColorWhite && image.color != Color.white)
             {
                 image.color = Color.white;
                 isDirty = true;

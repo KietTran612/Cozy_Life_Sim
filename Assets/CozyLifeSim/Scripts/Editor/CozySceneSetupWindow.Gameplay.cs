@@ -243,7 +243,7 @@ namespace CozyLifeSim.Editor
                 isSceneDirty = true;
             }
             ConfigureSlicedImage(bookPanelImg, ref isSceneDirty);
- 
+
             Button prevBtn = SetupButton(stickerBookPanel, "Prev_Button", "< Page", ref isSceneDirty);
             Image prevBtnImg = prevBtn.GetComponent<Image>();
             if (prevBtnImg != null)
@@ -255,7 +255,7 @@ namespace CozyLifeSim.Editor
                 var label = prevBtn.GetComponentInChildren<TextMeshProUGUI>(true);
                 if (label != null && label.gameObject.activeSelf) { label.gameObject.SetActive(false); isSceneDirty = true; }
             }
- 
+
             Button nextBtn = SetupButton(stickerBookPanel, "Next_Button", "Page >", ref isSceneDirty);
             Image nextBtnImg = nextBtn.GetComponent<Image>();
             if (nextBtnImg != null)
@@ -509,7 +509,7 @@ namespace CozyLifeSim.Editor
                 shadowImg.sprite = defaultSprite;
                 isSceneDirty = true;
             }
-            ConfigureSimpleImage(shadowImg, true, ref isSceneDirty);
+            ConfigureSimpleImage(shadowImg, true, ref isSceneDirty, forceColorWhite: false);
             ConfigureFixedVisualRect(shadowOffset, new Vector2(0.5f, 0.5f), new Vector2(92f, 92f), Vector2.zero, ref isSceneDirty);
 
             Image visualImg = SetupImage(stickerTemplate, "Visual_Image", ref isSceneDirty);

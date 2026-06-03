@@ -245,16 +245,37 @@ namespace CozyLifeSim.Editor
             RectTransform seedsTabBtnRect = seedsTabBtn.GetComponent<RectTransform>();
             SafeSetAnchoredPosition(seedsTabBtnRect, new Vector2(-150f, 160f), ref isSceneDirty);
             SafeSetSizeDelta(seedsTabBtnRect, new Vector2(120f, 35f), ref isSceneDirty);
+            Image seedsTabImg = seedsTabBtn.GetComponent<Image>();
+            if (seedsTabImg != null)
+            {
+                var tabBtnBg = LoadSprite("UI_Tab_Button_Bg");
+                if (seedsTabImg.sprite != tabBtnBg) { seedsTabImg.sprite = tabBtnBg; isSceneDirty = true; }
+                ConfigureSlicedImage(seedsTabImg, ref isSceneDirty);
+            }
 
             Button stickersTabBtn = SetupButton(sContentPanel, "Tab_Stickers", "Stickers", ref isSceneDirty);
             RectTransform stickersTabBtnRect = stickersTabBtn.GetComponent<RectTransform>();
             SafeSetAnchoredPosition(stickersTabBtnRect, new Vector2(0f, 160f), ref isSceneDirty);
             SafeSetSizeDelta(stickersTabBtnRect, new Vector2(120f, 35f), ref isSceneDirty);
+            Image stickersTabImg = stickersTabBtn.GetComponent<Image>();
+            if (stickersTabImg != null)
+            {
+                var tabBtnBg = LoadSprite("UI_Tab_Button_Bg");
+                if (stickersTabImg.sprite != tabBtnBg) { stickersTabImg.sprite = tabBtnBg; isSceneDirty = true; }
+                ConfigureSlicedImage(stickersTabImg, ref isSceneDirty);
+            }
 
             Button cropsTabBtn = SetupButton(sContentPanel, "Tab_Crops", "Crops", ref isSceneDirty);
             RectTransform cropsTabBtnRect = cropsTabBtn.GetComponent<RectTransform>();
             SafeSetAnchoredPosition(cropsTabBtnRect, new Vector2(150f, 160f), ref isSceneDirty);
             SafeSetSizeDelta(cropsTabBtnRect, new Vector2(120f, 35f), ref isSceneDirty);
+            Image cropsTabImg = cropsTabBtn.GetComponent<Image>();
+            if (cropsTabImg != null)
+            {
+                var tabBtnBg = LoadSprite("UI_Tab_Button_Bg");
+                if (cropsTabImg.sprite != tabBtnBg) { cropsTabImg.sprite = tabBtnBg; isSceneDirty = true; }
+                ConfigureSlicedImage(cropsTabImg, ref isSceneDirty);
+            }
 
             // Grids Container
             RectTransform sGridsContainer = SetupPanel(sContentPanel, "Grids_Container", ref isSceneDirty);
@@ -382,6 +403,12 @@ namespace CozyLifeSim.Editor
             }
 
             Image itemIcon = SetupImage(shopItemTemplate, "Item_Icon", ref isSceneDirty);
+            var defaultItemIconSprite = LoadSprite("System_Icon_Seeds");
+            if (itemIcon.sprite != defaultItemIconSprite)
+            {
+                itemIcon.sprite = defaultItemIconSprite;
+                isSceneDirty = true;
+            }
             ConfigureSimpleImage(itemIcon, true, ref isSceneDirty);
             SafeSetSizeDelta(itemIcon.GetComponent<RectTransform>(), new Vector2(50f, 50f), ref isSceneDirty);
             TextMeshProUGUI itemName = SetupText(shopItemTemplate, "Item_Name", "Product Name", "", ref isSceneDirty);

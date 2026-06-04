@@ -296,6 +296,7 @@ namespace CozyLifeSim.Editor
             // Left HUD elements: Player status text displays (Coins, Seeds, Crops)
             TextMeshProUGUI coinsText = SetupText(headerPanel, "Coins_Text", "100", "", ref isSceneDirty);
             RectTransform coinsRect = coinsText.GetComponent<RectTransform>();
+            ConfigureIgnoreLayout(coinsRect, ref isSceneDirty);
             SafeSetAnchor(coinsRect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), ref isSceneDirty);
             SafeSetPivot(coinsRect, new Vector2(0f, 0.5f), ref isSceneDirty);
             SafeSetSizeDelta(coinsRect, new Vector2(100f, 40f), ref isSceneDirty);
@@ -322,6 +323,7 @@ namespace CozyLifeSim.Editor
 
             TextMeshProUGUI seedsText = SetupText(headerPanel, "Seeds_Text", "5", "", ref isSceneDirty);
             RectTransform seedsRect = seedsText.GetComponent<RectTransform>();
+            ConfigureIgnoreLayout(seedsRect, ref isSceneDirty);
             SafeSetAnchor(seedsRect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), ref isSceneDirty);
             SafeSetPivot(seedsRect, new Vector2(0f, 0.5f), ref isSceneDirty);
             SafeSetSizeDelta(seedsRect, new Vector2(100f, 40f), ref isSceneDirty);
@@ -348,6 +350,7 @@ namespace CozyLifeSim.Editor
 
             TextMeshProUGUI cropsText = SetupText(headerPanel, "Crops_Text", "0", "", ref isSceneDirty);
             RectTransform cropsRect = cropsText.GetComponent<RectTransform>();
+            ConfigureIgnoreLayout(cropsRect, ref isSceneDirty);
             SafeSetAnchor(cropsRect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), ref isSceneDirty);
             SafeSetPivot(cropsRect, new Vector2(0f, 0.5f), ref isSceneDirty);
             SafeSetSizeDelta(cropsRect, new Vector2(100f, 40f), ref isSceneDirty);
@@ -509,6 +512,7 @@ namespace CozyLifeSim.Editor
         private void ConfigureProgressionHud(RectTransform headerPanel, Sprite starSprite, ref bool isSceneDirty)
         {
             RectTransform progressionHud = SetupPanel(headerPanel, "Progression_HUD", ref isSceneDirty);
+            ConfigureIgnoreLayout(progressionHud, ref isSceneDirty);
             SafeSetAnchor(progressionHud, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), ref isSceneDirty);
             SafeSetPivot(progressionHud, new Vector2(0.5f, 0.5f), ref isSceneDirty);
             SafeSetSizeDelta(progressionHud, new Vector2(300f, 50f), ref isSceneDirty);
@@ -517,6 +521,7 @@ namespace CozyLifeSim.Editor
             // ProgressionHUD level status Text displaying level
             TextMeshProUGUI levelText = SetupText(progressionHud, "Level_Text", "LV. 1", "", ref isSceneDirty);
             RectTransform levelRect = levelText.GetComponent<RectTransform>();
+            ConfigureIgnoreLayout(levelRect, ref isSceneDirty);
             SafeSetAnchor(levelRect, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), ref isSceneDirty);
             SafeSetPivot(levelRect, new Vector2(0f, 0.5f), ref isSceneDirty);
             SafeSetSizeDelta(levelRect, new Vector2(80f, 30f), ref isSceneDirty);
@@ -543,6 +548,7 @@ namespace CozyLifeSim.Editor
 
             // ProgressionHUD XP slider bar elements
             RectTransform xpBarContainer = SetupPanel(progressionHud, "XP_Bar_Container", ref isSceneDirty);
+            ConfigureIgnoreLayout(xpBarContainer, ref isSceneDirty);
             SafeSetAnchor(xpBarContainer, new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), ref isSceneDirty);
             SafeSetPivot(xpBarContainer, new Vector2(0f, 0.5f), ref isSceneDirty);
             SafeSetSizeDelta(xpBarContainer, new Vector2(-150f, 20f), ref isSceneDirty);

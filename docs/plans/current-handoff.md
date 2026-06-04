@@ -10,6 +10,13 @@
 
 ## Latest Completed Work
 
+ - **Editor refactor follow-up and visual validation fix**
+   - Split visual layout validation from `CozyLifeSimSceneGameplayValidation.UI.cs` into `CozyLifeSimSceneGameplayValidation.VisualLayout.cs`.
+   - Split shop popup setup from `CozySceneSetupWindow.Popups.cs` into `CozySceneSetupWindow.ShopPopup.cs`.
+   - Fixed `Prefabs_Holder` duplicate handling so shop template setup and scene validation resolve the same `Canvas/Prefabs_Holder` hierarchy.
+   - Restored corrupted Vietnamese dialogue literals in `CozySceneSetupWindow.Popups.cs`.
+   - Added `ConfigureIgnoreLayout` and applied it to fixed HUD/progression visual rects to keep consecutive scene setup runs idempotent.
+
  - **Task 41.2: Home Screen Visual Pass**
    - Verified that the scene setup successfully generates and scales Ba Ngoai, Quest Board, and Shop Stall in the world space using height-fitting scaling.
    - Verified that home UI images, panel layouts, HUD icons, and inventory trays conform to the target size/aspect policies.
@@ -59,58 +66,24 @@
 
 ## Latest Verification
 
-- Unity compile/import: Complete, compiling cleanly with no errors.
-- `Tools/CozySim/Run Scene Gameplay Loop Validation`: PASS, **395 passed, 0 failed, 1 expected warnings**.
-- Idempotency check: Verified **exactly 0 new changes** on consecutive setup scene generation runs.
+- Unity compile/import: Complete, compiling cleanly with no errors. Existing obsolete `TextureImporter.spritesheet` warnings remain in `CozyAssetImporterUtility.cs` and `CozyLifeSimSceneGameplayValidation.Textures.cs`.
+- `Tools/CozySim/Run Scene Gameplay Loop Validation`: PASS, **429 passed, 0 failed** after fixing duplicate `Prefabs_Holder`.
+- Idempotency check: PASS, `GenerateSceneSilent` kept `Assets/CozyLifeSim/Scenes/Main.unity` hash unchanged across consecutive runs.
 
 ## Current Uncommitted Scope
 
-- Modified project instructions:
-  - `AGENTS.md`
-- Modified code files:
+- Modified scene/code files:
   - `Assets/CozyLifeSim/Scenes/Main.unity`
-  - `Assets/CozyLifeSim/Scripts/Editor/CozyAssetImporterUtility.cs`
-  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.Textures.cs`
   - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.UI.cs`
-  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.cs`
-  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.cs`
-  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.Gameplay.cs`
   - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.Helpers.cs`
   - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.Popups.cs`
   - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.WorldAndUI.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/CozyDialoguePopup.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/CropWidget.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/InventoryHudWidget.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/ProgressionHudWidget.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/QuestHudWidget.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/QuestPopup.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/AnimalWidget.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/CozyJuiceUtility.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/CozyQuestItemWidget.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/CozySticker.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/ShopItemWidget.cs`
-  - `Assets/CozyLifeSim/Scripts/UI/StickerBookPage.cs`
-  - `Assets/CozyLifeSim/Settings/AnimalDatabase.asset`
-  - `Assets/CozyLifeSim/Settings/CropDatabase.asset`
-  - `Assets/CozyLifeSim/Settings/StickerDatabase.asset`
-  - `Assets/CozyLifeSim/Textures/Heritage/UI_Dialogue_Bubble.png.meta`
-  - `Assets/CozyLifeSim/Textures/Heritage/UI_Panel_Frame_Wood.png.meta`
-  - `Assets/CozyLifeSim/Textures/Heritage/UI_Quest_Item_Bg.png.meta`
-  - `Assets/CozyLifeSim/Textures/Heritage/UI_Tab_Button_Bg.png.meta`
-  - `Assets/CozyLifeSim/Textures/Heritage/*.png.meta` (Task 38 generated meta files)
 - New code files:
-  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.Textures.cs` (+ `.meta`)
-  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.UI.cs` (+ `.meta`)
-  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.Gameplay.cs` (+ `.meta`)
-  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.Helpers.cs` (+ `.meta`)
-  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.Popups.cs` (+ `.meta`)
-  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.WorldAndUI.cs` (+ `.meta`)
-  - `Assets/CozyLifeSim/Scripts/UI/CozyQuestItemWidget.cs` (+ `.meta`)
+  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.VisualLayout.cs` (+ `.meta`)
+  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.ShopPopup.cs` (+ `.meta`)
 - Modified plans:
-  - `docs/plans/2026-06-03-visual-layout-validator.md`
-  - `docs/plans/task.md`
   - `docs/plans/current-handoff.md`
-  - `docs/plans/index.md`
+- Untracked out-of-scope scratch files remain under `.agent/scratch/` and should not be committed.
 
 ## Next-Agent Read Order
 

@@ -455,10 +455,29 @@ namespace CozyLifeSim.Editor
         {
             if (rect == null) return;
 
+            ConfigureIgnoreLayout(rect, ref isDirty);
             SafeSetAnchor(rect, anchor, anchor, ref isDirty);
             SafeSetPivot(rect, new Vector2(0.5f, 0.5f), ref isDirty);
             SafeSetSizeDelta(rect, size, ref isDirty);
             SafeSetAnchoredPosition(rect, position, ref isDirty);
+        }
+
+        private static void ConfigureIgnoreLayout(RectTransform rect, ref bool isDirty)
+        {
+            if (rect == null) return;
+
+            LayoutElement layoutElement = rect.gameObject.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = rect.gameObject.AddComponent<LayoutElement>();
+                isDirty = true;
+            }
+
+            if (!layoutElement.ignoreLayout)
+            {
+                layoutElement.ignoreLayout = true;
+                isDirty = true;
+            }
         }
 
         private static void FitSpriteRendererToHeight(SpriteRenderer renderer, float targetHeight, ref bool isDirty)

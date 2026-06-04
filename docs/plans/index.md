@@ -13,6 +13,8 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Gameplay prototype specs: `2026-05-25-cozy-life-sim-gameplay-prototype.md`
 - Core services and MVP presenter implementation: `2026-05-25-cozy-life-sim-core-services.md`
 - Initial technical design: `2026-05-25-cozy-life-sim-technical-design.md`
+- Project Spec & AI Asset Prompts: [2026-06-04-cozy-life-sim-project-spec-and-ai-asset-prompts.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-04-cozy-life-sim-project-spec-and-ai-asset-prompts.md)
+
 
 ## Scene And UI
 
@@ -39,6 +41,7 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Editor Code Refactoring Plan [PROPOSED]: [2026-06-03-editor-code-refactoring-plan.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-03-editor-code-refactoring-plan.md)
 - Visual Layout Validator & Asset Fitting [COMPLETED]: [2026-06-03-visual-layout-validator.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-03-visual-layout-validator.md)
 - Fix Scene Setup Visuals [PROPOSED]: [2026-06-04-fix-scene-setup-visuals.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-04-fix-scene-setup-visuals.md)
+- Runtime Playtest Final Polish [PROPOSED]: [2026-06-04-runtime-playtest-final-polish.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-04-runtime-playtest-final-polish.md)
 
 ## Database Editors
 
@@ -51,5 +54,5 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 
 ## Suggested Next Plan
 
-Fix Scene Setup Visuals is the proposed plan. Use `2026-06-04-fix-scene-setup-visuals.md` to resolve the fallback prototype sprites, assign panel heritage backgrounds, clear legacy duplicates, and fix serializable bindings.
+Task 42 Runtime Playtest Final Polish is the next proposed plan. Use `2026-06-04-runtime-playtest-final-polish.md` when performing final Play Mode walkthrough, runtime issue triage, scoped polish fixes, and targeted verification.
 Work checklist and implementation tasks track live at `docs/plans/task.md`.

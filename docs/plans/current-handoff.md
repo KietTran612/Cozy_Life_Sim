@@ -2,13 +2,33 @@
 
 ## Snapshot
 
-- **Current Phase**: Task 41: Visual Layout Validator & Asset Fitting completed.
+- **Current Phase**: Task 42: Runtime Playtest Final Polish completed.
 - **Last Completed Commit**: `feat: integrate final 3 Vietnamese Heritage assets and complete Task 35` (`7626c44`).
-- **Current Task**: Task 41 fully completed (Task 41.1 to 41.5).
-- **Planned Next Feature**: Run final playtest walkthrough and vertical slice polish.
-- **Recommended Next Task**: Perform runtime validation and final playtest check in Unity.
+- **Current Task**: Task 42 completed successfully.
+- **Planned Next Feature**: Project vertical slice fully verified and balanced.
+- **Recommended Next Task**: Present findings to user and await final feedback / release instructions.
 
 ## Latest Completed Work
+
+ - **Task 42: Runtime Playtest Final Polish**
+   - Executed final Play Mode playtest walkthrough via Unity WebSocket MCP bridge.
+   - Verified HUD stats (Coins, Seeds, Crops, Level, Autosave) render perfectly without overlap.
+   - Run the 22-step Play Mode gameplay loop validation (`Run MCP Gameplay Loop Validation`) which tested shop purchases, crop planting/watering/harvesting/selling, premium stickers, scrapbook layout changes, diary notes, and persistence lifecycle. All 22 steps passed cleanly.
+   - Executed Vietnamese Heritage runtime unlock validation (`Run Heritage Runtime Validation`) covering progress progression (levels 1-3), seed/sticker locks, and quest rewards. All 5 steps passed cleanly.
+   - Ran core Logic Verification tests (31/31 passed) and Scene Setup validation (429/429 passed).
+   - Captured Game View screenshots representing the final playtest state.
+   - Found and confirmed exactly 0 P1/P2 runtime issues.
+
+ - **Brainstorming Project Spec & AI Asset Prompts**
+   - Created [2026-06-04-cozy-life-sim-project-spec-and-ai-asset-prompts.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-04-cozy-life-sim-project-spec-and-ai-asset-prompts.md).
+   - Documented project overview, aesthetic direction (Pop-up Book approach with Isometric 2.5D ground + flat 2D sticker sprites), and core gameplay systems.
+   - Outlined precise prompt requirements for AI image generation (e.g. no baked shadows, transparent/solid backgrounds, white borders for stickers, seamless 2:1 tiles for terrain).
+   - Linked the new design plan in [index.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/index.md).
+
+ - **Task 42: Runtime Playtest Final Polish planning**
+   - Created `docs/plans/2026-06-04-runtime-playtest-final-polish.md`.
+   - Plan covers baseline editor health, runtime walkthrough, reproduced issue triage, scoped P1/P2 fixes only, targeted verification, and concise handoff updates.
+   - Updated the live task tracker and plan index to point at Task 42.
 
  - **Task 41.5: Snapshot Utility & Final Aggregate**
    - Created `CozyVisualSnapshotUtility.cs` to add menu-callable Game view screen capture functionality (`Tools/CozySim/Capture Visual Layout Snapshot`).
@@ -74,19 +94,24 @@
 ## Latest Verification
 
 - Unity compile/import: Complete, compiling cleanly with no errors. Existing obsolete `TextureImporter.spritesheet` warnings remain in `CozyAssetImporterUtility.cs` and `CozyLifeSimSceneGameplayValidation.Textures.cs`.
-- `Tools/CozySim/Run Scene Gameplay Loop Validation`: PASS, **429 passed, 0 failed** after fixing duplicate `Prefabs_Holder`.
+- `Tools/CozySim/Run Scene Gameplay Loop Validation`: PASS, **429 passed, 0 failed**.
+- `Tools/CozySim/Run MCP Gameplay Loop Validation` (Play Mode loop): PASS, **22 passed, 0 failed**.
+- `Tools/CozySim/Run Heritage Runtime Validation`: PASS, **5 passed, 0 failed**.
+- `Tools/CozySim/Run Logic Verification Tests`: PASS, **31 passed, 0 failed**.
 - Idempotency check: PASS, `GenerateSceneSilent` kept `Assets/CozyLifeSim/Scenes/Main.unity` hash unchanged across consecutive runs.
 
 ## Current Uncommitted Scope
 
-- Modified code files:
-  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.VisualLayout.cs`
-- New code files:
-  - `Assets/CozyLifeSim/Scripts/Editor/CozyVisualSnapshotUtility.cs` (+ `.meta`)
 - Modified plans:
   - `docs/plans/task.md`
   - `docs/plans/current-handoff.md`
-- Untracked out-of-scope scratch files remain under `.agent/scratch/` and should not be committed.
+- Screenshots (untracked):
+  - `.screenshots/game_view.png`
+  - `.screenshots/editor_all.png`
+- Untracked out-of-scope files:
+  - `.agent/scratch/scratch.rar`
+  - `docs/plans/2026-06-04-cozy-life-sim-project-spec-and-ai-asset-prompts.md`
+  - `docs/plans/2026-06-04-runtime-playtest-final-polish.md`
 
 ## Next-Agent Read Order
 
@@ -94,3 +119,4 @@
 2. Read `docs/plans/task.md`.
 3. Read this file.
 4. Read detailed plan files only if the next task specifically requires them.
+

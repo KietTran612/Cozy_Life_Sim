@@ -37,7 +37,8 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Phase 3.7 Landscape-Only Startup, Camera & Layout Hardening [COMPLETED]: [2026-06-02-landscape-startup-camera-layout-hardening.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-02-landscape-startup-camera-layout-hardening.md)
 - Wire Vietnamese Heritage UI Assets [PROPOSED]: [2026-06-03-wire-heritage-ui-assets.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-03-wire-heritage-ui-assets.md)
 - Editor Code Refactoring Plan [PROPOSED]: [2026-06-03-editor-code-refactoring-plan.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-03-editor-code-refactoring-plan.md)
-- Visual Layout Validator & Asset Fitting [IN PROGRESS]: [2026-06-03-visual-layout-validator.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-03-visual-layout-validator.md)
+- Visual Layout Validator & Asset Fitting [COMPLETED]: [2026-06-03-visual-layout-validator.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-03-visual-layout-validator.md)
+- Fix Scene Setup Visuals [PROPOSED]: [2026-06-04-fix-scene-setup-visuals.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-04-fix-scene-setup-visuals.md)
 
 ## Database Editors
 
@@ -50,5 +51,5 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 
 ## Suggested Next Plan
 
-Task 41 Visual Layout Validator & Asset Fitting is the active plan. Use `2026-06-03-visual-layout-validator.md` when implementing visual size/aspect policy, popup coverage, scene visual validation, and snapshot review.
+Fix Scene Setup Visuals is the proposed plan. Use `2026-06-04-fix-scene-setup-visuals.md` to resolve the fallback prototype sprites, assign panel heritage backgrounds, clear legacy duplicates, and fix serializable bindings.
 Work checklist and implementation tasks track live at `docs/plans/task.md`.

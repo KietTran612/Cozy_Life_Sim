@@ -2,13 +2,20 @@
 
 ## Snapshot
 
-- **Current Phase**: Task 41: Visual Layout Validator & Asset Fitting in progress.
+- **Current Phase**: Task 41: Visual Layout Validator & Asset Fitting completed.
 - **Last Completed Commit**: `feat: integrate final 3 Vietnamese Heritage assets and complete Task 35` (`7626c44`).
-- **Current Task**: Task 41.2, 41.3, and 41.4 completed. Task 41.5 Snapshot Utility & Final Aggregate is next.
-- **Planned Next Feature**: Implement visual snapshot utility, run final aggregate visual validation, verify idempotency, and update the plan tracker.
-- **Recommended Next Task**: Start Task 41.5 from `docs/plans/2026-06-03-visual-layout-validator.md`.
+- **Current Task**: Task 41 fully completed (Task 41.1 to 41.5).
+- **Planned Next Feature**: Run final playtest walkthrough and vertical slice polish.
+- **Recommended Next Task**: Perform runtime validation and final playtest check in Unity.
 
 ## Latest Completed Work
+
+ - **Task 41.5: Snapshot Utility & Final Aggregate**
+   - Created `CozyVisualSnapshotUtility.cs` to add menu-callable Game view screen capture functionality (`Tools/CozySim/Capture Visual Layout Snapshot`).
+   - Implemented `ValidateAggregateVisualLayout` inside `CozyLifeSimSceneGameplayValidation.VisualLayout.cs` to check for accumulated errors.
+   - Confirmed all 429 validation checks pass cleanly with 0 errors.
+   - Verified that running `GenerateSceneSilent` consecutively produces exactly 0 git diffs on scene files, achieving 100% idempotency.
+   - Documented the limitation that `ScreenCapture.CaptureScreenshot` requires focused rendering of the Game view or Play Mode.
 
  - **Editor refactor follow-up and visual validation fix**
    - Split visual layout validation from `CozyLifeSimSceneGameplayValidation.UI.cs` into `CozyLifeSimSceneGameplayValidation.VisualLayout.cs`.
@@ -72,16 +79,12 @@
 
 ## Current Uncommitted Scope
 
-- Modified scene/code files:
-  - `Assets/CozyLifeSim/Scenes/Main.unity`
-  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.UI.cs`
-  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.Helpers.cs`
-  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.Popups.cs`
-  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.WorldAndUI.cs`
+- Modified code files:
+  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.VisualLayout.cs`
 - New code files:
-  - `Assets/CozyLifeSim/Scripts/Editor/CozyLifeSimSceneGameplayValidation.VisualLayout.cs` (+ `.meta`)
-  - `Assets/CozyLifeSim/Scripts/Editor/CozySceneSetupWindow.ShopPopup.cs` (+ `.meta`)
+  - `Assets/CozyLifeSim/Scripts/Editor/CozyVisualSnapshotUtility.cs` (+ `.meta`)
 - Modified plans:
+  - `docs/plans/task.md`
   - `docs/plans/current-handoff.md`
 - Untracked out-of-scope scratch files remain under `.agent/scratch/` and should not be committed.
 

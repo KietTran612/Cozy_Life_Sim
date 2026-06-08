@@ -2,22 +2,25 @@
 
 ## Snapshot
 
-- **Current Phase**: Task 42: Runtime Playtest Final Polish completed.
+- **Current Phase**: Canvas hierarchy cleanup and validation completed.
 - **Last Completed Commit**: `feat: integrate final 3 Vietnamese Heritage assets and complete Task 35` (`7626c44`).
-- **Current Task**: Task 42 completed successfully.
+- **Current Task**: Rollback and hierarchy restoration completed successfully.
 - **Planned Next Feature**: Project vertical slice fully verified and balanced.
 - **Recommended Next Task**: Present findings to user and await final feedback / release instructions.
 
 ## Latest Completed Work
 
- - **Task 42: Runtime Playtest Final Polish**
-   - Executed final Play Mode playtest walkthrough via Unity WebSocket MCP bridge.
-   - Verified HUD stats (Coins, Seeds, Crops, Level, Autosave) render perfectly without overlap.
-   - Run the 22-step Play Mode gameplay loop validation (`Run MCP Gameplay Loop Validation`) which tested shop purchases, crop planting/watering/harvesting/selling, premium stickers, scrapbook layout changes, diary notes, and persistence lifecycle. All 22 steps passed cleanly.
-   - Executed Vietnamese Heritage runtime unlock validation (`Run Heritage Runtime Validation`) covering progress progression (levels 1-3), seed/sticker locks, and quest rewards. All 5 steps passed cleanly.
-   - Ran core Logic Verification tests (31/31 passed) and Scene Setup validation (429/429 passed).
-   - Captured Game View screenshots representing the final playtest state.
-   - Found and confirmed exactly 0 P1/P2 runtime issues.
+ - **Canvas Hierarchy Cleanup & Transform Restoration**
+   - Cleaned up duplicate UI elements under `Canvas_Object`.
+   - Moved the 19 child `SpriteRenderer` objects from `Canvas_Object` to the root hierarchy level.
+   - Replaced their `RectTransform` components with standard `Transform` components.
+   - Grouped them under the parent `World_Object` gameobject.
+   - Aligned `World_Object` at `(0, 0, 0)` with local scale `(0.0091559, 0.0091559, 1.0)` to match World Space camera viewport.
+   - Restored exact original local coordinates and scales for all 19 world sprite children under `World_Object`.
+   - Re-activated the main Canvas and world objects (`Quest_Board`, `Shop_Stall`, `NPC_BaNgoai`).
+   - Re-ran standard UI generation under the main Canvas via `GenerateSceneSilent` and saved the scene.
+   - Verified that the scene passes validation with **429 checks passed, 0 failed**.
+   - Cleaned up all temporary editor helper scripts, leaving a clean workspace.
 
  - **Brainstorming Project Spec & AI Asset Prompts**
    - Created [2026-06-04-cozy-life-sim-project-spec-and-ai-asset-prompts.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-04-cozy-life-sim-project-spec-and-ai-asset-prompts.md).

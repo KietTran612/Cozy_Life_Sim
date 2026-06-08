@@ -13,6 +13,26 @@
       "source": "builtin",
       "dependencies": {}
     },
+    "com.unity.2d.tilemap": {
+      "version": "1.0.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.modules.tilemap": "1.0.0",
+        "com.unity.modules.uielements": "1.0.0"
+      }
+    },
+    "com.unity.2d.tilemap.extras": {
+      "version": "6.0.2",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.2d.tilemap": "1.0.0",
+        "com.unity.modules.tilemap": "1.0.0",
+        "com.unity.modules.jsonserialize": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.nuget.newtonsoft-json": {
       "version": "3.2.2",
       "depth": 1,
@@ -57,6 +77,12 @@
       "source": "builtin",
       "dependencies": {}
     },
+    "com.unity.modules.hierarchycore": {
+      "version": "1.0.0",
+      "depth": 2,
+      "source": "builtin",
+      "dependencies": {}
+    },
     "com.unity.modules.imgui": {
       "version": "1.0.0",
       "depth": 1,
@@ -81,11 +107,31 @@
       "source": "builtin",
       "dependencies": {}
     },
+    "com.unity.modules.tilemap": {
+      "version": "1.0.0",
+      "depth": 1,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.modules.physics2d": "1.0.0"
+      }
+    },
     "com.unity.modules.ui": {
       "version": "1.0.0",
       "depth": 1,
       "source": "builtin",
       "dependencies": {}
+    },
+    "com.unity.modules.uielements": {
+      "version": "1.0.0",
+      "depth": 1,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.modules.ui": "1.0.0",
+        "com.unity.modules.imgui": "1.0.0",
+        "com.unity.modules.jsonserialize": "1.0.0",
+        "com.unity.modules.hierarchycore": "1.0.0",
+        "com.unity.modules.physics": "1.0.0"
+      }
     }
   }
 }

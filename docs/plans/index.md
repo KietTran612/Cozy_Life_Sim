@@ -42,6 +42,7 @@ Use this file to locate detailed plans without scanning the whole `docs/plans` f
 - Visual Layout Validator & Asset Fitting [COMPLETED]: [2026-06-03-visual-layout-validator.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-03-visual-layout-validator.md)
 - Fix Scene Setup Visuals [PROPOSED]: [2026-06-04-fix-scene-setup-visuals.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-04-fix-scene-setup-visuals.md)
 - Runtime Playtest Final Polish [PROPOSED]: [2026-06-04-runtime-playtest-final-polish.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-04-runtime-playtest-final-polish.md)
+- Align Home UI with World Objects [PROPOSED]: [2026-06-08-align-home-ui-with-world.md](file:///d:/soflware/Unity/Source/Cozy_Life_Sim/docs/plans/2026-06-08-align-home-ui-with-world.md)
 
 ## Database Editors
 

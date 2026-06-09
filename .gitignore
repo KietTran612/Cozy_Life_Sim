@@ -48,3 +48,6 @@ Thumbs.db
 /Assets/Packages.meta
 /Assets/TextMesh Pro
 /Assets/TextMesh Pro.meta
+
+# Mockup PSD files
+/docs/Mockup/*.psd
